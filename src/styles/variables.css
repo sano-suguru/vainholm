@@ -1,0 +1,100 @@
+:root {
+  /* === Background Hierarchy (60%) === */
+  --bg-base: #0a0a0a;
+  --bg-elevation-1: #1a1a1a;
+  --bg-elevation-2: #2d2d2d;
+  --bg-elevation-3: #383838;
+
+  /* === Tile Base Colors === */
+  /* Natural terrain */
+  --tile-grass-base: #3a3a2d;
+  --tile-grass-accent: #4a4a3a;
+  --tile-grass-shadow: #2a2a20;
+
+  --tile-water-base: #1a2a35;
+  --tile-water-accent: #2a3a45;
+  --tile-water-deep: #0a1a25;
+
+  --tile-forest-base: #2a3a28;
+  --tile-forest-canopy: #1f2f1d;
+  --tile-forest-trunk: #1a1a15;
+
+  --tile-mountain-base: #404045;
+  --tile-mountain-peak: #505055;
+  --tile-mountain-shadow: #2a2a2f;
+
+  --tile-sand-base: #4a4540;
+  --tile-sand-accent: #5a5550;
+  --tile-sand-shadow: #3a3530;
+
+  --tile-road-base: #3a3530;
+  --tile-road-accent: #4a4540;
+  --tile-road-shadow: #2a2520;
+
+  /* Indoor/Dungeon */
+  --tile-floor-base: #35302a;
+  --tile-floor-accent: #453f38;
+  --tile-floor-shadow: #252018;
+
+  --tile-wall-base: #454545;
+  --tile-wall-accent: #555555;
+  --tile-wall-shadow: #353535;
+
+  /* Hazards */
+  --tile-lava-core: #8a2010;
+  --tile-lava-glow: #c04020;
+  --tile-lava-crust: #3a1a10;
+
+  --tile-swamp-base: #2a3525;
+  --tile-swamp-water: #1a2a1f;
+  --tile-swamp-muck: #1f2a1a;
+
+  --tile-chasm-void: #020204;
+  --tile-chasm-edge: #1a1a1f;
+
+  /* Dark fantasy */
+  --tile-ruins-base: #3a3835;
+  --tile-ruins-stone: #454340;
+  --tile-ruins-moss: #2a3528;
+
+  --tile-graveyard-base: #2a2a28;
+  --tile-graveyard-stone: #3a3a38;
+  --tile-graveyard-earth: #252320;
+
+  --tile-blight-base: #3a2a35;
+  --tile-blight-corrupt: #4a3545;
+  --tile-blight-dead: #2a1a25;
+
+  /* Stairs */
+  --tile-stairs-base: #353535;
+  --tile-stairs-step: #454545;
+  --tile-stairs-shadow: #252525;
+
+  /* Dungeon specific */
+  --tile-dungeon-floor-base: #2a2825;
+  --tile-dungeon-floor-accent: #3a3835;
+  --tile-dungeon-wall-base: #3a3a3a;
+  --tile-dungeon-wall-brick: #454545;
+
+  /* === Accent Colors (10%) === */
+  --accent-danger: #8a2020;
+  --accent-magic: #4a3a6a;
+  --accent-interact: #6a5030;
+  --accent-warning: #8a6020;
+
+  /* === Player Glow Effect === */
+  --player-glow-core: rgba(180, 140, 80, 0.15);
+  --player-glow-mid: rgba(140, 100, 50, 0.08);
+  --player-glow-outer: transparent;
+
+  /* === UI Colors === */
+  --ui-text-primary: #8a7a6a;
+  --ui-text-secondary: #6a5a4a;
+  --ui-border: #2a2420;
+  --ui-bg: rgba(20, 18, 15, 0.95);
+
+  /* === Frame/Viewport === */
+  --viewport-border: #2a201a;
+  --viewport-outline: #1a1210;
+  --viewport-shadow: rgba(0, 0, 0, 0.9);
+}

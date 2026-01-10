@@ -1,0 +1,200 @@
+import type { TileDefinition, TileType } from '../types';
+
+export const TILE_SIZE = 16;
+export const VIEWPORT_WIDTH_TILES = 50;
+export const VIEWPORT_HEIGHT_TILES = 38;
+export const MAP_WIDTH = 100;
+export const MAP_HEIGHT = 100;
+
+export const TILE_DEFINITIONS: Record<TileType, TileDefinition> = {
+  grass: {
+    type: 'grass',
+    walkable: true,
+    movementCost: 1,
+    name: 'Grass',
+    char: '.',
+  },
+  water: {
+    type: 'water',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Water',
+    char: '~',
+  },
+  shallow_water: {
+    type: 'shallow_water',
+    walkable: true,
+    movementCost: 2,
+    name: 'Shallow Water',
+    char: '~',
+  },
+  deep_water: {
+    type: 'deep_water',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Deep Water',
+    char: '≈',
+  },
+  forest: {
+    type: 'forest',
+    walkable: true,
+    movementCost: 2,
+    name: 'Forest',
+    char: 'T',
+  },
+  mountain: {
+    type: 'mountain',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Mountain',
+    char: '^',
+  },
+  hills: {
+    type: 'hills',
+    walkable: true,
+    movementCost: 1.5,
+    name: 'Hills',
+    char: 'n',
+  },
+  wall: {
+    type: 'wall',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Wall',
+    char: '#',
+  },
+  floor: {
+    type: 'floor',
+    walkable: true,
+    movementCost: 1,
+    name: 'Floor',
+    char: '.',
+  },
+  road: {
+    type: 'road',
+    walkable: true,
+    movementCost: 0.5,
+    name: 'Road',
+    char: '=',
+  },
+  sand: {
+    type: 'sand',
+    walkable: true,
+    movementCost: 1.5,
+    name: 'Sand',
+    char: ':',
+  },
+  lava: {
+    type: 'lava',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Lava',
+    char: '~',
+  },
+  swamp: {
+    type: 'swamp',
+    walkable: true,
+    movementCost: 3,
+    name: 'Swamp',
+    char: '%',
+  },
+  chasm: {
+    type: 'chasm',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Chasm',
+    char: ' ',
+  },
+  ruins: {
+    type: 'ruins',
+    walkable: true,
+    movementCost: 2,
+    name: 'Ruins',
+    char: '*',
+  },
+  graveyard: {
+    type: 'graveyard',
+    walkable: true,
+    movementCost: 1,
+    name: 'Graveyard',
+    char: '+',
+  },
+  blight: {
+    type: 'blight',
+    walkable: true,
+    movementCost: 1.5,
+    name: 'Blighted Land',
+    char: '!',
+  },
+  snow: {
+    type: 'snow',
+    walkable: true,
+    movementCost: 1.5,
+    name: 'Snow',
+    char: '*',
+  },
+  ice: {
+    type: 'ice',
+    walkable: true,
+    movementCost: 0.8,
+    name: 'Ice',
+    char: '=',
+  },
+  frozen_water: {
+    type: 'frozen_water',
+    walkable: true,
+    movementCost: 1,
+    name: 'Frozen Water',
+    char: '≈',
+  },
+  flowers: {
+    type: 'flowers',
+    walkable: true,
+    movementCost: 1,
+    name: 'Flower Field',
+    char: '"',
+  },
+  bridge: {
+    type: 'bridge',
+    walkable: true,
+    movementCost: 1,
+    name: 'Bridge',
+    char: '=',
+  },
+  dungeon_floor: {
+    type: 'dungeon_floor',
+    walkable: true,
+    movementCost: 1,
+    name: 'Dungeon Floor',
+    char: '.',
+  },
+  dungeon_wall: {
+    type: 'dungeon_wall',
+    walkable: false,
+    movementCost: Infinity,
+    name: 'Dungeon Wall',
+    char: '#',
+  },
+  stairs_down: {
+    type: 'stairs_down',
+    walkable: true,
+    movementCost: 1,
+    name: 'Stairs Down',
+    char: '>',
+  },
+  stairs_up: {
+    type: 'stairs_up',
+    walkable: true,
+    movementCost: 1,
+    name: 'Stairs Up',
+    char: '<',
+  },
+};
+
+export const KEY_BINDINGS = {
+  up: ['KeyW', 'ArrowUp'],
+  down: ['KeyS', 'ArrowDown'],
+  left: ['KeyA', 'ArrowLeft'],
+  right: ['KeyD', 'ArrowRight'],
+  debug: ['F3'],
+} as const;

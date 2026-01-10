@@ -1,0 +1,249 @@
+.tile {
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.grass {
+  background:
+    radial-gradient(circle at 20% 30%, var(--tile-grass-accent) 2px, transparent 3px),
+    radial-gradient(circle at 70% 60%, var(--tile-grass-shadow) 2px, transparent 3px),
+    radial-gradient(circle at 45% 80%, var(--tile-grass-accent) 1px, transparent 2px),
+    radial-gradient(circle at 85% 20%, var(--tile-grass-shadow) 2px, transparent 3px),
+    radial-gradient(circle at 50% 50%, var(--tile-grass-accent) 1px, transparent 2px),
+    linear-gradient(135deg, var(--tile-grass-base) 0%, var(--tile-grass-shadow) 50%, var(--tile-grass-base) 100%);
+}
+
+.water {
+  background:
+    radial-gradient(circle at 25% 35%, rgba(0, 0, 0, 0.3) 0%, transparent 20%),
+    radial-gradient(circle at 75% 65%, rgba(0, 0, 0, 0.2) 0%, transparent 25%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(100, 150, 180, 0.1) 0px,
+      transparent 3px,
+      transparent 6px
+    ),
+    linear-gradient(180deg, var(--tile-water-base) 0%, var(--tile-water-accent) 50%, var(--tile-water-deep) 100%);
+}
+
+.forest {
+  background:
+    radial-gradient(ellipse 8% 60% at 50% 60%, var(--tile-forest-trunk) 0%, transparent 100%),
+    radial-gradient(ellipse 6% 50% at 30% 65%, var(--tile-forest-trunk) 0%, transparent 100%),
+    radial-gradient(ellipse 6% 50% at 70% 65%, var(--tile-forest-trunk) 0%, transparent 100%),
+    radial-gradient(ellipse 35% 40% at 50% 30%, var(--tile-forest-canopy) 0%, transparent 100%),
+    radial-gradient(ellipse 25% 30% at 25% 40%, var(--tile-forest-canopy) 0%, transparent 100%),
+    radial-gradient(ellipse 25% 30% at 75% 40%, var(--tile-forest-canopy) 0%, transparent 100%),
+    linear-gradient(180deg, var(--tile-forest-base) 0%, var(--tile-forest-canopy) 100%);
+}
+
+.mountain {
+  background:
+    linear-gradient(160deg, transparent 25%, rgba(0, 0, 0, 0.5) 25%, transparent 35%),
+    linear-gradient(20deg, transparent 25%, rgba(20, 20, 25, 0.4) 25%, transparent 35%),
+    conic-gradient(
+      from 180deg at 50% 75%,
+      var(--tile-mountain-base) 0deg,
+      var(--tile-mountain-shadow) 60deg,
+      var(--tile-mountain-peak) 90deg,
+      var(--tile-mountain-shadow) 120deg,
+      var(--tile-mountain-base) 180deg
+    ),
+    radial-gradient(circle at 30% 40%, var(--tile-mountain-peak) 0%, transparent 30%),
+    linear-gradient(180deg, var(--tile-mountain-peak) 0%, var(--tile-mountain-base) 30%, var(--tile-mountain-shadow) 100%);
+}
+
+.wall {
+  background:
+    radial-gradient(circle at 10% 20%, var(--tile-wall-accent) 3px, transparent 4px),
+    radial-gradient(circle at 80% 70%, var(--tile-wall-base) 2px, transparent 3px),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 14px,
+      var(--tile-wall-shadow) 14px,
+      var(--tile-wall-shadow) 16px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 14px,
+      var(--tile-wall-shadow) 14px,
+      var(--tile-wall-shadow) 16px
+    ),
+    linear-gradient(135deg, var(--tile-wall-accent) 0%, var(--tile-wall-base) 50%, var(--tile-wall-shadow) 100%);
+}
+
+.floor {
+  background:
+    radial-gradient(circle at 25% 25%, rgba(80, 50, 40, 0.2) 0%, transparent 30%),
+    radial-gradient(circle at 75% 75%, rgba(60, 40, 30, 0.15) 0%, transparent 25%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.1) 0px,
+      transparent 1px,
+      transparent 7px,
+      rgba(0, 0, 0, 0.1) 8px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.08) 0px,
+      transparent 1px,
+      transparent 15px,
+      rgba(0, 0, 0, 0.08) 16px
+    ),
+    linear-gradient(135deg, var(--tile-floor-base) 0%, var(--tile-floor-accent) 50%, var(--tile-floor-shadow) 100%);
+}
+
+.road {
+  background:
+    radial-gradient(circle at 15% 40%, var(--tile-road-shadow) 4px, transparent 5px),
+    radial-gradient(circle at 65% 70%, var(--tile-road-shadow) 3px, transparent 4px),
+    radial-gradient(circle at 45% 20%, var(--tile-road-shadow) 2px, transparent 3px),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 5px,
+      rgba(0, 0, 0, 0.2) 5px,
+      rgba(0, 0, 0, 0.2) 7px
+    ),
+    linear-gradient(180deg, var(--tile-road-base) 0%, var(--tile-road-accent) 50%, var(--tile-road-shadow) 100%);
+}
+
+.sand {
+  background:
+    radial-gradient(circle at 15% 25%, var(--tile-sand-accent) 1px, transparent 2px),
+    radial-gradient(circle at 55% 45%, var(--tile-sand-accent) 1px, transparent 2px),
+    radial-gradient(circle at 85% 75%, var(--tile-sand-shadow) 1px, transparent 2px),
+    radial-gradient(circle at 35% 85%, var(--tile-sand-accent) 1px, transparent 2px),
+    radial-gradient(circle at 70% 20%, var(--tile-sand-accent) 1px, transparent 2px),
+    linear-gradient(135deg, var(--tile-sand-base) 0%, var(--tile-sand-accent) 50%, var(--tile-sand-shadow) 100%);
+}
+
+.unknown {
+  background: repeating-conic-gradient(
+    var(--accent-danger) 0deg 90deg,
+    var(--bg-base) 90deg 180deg
+  );
+  background-size: 16px 16px;
+}
+
+.lava {
+  background:
+    radial-gradient(circle at 30% 40%, var(--tile-lava-glow) 0%, transparent 40%),
+    radial-gradient(circle at 70% 60%, var(--tile-lava-glow) 0%, transparent 35%),
+    radial-gradient(circle at 50% 30%, var(--tile-lava-core) 0%, transparent 50%),
+    linear-gradient(180deg, var(--tile-lava-glow) 0%, var(--tile-lava-core) 50%, var(--tile-lava-crust) 100%);
+  animation: lavaGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes lavaGlow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.2); }
+}
+
+.swamp {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(100, 120, 80, 0.3) 3px, transparent 4px),
+    radial-gradient(circle at 70% 50%, rgba(80, 100, 60, 0.2) 2px, transparent 3px),
+    radial-gradient(circle at 40% 70%, rgba(60, 80, 40, 0.25) 4px, transparent 5px),
+    linear-gradient(180deg, var(--tile-swamp-base) 0%, var(--tile-swamp-water) 50%, var(--tile-swamp-muck) 100%);
+}
+
+.chasm {
+  background:
+    radial-gradient(circle at 50% 50%, var(--tile-chasm-void) 0%, var(--tile-chasm-void) 60%, var(--tile-chasm-edge) 100%),
+    linear-gradient(180deg, var(--tile-chasm-edge) 0%, var(--tile-chasm-void) 20%, var(--tile-chasm-void) 100%);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+}
+
+.ruins {
+  background:
+    radial-gradient(ellipse 40% 20% at 30% 70%, var(--tile-ruins-stone) 0%, transparent 100%),
+    radial-gradient(ellipse 30% 25% at 70% 60%, var(--tile-ruins-stone) 0%, transparent 100%),
+    radial-gradient(circle at 50% 40%, var(--tile-ruins-moss) 0%, transparent 30%),
+    linear-gradient(135deg, var(--tile-ruins-base) 0%, var(--tile-ruins-stone) 50%, var(--tile-ruins-base) 100%);
+}
+
+.graveyard {
+  background:
+    radial-gradient(ellipse 15% 30% at 30% 55%, var(--tile-graveyard-stone) 0%, transparent 100%),
+    radial-gradient(ellipse 12% 25% at 70% 60%, var(--tile-graveyard-stone) 0%, transparent 100%),
+    radial-gradient(ellipse 10% 20% at 50% 65%, var(--tile-graveyard-stone) 0%, transparent 100%),
+    linear-gradient(180deg, var(--tile-graveyard-base) 0%, var(--tile-graveyard-earth) 100%);
+}
+
+.blight {
+  background:
+    radial-gradient(circle at 25% 35%, var(--tile-blight-corrupt) 0%, transparent 30%),
+    radial-gradient(circle at 75% 65%, var(--tile-blight-corrupt) 0%, transparent 25%),
+    radial-gradient(circle at 50% 50%, var(--tile-blight-dead) 0%, transparent 40%),
+    linear-gradient(135deg, var(--tile-blight-base) 0%, var(--tile-blight-dead) 50%, var(--tile-blight-base) 100%);
+}
+
+.dungeonFloor {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      transparent 1px,
+      transparent 15px,
+      rgba(0, 0, 0, 0.15) 16px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.1) 0px,
+      transparent 1px,
+      transparent 15px,
+      rgba(0, 0, 0, 0.1) 16px
+    ),
+    linear-gradient(135deg, var(--tile-dungeon-floor-base) 0%, var(--tile-dungeon-floor-accent) 50%, var(--tile-dungeon-floor-base) 100%);
+}
+
+.dungeonWall {
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 6px,
+      rgba(0, 0, 0, 0.3) 6px,
+      rgba(0, 0, 0, 0.3) 8px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 14px,
+      rgba(0, 0, 0, 0.2) 14px,
+      rgba(0, 0, 0, 0.2) 16px
+    ),
+    linear-gradient(180deg, var(--tile-dungeon-wall-brick) 0%, var(--tile-dungeon-wall-base) 50%, var(--tile-dungeon-wall-base) 100%);
+}
+
+.stairsDown {
+  background:
+    linear-gradient(180deg,
+      var(--tile-stairs-step) 0%, var(--tile-stairs-step) 20%,
+      var(--tile-stairs-shadow) 20%, var(--tile-stairs-shadow) 25%,
+      var(--tile-stairs-base) 25%, var(--tile-stairs-base) 45%,
+      var(--tile-stairs-shadow) 45%, var(--tile-stairs-shadow) 50%,
+      #1a1a1a 50%, #1a1a1a 70%,
+      #101010 70%, #101010 75%,
+      #0a0a0a 75%, #0a0a0a 100%
+    );
+}
+
+.stairsUp {
+  background:
+    linear-gradient(180deg,
+      #0a0a0a 0%, #0a0a0a 25%,
+      #101010 25%, #101010 30%,
+      #1a1a1a 30%, #1a1a1a 50%,
+      var(--tile-stairs-shadow) 50%, var(--tile-stairs-shadow) 55%,
+      var(--tile-stairs-base) 55%, var(--tile-stairs-base) 75%,
+      var(--tile-stairs-shadow) 75%, var(--tile-stairs-shadow) 80%,
+      var(--tile-stairs-step) 80%, var(--tile-stairs-step) 100%
+    );
+}
