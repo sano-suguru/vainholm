@@ -64,3 +64,8 @@ export interface ViewportBounds {
   endX: number;
   endY: number;
 }
+
+export interface AnimatedViewportProps {
+  viewport: ViewportBounds;
+  animationTime: number;
+}

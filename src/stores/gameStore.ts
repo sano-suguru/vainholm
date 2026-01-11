@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { Direction, MapData, MapLayer, Position, TileType } from '../types';
+import type { LightSource } from '../utils/lighting';
+import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/lighting';
 import { TILE_DEFINITIONS } from '../utils/constants';
 
 interface PlayerState {
@@ -94,6 +96,7 @@ interface GameStore {
   exploredTiles: Set<string>;
   visibleTiles: Set<string>;
   visibilityHash: number;
+  lightSources: LightSource[];
 
   setMap: (map: MapData) => void;
   movePlayer: (dx: number, dy: number) => void;
@@ -106,6 +109,9 @@ interface GameStore {
   getTileAt: (x: number, y: number) => TileType | null;
   isTileVisible: (x: number, y: number) => boolean;
   isTileExplored: (x: number, y: number) => boolean;
+  addLightSource: (light: LightSource) => void;
+  removeLightSource: (id: string) => void;
+  generateTileLights: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -122,6 +128,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   exploredTiles: new Set<string>(),
   visibleTiles: new Set<string>(),
   visibilityHash: 0,
+  lightSources: [],
 
   setMap: (map) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
@@ -236,5 +243,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isTileExplored: (x, y) => {
     const { exploredTiles } = get();
     return exploredTiles.has(`${x},${y}`);
+  },
+
+  addLightSource: (light) => {
+    set((state) => ({
+      lightSources: [...state.lightSources, light],
+    }));
+  },
+
+  removeLightSource: (id) => {
+    set((state) => ({
+      lightSources: state.lightSources.filter((l) => l.id !== id),
+    }));
+  },
+
+  generateTileLights: () => {
+    const { map, terrainLayer } = get();
+    if (!map || !terrainLayer) return;
+
+    const tileLights: LightSource[] = [];
+    
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const tileId = terrainLayer.data[y]?.[x];
+        if (tileId === undefined) continue;
+        
+        const tileType = map.tileMapping[String(tileId)] as TileType | undefined;
+        if (!tileType) continue;
+        
+        const presetKey = TILE_LIGHT_SOURCES[tileType];
+        if (presetKey && LIGHT_PRESETS[presetKey]) {
+          tileLights.push(
+            createLightSource(`tile-${x}-${y}`, { x, y }, presetKey)
+          );
+        }
+      }
+    }
+    
+    set({ lightSources: tileLights });
   },
 }));

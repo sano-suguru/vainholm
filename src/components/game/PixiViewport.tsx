@@ -1,8 +1,11 @@
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Application, extend, useTick } from '@pixi/react';
 import { Container, Graphics, Text, TextStyle, BlurFilter } from 'pixi.js';
-import type { MapData, Position, Direction, ViewportBounds, TileType } from '../../types';
+import type { MapData, Position, ViewportBounds, TileType } from '../../types';
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
+import type { LightSource } from '../../utils/lighting';
+import { LightLayer } from './LightLayer';
+import { ParticleLayer } from './ParticleLayer';
 import { 
   TILE_GLYPHS, 
   PLAYER_GLYPH, 
@@ -32,20 +35,9 @@ const PLAYER_TEXT_STYLE = new TextStyle({
 
 
 
-const AMBIENT_BLUR_FILTER = (() => {
-  const filter = new BlurFilter({ strength: 25, quality: 2 });
-  return [filter];
-})();
 
-const TORCH_BLUR_FILTER = (() => {
-  const filter = new BlurFilter({ strength: 12, quality: 2 });
-  return [filter];
-})();
 
-const GLOW_BLUR_FILTER = (() => {
-  const filter = new BlurFilter({ strength: 8, quality: 2 });
-  return [filter];
-})();
+
 
 const FOG_BLUR_FILTER = (() => {
   const filter = new BlurFilter({ strength: 30, quality: 1 });
@@ -60,13 +52,13 @@ const FIREFLY_BLUR_FILTER = (() => {
 interface PixiViewportProps {
   map: MapData;
   playerPosition: Position;
-  playerFacing: Direction;
   viewport: ViewportBounds;
   weather: WeatherType;
   timeOfDay: TimeOfDay;
   visibilityHash: number;
   isTileVisible: (x: number, y: number) => boolean;
   isTileExplored: (x: number, y: number) => boolean;
+  lightSources: LightSource[];
 }
 
 interface MapViewportProps {
@@ -148,6 +140,21 @@ const StaticTileLayer = memo(function StaticTileLayer({
           />
         );
         
+        if (glyph.detail) {
+          const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
+          result.push(
+            <pixiText
+              key={`detail-${key}`}
+              text={glyph.char}
+              x={screenX + 1}
+              y={screenY - 1}
+              style={SHARED_TEXT_STYLE}
+              tint={detailColor}
+              alpha={0.3}
+            />
+          );
+        }
+        
         result.push(
           <pixiText
             key={`fg-${key}`}
@@ -206,6 +213,21 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
         />
       );
       
+      if (glyph.detail) {
+        const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
+        tiles.push(
+          <pixiText
+            key={`detail-${key}`}
+            text={glyph.char}
+            x={screenX + 1}
+            y={screenY - 1}
+            style={SHARED_TEXT_STYLE}
+            tint={detailColor}
+            alpha={0.3}
+          />
+        );
+      }
+      
       tiles.push(
         <pixiText
           key={`fg-${key}`}
@@ -222,63 +244,22 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
   return <pixiContainer>{tiles}</pixiContainer>;
 });
 
-function getTorchFlicker(time: number): { radius: number; alpha: number; color: number } {
-  const t1 = Math.sin(time * 0.0015) * 0.5 + 0.5;
-  const t2 = Math.sin(time * 0.002 + 1.5) * 0.5 + 0.5;
-  const flicker = t1 * 0.6 + t2 * 0.4;
-  
-  return {
-    radius: 0.96 + flicker * 0.08,
-    alpha: 0.20 + flicker * 0.04,
-    color: 0xff8822 + Math.floor(flicker * 0x000808),
-  };
-}
+
 
 interface PlayerLayerProps {
   playerPosition: Position;
-  playerFacing: Direction;
   viewport: ViewportBounds;
-  animationTime: number;
 }
 
 const PlayerLayer = memo(function PlayerLayer({
   playerPosition,
   viewport,
-  animationTime,
 }: PlayerLayerProps) {
   const screenX = (playerPosition.x - viewport.startX) * TILE_SIZE;
   const screenY = (playerPosition.y - viewport.startY) * TILE_SIZE;
-  const centerX = screenX + TILE_SIZE / 2;
-  const centerY = screenY + TILE_SIZE / 2;
-  
-  const flicker = getTorchFlicker(animationTime);
 
   return (
     <pixiContainer>
-      <pixiGraphics
-        filters={AMBIENT_BLUR_FILTER}
-        draw={(g) => {
-          g.clear();
-          g.circle(centerX, centerY, TILE_SIZE * 8 * flicker.radius);
-          g.fill({ color: flicker.color, alpha: flicker.alpha * 0.8 });
-        }}
-      />
-      <pixiGraphics
-        filters={TORCH_BLUR_FILTER}
-        draw={(g) => {
-          g.clear();
-          g.circle(centerX, centerY, TILE_SIZE * 4 * flicker.radius);
-          g.fill({ color: flicker.color, alpha: flicker.alpha });
-        }}
-      />
-      <pixiGraphics
-        filters={TORCH_BLUR_FILTER}
-        draw={(g) => {
-          g.clear();
-          g.circle(centerX, centerY, TILE_SIZE * 1.5 * flicker.radius);
-          g.fill({ color: 0xffcc55, alpha: flicker.alpha * 1.2 });
-        }}
-      />
       <pixiGraphics
         draw={(g) => {
           g.clear();
@@ -296,12 +277,29 @@ const PlayerLayer = memo(function PlayerLayer({
   );
 });
 
-const GlowLayer = memo(function GlowLayer({
-  map,
-  viewport,
-  animationTime,
-}: GlowLayerProps) {
-  const drawGlows = useCallback((g: Graphics) => {
+const GLOW_BLUR_OUTER = (() => {
+  const filter = new BlurFilter({ strength: 16, quality: 2 });
+  return [filter];
+})();
+
+const GLOW_BLUR_MID = (() => {
+  const filter = new BlurFilter({ strength: 8, quality: 2 });
+  return [filter];
+})();
+
+const GLOW_BLUR_INNER = (() => {
+  const filter = new BlurFilter({ strength: 4, quality: 2 });
+  return [filter];
+})();
+
+function useGlowDrawer(
+  map: MapData,
+  viewport: ViewportBounds,
+  animationTime: number,
+  radiusMultiplier: number,
+  alphaMultiplier: number
+) {
+  return useCallback((g: Graphics) => {
     g.clear();
     
     const layer = map.layers[0];
@@ -328,13 +326,29 @@ const GlowLayer = memo(function GlowLayer({
         const phaseOffset = (x * 7 + y * 13) * 0.1;
         const pulse = Math.sin(animationTime * 0.005 + phaseOffset) * 0.3 + 0.7;
 
-        g.circle(centerX, centerY, TILE_SIZE * 1.5 * pulse);
-        g.fill({ color: glyph.glow, alpha: 0.35 * pulse });
+        g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
+        g.fill({ color: glyph.glow, alpha: alphaMultiplier * pulse });
       }
     }
-  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, animationTime]);
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, animationTime, radiusMultiplier, alphaMultiplier]);
+}
 
-  return <pixiGraphics filters={GLOW_BLUR_FILTER} draw={drawGlows} />;
+const GlowLayer = memo(function GlowLayer({
+  map,
+  viewport,
+  animationTime,
+}: GlowLayerProps) {
+  const drawOuter = useGlowDrawer(map, viewport, animationTime, 3.0, 0.2);
+  const drawMid = useGlowDrawer(map, viewport, animationTime, 2.0, 0.35);
+  const drawInner = useGlowDrawer(map, viewport, animationTime, 1.2, 0.5);
+
+  return (
+    <pixiContainer>
+      <pixiGraphics filters={GLOW_BLUR_OUTER} draw={drawOuter} />
+      <pixiGraphics filters={GLOW_BLUR_MID} draw={drawMid} />
+      <pixiGraphics filters={GLOW_BLUR_INNER} draw={drawInner} />
+    </pixiContainer>
+  );
 });
 
 const SHADOW_CASTING_TILES = new Set<TileType>(['mountain', 'wall', 'dungeon_wall', 'forest']);
@@ -586,6 +600,61 @@ const FireflyLayer = memo(function FireflyLayer({
   return <pixiGraphics filters={FIREFLY_BLUR_FILTER} draw={drawFireflies} />;
 });
 
+const DUST_COUNT = 40;
+
+const DUST_BLUR_FILTER = (() => {
+  const filter = new BlurFilter({ strength: 2, quality: 1 });
+  return [filter];
+})();
+
+interface AmbientDustLayerProps extends ScreenSizeProps {
+  animationTime: number;
+  timeOfDay: TimeOfDay;
+}
+
+const AmbientDustLayer = memo(function AmbientDustLayer({
+  width,
+  height,
+  animationTime,
+  timeOfDay,
+}: AmbientDustLayerProps) {
+  const dustColor = timeOfDay === 'dawn' ? 0xffddaa 
+    : timeOfDay === 'dusk' ? 0xffccaa 
+    : timeOfDay === 'night' ? 0x8899aa 
+    : 0xeeeecc;
+  
+  const drawDust = useCallback((g: Graphics) => {
+    g.clear();
+    
+    const seed = 11111;
+    
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const hash = (seed * (i + 1) * 16807) % 2147483647;
+      const baseX = hash % width;
+      const baseY = (hash >> 10) % height;
+      const driftSpeedX = 0.008 + ((hash >> 5) % 10) / 1000;
+      const driftSpeedY = 0.005 + ((hash >> 8) % 8) / 1000;
+      const phaseX = (hash >> 12) % 1000;
+      const phaseY = (hash >> 15) % 1000;
+      const floatSpeed = 0.001 + ((hash >> 18) % 10) / 10000;
+      const floatPhase = (hash >> 20) % 1000;
+      const size = 1 + ((hash >> 22) % 10) / 10;
+      
+      const x = baseX + Math.sin((animationTime + phaseX) * driftSpeedX) * 80;
+      const y = baseY + Math.cos((animationTime + phaseY) * driftSpeedY) * 60 
+        + Math.sin((animationTime + floatPhase) * floatSpeed) * 20;
+      
+      const twinkle = Math.sin((animationTime + floatPhase) * 0.003) * 0.5 + 0.5;
+      const alpha = 0.1 + twinkle * 0.15;
+      
+      g.circle(x, y, size);
+      g.fill({ color: dustColor, alpha });
+    }
+  }, [width, height, animationTime, dustColor]);
+
+  return <pixiGraphics filters={DUST_BLUR_FILTER} draw={drawDust} />;
+});
+
 const TIME_OF_DAY_TINTS: Record<TimeOfDay, { color: number; alpha: number }> = {
   dawn: { color: 0xff8866, alpha: 0.15 },
   day: { color: 0x000000, alpha: 0 },
@@ -621,12 +690,12 @@ const DayNightLayer = memo(function DayNightLayer({
 interface GameSceneProps extends Omit<PixiViewportProps, 'animationTime'> {
   width: number;
   height: number;
+  lightSources: LightSource[];
 }
 
 function GameScene({
   map,
   playerPosition,
-  playerFacing,
   viewport,
   weather,
   timeOfDay,
@@ -634,6 +703,7 @@ function GameScene({
   isTileExplored,
   width,
   height,
+  lightSources,
 }: GameSceneProps) {
   const [animationTime, setAnimationTime] = useState(0);
   const startTimeRef = useRef(0);
@@ -661,14 +731,20 @@ function GameScene({
       />
       <PlayerLayer 
         playerPosition={playerPosition} 
-        playerFacing={playerFacing}
         viewport={viewport}
-        animationTime={animationTime}
       />
+      <LightLayer 
+        lights={lightSources} 
+        viewport={viewport} 
+        animationTime={animationTime}
+        playerPosition={playerPosition}
+      />
+      <ParticleLayer map={map} viewport={viewport} animationTime={animationTime} />
       <DayNightLayer width={width} height={height} timeOfDay={timeOfDay} animationTime={animationTime} />
       <RainLayer width={width} height={height} animationTime={animationTime} weather={weather} />
       <FogLayer width={width} height={height} animationTime={animationTime} weather={weather} />
       <FireflyLayer width={width} height={height} animationTime={animationTime} timeOfDay={timeOfDay} />
+      <AmbientDustLayer width={width} height={height} animationTime={animationTime} timeOfDay={timeOfDay} />
       <VignetteLayer width={width} height={height} />
     </pixiContainer>
   );
@@ -677,13 +753,13 @@ function GameScene({
 export function PixiViewport({
   map,
   playerPosition,
-  playerFacing,
   viewport,
   weather,
   timeOfDay,
   visibilityHash,
   isTileVisible,
   isTileExplored,
+  lightSources,
 }: PixiViewportProps) {
   const width = VIEWPORT_WIDTH_TILES * TILE_SIZE;
   const height = VIEWPORT_HEIGHT_TILES * TILE_SIZE;
@@ -700,7 +776,6 @@ export function PixiViewport({
       <GameScene
         map={map}
         playerPosition={playerPosition}
-        playerFacing={playerFacing}
         viewport={viewport}
         weather={weather}
         timeOfDay={timeOfDay}
@@ -709,6 +784,7 @@ export function PixiViewport({
         isTileExplored={isTileExplored}
         width={width}
         height={height}
+        lightSources={lightSources}
       />
     </Application>
   );

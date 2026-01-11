@@ -12,13 +12,14 @@ import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import styles from '../../styles/game.module.css';
 
 export function GameContainer() {
-  const { player, map, weather, timeOfDay, visibilityHash } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
       weather: state.weather,
       timeOfDay: state.timeOfDay,
       visibilityHash: state.visibilityHash,
+      lightSources: state.lightSources,
     }))
   );
 
@@ -30,6 +31,7 @@ export function GameContainer() {
   const getTileAt = useGameStore((state) => state.getTileAt);
   const isTileVisible = useGameStore((state) => state.isTileVisible);
   const isTileExplored = useGameStore((state) => state.isTileExplored);
+  const generateTileLights = useGameStore((state) => state.generateTileLights);
 
   const { metrics, updateMetrics } = usePerformanceMetrics(debugMode);
   
@@ -37,9 +39,12 @@ export function GameContainer() {
 
   useEffect(() => {
     clearColorNoiseCache();
-    generateMapAsync(MAP_WIDTH, MAP_HEIGHT, 42).then(setMap);
+    generateMapAsync(MAP_WIDTH, MAP_HEIGHT, 42).then((mapData) => {
+      setMap(mapData);
+      generateTileLights();
+    });
     return () => terminateWorker();
-  }, [setMap]);
+  }, [setMap, generateTileLights]);
 
   useEffect(() => {
     let animationId: number;
@@ -109,13 +114,13 @@ export function GameContainer() {
         <PixiViewport
           map={map}
           playerPosition={player.position}
-          playerFacing={player.facing}
           viewport={viewport}
           weather={weather}
           timeOfDay={timeOfDay}
           visibilityHash={visibilityHash}
           isTileVisible={isTileVisible}
           isTileExplored={isTileExplored}
+          lightSources={lightSources}
         />
       </div>
       {debugMode && (
