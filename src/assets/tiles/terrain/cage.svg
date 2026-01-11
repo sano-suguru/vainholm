@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Dungeon floor base -->
+  <rect x="0" y="0" width="16" height="16" fill="#1a1815"/>
+  <rect x="1" y="1" width="1" height="1" fill="#252220"/>
+  <rect x="14" y="1" width="1" height="1" fill="#252220"/>
+  
+  <!-- Cage top bar -->
+  <rect x="1" y="2" width="14" height="1" fill="#555555"/>
+  <rect x="2" y="2" width="2" height="1" fill="#666666"/>
+  <rect x="12" y="2" width="2" height="1" fill="#666666"/>
+  
+  <!-- Cage bottom bar -->
+  <rect x="1" y="13" width="14" height="1" fill="#444444"/>
+  <rect x="3" y="13" width="2" height="1" fill="#555555"/>
+  
+  <!-- Left side bar -->
+  <rect x="1" y="2" width="1" height="12" fill="#555555"/>
+  <rect x="1" y="4" width="1" height="2" fill="#666666"/>
+  <rect x="1" y="10" width="1" height="2" fill="#444444"/>
+  
+  <!-- Right side bar -->
+  <rect x="14" y="2" width="1" height="12" fill="#555555"/>
+  <rect x="14" y="5" width="1" height="2" fill="#666666"/>
+  <rect x="14" y="11" width="1" height="2" fill="#444444"/>
+  
+  <!-- Vertical bars -->
+  <rect x="4" y="3" width="1" height="10" fill="#555555"/>
+  <rect x="4" y="5" width="1" height="2" fill="#666666"/>
+  <rect x="4" y="9" width="1" height="2" fill="#444444"/>
+  
+  <rect x="7" y="3" width="1" height="10" fill="#555555"/>
+  <rect x="7" y="4" width="1" height="2" fill="#666666"/>
+  <rect x="7" y="10" width="1" height="2" fill="#444444"/>
+  
+  <rect x="10" y="3" width="1" height="10" fill="#555555"/>
+  <rect x="10" y="6" width="1" height="2" fill="#666666"/>
+  <rect x="10" y="11" width="1" height="2" fill="#444444"/>
+  
+  <!-- Horizontal cross bar (middle) -->
+  <rect x="1" y="7" width="14" height="1" fill="#444444"/>
+  <rect x="2" y="7" width="1" height="1" fill="#555555"/>
+  <rect x="5" y="7" width="1" height="1" fill="#555555"/>
+  <rect x="11" y="7" width="1" height="1" fill="#555555"/>
+  
+  <!-- Corner reinforcements -->
+  <rect x="2" y="3" width="1" height="1" fill="#444444"/>
+  <rect x="13" y="3" width="1" height="1" fill="#444444"/>
+  <rect x="2" y="12" width="1" height="1" fill="#333333"/>
+  <rect x="13" y="12" width="1" height="1" fill="#333333"/>
+  
+  <!-- Rust spots -->
+  <rect x="4" y="11" width="1" height="1" fill="#4a3830"/>
+  <rect x="10" y="4" width="1" height="1" fill="#4a3830"/>
+  <rect x="1" y="8" width="1" height="1" fill="#3a2820"/>
+  <rect x="7" y="12" width="1" height="1" fill="#3a2820"/>
+  
+  <!-- Shadow inside cage -->
+  <rect x="3" y="9" width="1" height="1" fill="#151210"/>
+  <rect x="6" y="5" width="1" height="1" fill="#151210"/>
+  <rect x="9" y="8" width="1" height="1" fill="#151210"/>
+  <rect x="12" y="6" width="1" height="1" fill="#151210"/>
+</svg>

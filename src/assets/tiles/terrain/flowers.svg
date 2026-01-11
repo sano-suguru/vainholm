@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Base grass -->
+  <rect width="16" height="16" fill="#2d4a28"/>
+  
+  <!-- Grass highlights -->
+  <rect x="0" y="0" width="1" height="1" fill="#3d5a38"/>
+  <rect x="4" y="1" width="1" height="1" fill="#3d5a38"/>
+  <rect x="8" y="0" width="1" height="1" fill="#4a6a45"/>
+  <rect x="12" y="1" width="1" height="1" fill="#3d5a38"/>
+  <rect x="2" y="3" width="1" height="1" fill="#4a6a45"/>
+  <rect x="10" y="2" width="1" height="1" fill="#3d5a38"/>
+  <rect x="14" y="3" width="1" height="1" fill="#4a6a45"/>
+  
+  <!-- Grass blades -->
+  <rect x="0" y="4" width="1" height="2" fill="#1a3318"/>
+  <rect x="1" y="5" width="1" height="1" fill="#234422"/>
+  <rect x="6" y="9" width="1" height="2" fill="#1a3318"/>
+  <rect x="7" y="10" width="1" height="1" fill="#234422"/>
+  <rect x="12" y="6" width="1" height="2" fill="#1a3318"/>
+  <rect x="13" y="7" width="1" height="1" fill="#234422"/>
+  <rect x="3" y="12" width="1" height="2" fill="#1a3318"/>
+  <rect x="4" y="13" width="1" height="1" fill="#234422"/>
+  
+  <!-- Red flowers -->
+  <rect x="2" y="5" width="1" height="1" fill="#cc4444"/>
+  <rect x="3" y="4" width="1" height="1" fill="#cc4444"/>
+  <rect x="3" y="6" width="1" height="1" fill="#cc4444"/>
+  <rect x="4" y="5" width="1" height="1" fill="#cc4444"/>
+  <rect x="3" y="5" width="1" height="1" fill="#ff6666"/>
+  
+  <!-- Yellow flowers -->
+  <rect x="9" y="2" width="1" height="1" fill="#cccc44"/>
+  <rect x="8" y="3" width="1" height="1" fill="#cccc44"/>
+  <rect x="10" y="3" width="1" height="1" fill="#cccc44"/>
+  <rect x="9" y="4" width="1" height="1" fill="#cccc44"/>
+  <rect x="9" y="3" width="1" height="1" fill="#ffff66"/>
+  
+  <!-- Pink flowers -->
+  <rect x="13" y="10" width="1" height="1" fill="#cc44cc"/>
+  <rect x="12" y="11" width="1" height="1" fill="#cc44cc"/>
+  <rect x="14" y="11" width="1" height="1" fill="#cc44cc"/>
+  <rect x="13" y="12" width="1" height="1" fill="#cc44cc"/>
+  <rect x="13" y="11" width="1" height="1" fill="#ff66ff"/>
+  
+  <!-- Small blue flower -->
+  <rect x="5" y="13" width="1" height="1" fill="#4488cc"/>
+  <rect x="6" y="12" width="1" height="1" fill="#4488cc"/>
+  <rect x="6" y="14" width="1" height="1" fill="#4488cc"/>
+  <rect x="7" y="13" width="1" height="1" fill="#4488cc"/>
+  <rect x="6" y="13" width="1" height="1" fill="#66aaff"/>
+  
+  <!-- Flower stems -->
+  <rect x="3" y="7" width="1" height="1" fill="#1a3318"/>
+  <rect x="9" y="5" width="1" height="1" fill="#1a3318"/>
+  <rect x="13" y="13" width="1" height="1" fill="#1a3318"/>
+  <rect x="6" y="15" width="1" height="1" fill="#1a3318"/>
+  
+  <!-- Extra grass details -->
+  <rect x="0" y="10" width="1" height="1" fill="#3d5a38"/>
+  <rect x="15" y="5" width="1" height="1" fill="#3d5a38"/>
+  <rect x="10" y="14" width="1" height="1" fill="#4a6a45"/>
+  <rect x="1" y="14" width="1" height="1" fill="#263f22"/>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Base/floor shadow -->
+  <rect x="4" y="14" width="8" height="2" fill="#2a2a2a"/>
+  <!-- Pillar base -->
+  <rect x="4" y="12" width="8" height="2" fill="#3a3a3a"/>
+  <!-- Main pillar body -->
+  <rect x="5" y="3" width="6" height="9" fill="#4a4a4a"/>
+  <!-- Left shadow -->
+  <rect x="5" y="3" width="2" height="9" fill="#3a3a3a"/>
+  <!-- Right highlight -->
+  <rect x="9" y="3" width="2" height="9" fill="#555555"/>
+  <!-- Center highlight -->
+  <rect x="7" y="4" width="2" height="7" fill="#606060"/>
+  <!-- Capital (top) -->
+  <rect x="4" y="1" width="8" height="2" fill="#4a4a4a"/>
+  <rect x="5" y="0" width="6" height="1" fill="#555555"/>
+  <!-- Capital detail -->
+  <rect x="4" y="1" width="1" height="2" fill="#3a3a3a"/>
+  <rect x="11" y="1" width="1" height="2" fill="#555555"/>
+</svg>

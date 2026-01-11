@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Floor shadow -->
+  <rect x="1" y="14" width="14" height="2" fill="#0a0a0a"/>
+  <!-- Base platform -->
+  <rect x="1" y="11" width="14" height="3" fill="#1a0a1a"/>
+  <rect x="2" y="11" width="12" height="1" fill="#2a1a2a"/>
+  <!-- Altar body -->
+  <rect x="3" y="6" width="10" height="5" fill="#1a0a1a"/>
+  <rect x="4" y="6" width="8" height="1" fill="#2a1a2a"/>
+  <!-- Top surface -->
+  <rect x="2" y="5" width="12" height="1" fill="#2a1a2a"/>
+  <rect x="3" y="4" width="10" height="1" fill="#3a2a3a"/>
+  <!-- Ominous symbols/accents -->
+  <rect x="5" y="8" width="1" height="2" fill="#4a2a4a"/>
+  <rect x="10" y="8" width="1" height="2" fill="#4a2a4a"/>
+  <!-- Center glow/offering spot -->
+  <rect x="7" y="4" width="2" height="1" fill="#5a3a5a"/>
+  <rect x="6" y="7" width="4" height="1" fill="#3a1a3a"/>
+  <!-- Dark energy wisps -->
+  <rect x="7" y="2" width="2" height="2" fill="#2a1a2a"/>
+  <rect x="6" y="1" width="1" height="2" fill="#1a0a1a"/>
+  <rect x="9" y="1" width="1" height="2" fill="#1a0a1a"/>
+  <rect x="7" y="0" width="2" height="1" fill="#1a0a1a"/>
+</svg>

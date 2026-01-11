@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Ground glow -->
+  <rect x="4" y="14" width="8" height="2" fill="#335566"/>
+  <rect x="5" y="13" width="6" height="1" fill="#446677"/>
+  <!-- Main crystal - center large -->
+  <rect x="6" y="3" width="4" height="10" fill="#5599bb"/>
+  <rect x="7" y="1" width="2" height="2" fill="#66aacc"/>
+  <rect x="7" y="0" width="2" height="1" fill="#88ccee"/>
+  <!-- Center highlight -->
+  <rect x="8" y="2" width="1" height="8" fill="#77bbdd"/>
+  <rect x="8" y="3" width="1" height="5" fill="#99ddff"/>
+  <!-- Left crystal shard -->
+  <rect x="3" y="8" width="3" height="5" fill="#5599bb"/>
+  <rect x="4" y="6" width="2" height="2" fill="#66aacc"/>
+  <rect x="4" y="5" width="1" height="1" fill="#77bbdd"/>
+  <rect x="4" y="8" width="1" height="3" fill="#77bbdd"/>
+  <!-- Right crystal shard -->
+  <rect x="10" y="7" width="3" height="6" fill="#9966cc"/>
+  <rect x="11" y="5" width="2" height="2" fill="#aa77dd"/>
+  <rect x="11" y="4" width="1" height="1" fill="#bb88ee"/>
+  <rect x="11" y="7" width="1" height="4" fill="#bb88ee"/>
+  <!-- Small accent crystal -->
+  <rect x="2" y="11" width="1" height="2" fill="#66aacc"/>
+  <rect x="13" y="10" width="1" height="3" fill="#9966cc"/>
+  <!-- Sparkle/glow effects -->
+  <rect x="7" y="2" width="1" height="1" fill="#ffffff"/>
+  <rect x="4" y="6" width="1" height="1" fill="#cceeFF"/>
+  <rect x="11" y="5" width="1" height="1" fill="#ddaaff"/>
+</svg>
