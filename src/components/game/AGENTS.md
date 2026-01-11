@@ -18,7 +18,6 @@ Pixi.js rendering layer for Vainholm. ALL visual game content rendered here.
 | `PixiViewport.tsx` | Pixi Application + 11-layer scene graph |
 | `index.ts` | Barrel exports |
 | `LightLayer.tsx` | Light source rendering with flicker |
-| `ParticleLayer.tsx` | Particle effects (dust, sparks) |
 
 ## Pixi.js Setup
 

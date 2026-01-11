@@ -5,7 +5,6 @@ import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import { LightLayer } from './LightLayer';
-import { ParticleLayer } from './ParticleLayer';
 import { 
   PLAYER_GLYPH, 
   getGlowAtTime, 
@@ -20,6 +19,8 @@ import {
   getConnectedTileTexture,
   getConnectionType,
   getOverlayTexture,
+  isAnimatedTile,
+  getAnimatedTileTextures,
   type TransitionDirection,
 } from '../../utils/tileTextures';
 import {
@@ -121,6 +122,7 @@ const TileLayer = memo(function TileLayer({
         if (tileId === undefined) continue;
         
         const tileType = map.tileMapping[String(tileId)] as TileType;
+        if (isAnimatedTile(tileType)) continue;
         positions.push({ x, y, tileType });
       }
     }
@@ -151,6 +153,70 @@ const TileLayer = memo(function TileLayer({
     }
     return elements;
   }, [tilePositions, viewport.startX, viewport.startY]);
+  
+  return <pixiContainer>{tileElements}</pixiContainer>;
+});
+
+const ANIMATION_FRAME_INTERVAL = 250;
+const ANIMATION_FRAME_COUNT = 4;
+
+type AnimatedTileLayerProps = MapViewportProps & AnimatedProps;
+
+const AnimatedTileLayer = memo(function AnimatedTileLayer({ 
+  map, 
+  viewport,
+  animationTime,
+}: AnimatedTileLayerProps) {
+  
+  const animatedTilePositions = useMemo(() => {
+    const positions: TilePosition[] = [];
+    const layer = map.layers[0];
+    if (!layer) return positions;
+    
+    for (let y = viewport.startY; y < viewport.endY; y++) {
+      for (let x = viewport.startX; x < viewport.endX; x++) {
+        if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
+        
+        const tileId = layer.data[y]?.[x];
+        if (tileId === undefined) continue;
+        
+        const tileType = map.tileMapping[String(tileId)] as TileType;
+        if (!isAnimatedTile(tileType)) continue;
+        positions.push({ x, y, tileType });
+      }
+    }
+    return positions;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+
+  const frameIndex = Math.floor(animationTime / ANIMATION_FRAME_INTERVAL) % ANIMATION_FRAME_COUNT;
+
+  const tileElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+    
+    for (const { x, y, tileType } of animatedTilePositions) {
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const key = `animated-${x}-${y}`;
+      
+      const textures = getAnimatedTileTextures(tileType);
+      const texture = textures?.[frameIndex % textures.length];
+      if (texture) {
+        elements.push(
+          <pixiSprite
+            key={key}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+          />
+        );
+      }
+    }
+    return elements;
+  }, [animatedTilePositions, viewport.startX, viewport.startY, frameIndex]);
+  
+  if (animatedTilePositions.length === 0) return null;
   
   return <pixiContainer>{tileElements}</pixiContainer>;
 });
@@ -951,6 +1017,7 @@ function GameScene({
   return (
     <pixiContainer>
       <TileLayer map={map} viewport={viewport} />
+      <AnimatedTileLayer map={map} viewport={viewport} animationTime={animationTime} />
       <FeatureLayer map={map} viewport={viewport} />
       <TransitionLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ConnectedTileLayer map={map} viewport={viewport} texturesReady={texturesReady} />
@@ -972,7 +1039,6 @@ function GameScene({
         animationTime={animationTime}
         playerPosition={playerPosition}
       />
-      <ParticleLayer map={map} viewport={viewport} animationTime={animationTime} />
       <DayNightLayer width={width} height={height} timeOfDay={timeOfDay} animationTime={animationTime} />
       <RainLayer width={width} height={height} animationTime={animationTime} weather={weather} />
       <FogLayer width={width} height={height} animationTime={animationTime} weather={weather} />

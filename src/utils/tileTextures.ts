@@ -49,6 +49,21 @@ import pebbles2Url from '../assets/tiles/overlays/pebbles_2.svg';
 import leavesUrl from '../assets/tiles/overlays/leaves.svg';
 import tallGrassUrl from '../assets/tiles/overlays/tall_grass.svg';
 
+import waterFrame0Url from '../assets/tiles/animated/water/frame_0.svg';
+import waterFrame1Url from '../assets/tiles/animated/water/frame_1.svg';
+import waterFrame2Url from '../assets/tiles/animated/water/frame_2.svg';
+import waterFrame3Url from '../assets/tiles/animated/water/frame_3.svg';
+
+import lavaFrame0Url from '../assets/tiles/animated/lava/frame_0.svg';
+import lavaFrame1Url from '../assets/tiles/animated/lava/frame_1.svg';
+import lavaFrame2Url from '../assets/tiles/animated/lava/frame_2.svg';
+import lavaFrame3Url from '../assets/tiles/animated/lava/frame_3.svg';
+
+import swampFrame0Url from '../assets/tiles/animated/swamp/frame_0.svg';
+import swampFrame1Url from '../assets/tiles/animated/swamp/frame_1.svg';
+import swampFrame2Url from '../assets/tiles/animated/swamp/frame_2.svg';
+import swampFrame3Url from '../assets/tiles/animated/swamp/frame_3.svg';
+
 const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   grass: grassUrl,
   water: waterUrl,
@@ -159,6 +174,14 @@ const OVERLAY_URLS: Record<OverlayId, string> = {
   tall_grass: tallGrassUrl,
 };
 
+const ANIMATED_TILE_URLS: Partial<Record<TileType, string[]>> = {
+  water: [waterFrame0Url, waterFrame1Url, waterFrame2Url, waterFrame3Url],
+  lava: [lavaFrame0Url, lavaFrame1Url, lavaFrame2Url, lavaFrame3Url],
+  swamp: [swampFrame0Url, swampFrame1Url, swampFrame2Url, swampFrame3Url],
+};
+
+const ANIMATED_TILES = new Set<TileType>(Object.keys(ANIMATED_TILE_URLS) as TileType[]);
+
 export type OverlayType = OverlayId;
 
 const textureCache = new Map<string, Texture>();
@@ -181,6 +204,10 @@ function getAllTextureUrls(): string[] {
   }
   
   urls.push(...Object.values(OVERLAY_URLS));
+  
+  for (const frames of Object.values(ANIMATED_TILE_URLS)) {
+    if (frames) urls.push(...frames);
+  }
   
   return urls;
 }
@@ -253,6 +280,25 @@ export function getConnectedTileTexture(
 export function getOverlayTexture(overlayType: OverlayType): Texture | null {
   const url = OVERLAY_URLS[overlayType];
   return textureCache.get(url) || null;
+}
+
+export function isAnimatedTile(tileType: TileType): boolean {
+  return ANIMATED_TILES.has(tileType);
+}
+
+export function getAnimatedTileTextures(tileType: TileType): Texture[] | null {
+  const urls = ANIMATED_TILE_URLS[tileType];
+  if (!urls) return null;
+  
+  const textures: Texture[] = [];
+  for (const url of urls) {
+    const texture = textureCache.get(url);
+    if (texture) {
+      textures.push(texture);
+    }
+  }
+  
+  return textures.length > 0 ? textures : null;
 }
 
 export function getConnectionType(neighbors: {
