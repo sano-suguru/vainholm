@@ -1,5 +1,7 @@
 # AGENTS.md - src/components/game
 
+**Generated**: 2026-01-12 | **Parent**: [../../../AGENTS.md](../../../AGENTS.md)
+
 Pixi.js rendering layer for Vainholm. ALL visual game content rendered here.
 
 ## Architecture
@@ -15,9 +17,8 @@ Pixi.js rendering layer for Vainholm. ALL visual game content rendered here.
 | `GameContainer.tsx` | Orchestrator: map init, keyboard/click handlers, state subscriptions |
 | `PixiViewport.tsx` | Pixi Application + 11-layer scene graph |
 | `index.ts` | Barrel exports |
-| `TileGrid.tsx` | UNUSED legacy |
-| `Viewport.tsx` | UNUSED legacy |
-| `PlayerSprite.tsx` | UNUSED legacy |
+| `LightLayer.tsx` | Light source rendering with flicker |
+| `ParticleLayer.tsx` | Particle effects (dust, sparks) |
 
 ## Pixi.js Setup
 
@@ -143,6 +144,29 @@ visibilityHash: playerX * 10000 + playerY
 | Fog | 30px | Weather fog patches |
 | Firefly | 4px | Subtle ambient |
 
+## Complexity Hotspots (PixiViewport.tsx)
+
+| Component | Lines | Complexity |
+|-----------|-------|------------|
+| TransitionLayer | 224-302 | 8-directional neighbor checking |
+| ConnectedTileLayer | 308-379 | 16-state connection detection |
+| OverlayLayer | 397-459 | Deterministic spatial hashing |
+| GlowLayer | 560-580 | Multi-layer blur with phase pulsing |
+| ShadowLayer | 603-650 | Time-of-day shadow casting |
+| WeatherLayers | 716-829 | Rain/fog/firefly animations |
+
+## useShallow Optimization
+
+GameContainer uses Zustand's `useShallow` for selective state subscriptions:
+
+```typescript
+const { player, map, weather } = useGameStore(
+  useShallow((state) => ({ player: state.player, map: state.map, weather: state.weather }))
+);
+```
+
+Prevents re-renders when unrelated store fields change.
+
 ## Anti-Patterns
 
 | Forbidden | Why |
@@ -152,3 +176,4 @@ visibilityHash: playerX * 10000 + playerY
 | Inline TextStyle/BlurFilter | Recreated every render |
 | Mix `<pixiText>` with `<Text>` | Inconsistent, breaks |
 | Skip `extend()` call | JSX elements won't work |
+| Direct layer imports | Layers are internal to PixiViewport |

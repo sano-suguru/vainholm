@@ -1,5 +1,7 @@
 # AGENTS.md - Vainholm
 
+**Generated**: 2026-01-12 | **Commit**: ab1e938 | **Branch**: main
+
 Guidelines for AI agents working in this React + TypeScript + Pixi.js tile-based game codebase.
 
 ## Quick Reference
@@ -50,7 +52,9 @@ src/
 ├── stores/            # Zustand gameStore (single store pattern)
 ├── styles/            # CSS modules + variables
 ├── types/             # Type definitions barrel (index.ts)
-└── utils/             # Map generation, constants, glyphs, color cache
+├── tiles/             # Tile registry: 57 types, ID mapping, definitions
+├── utils/             # Map generation, constants, glyphs (see utils/AGENTS.md)
+└── assets/tiles/      # SVG textures: terrain, connected, transitions, overlays, structures
 ```
 
 ## Code Map (Key Symbols)
@@ -67,6 +71,9 @@ src/
 | `Position` | Interface | `types/index.ts` | `{ x: number, y: number }` |
 | `MapData` | Interface | `types/index.ts` | Map structure definition |
 | `ViewportBounds` | Interface | `types/index.ts` | Camera bounds |
+| `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 57 tile definitions |
+| `TILE_MAPPING` | Constant | `tiles/registry.ts` | ID → type lookup |
+| `TILE_ID_BY_TYPE` | Constant | `tiles/registry.ts` | Type → ID lookup |
 
 ## WHERE TO LOOK
 
@@ -304,3 +311,48 @@ pnpm deadcode:fix       # Auto-remove unused exports
 | Unused types | Type exports never referenced |
 
 Configuration: `knip.json`
+
+## Tile System Architecture
+
+**57 tile types** organized into 10 categories:
+
+| Category | Examples | Count |
+|----------|----------|-------|
+| Terrain | grass, water, sand, snow, lava | 9 |
+| Features | forest, mountain, hills, wall | 4 |
+| Water | shallow_water, deep_water, frozen_water | 3 |
+| Dungeon | dungeon_floor, dungeon_wall, stairs_* | 4 |
+| Doors | door, door_open, door_locked, door_secret | 4 |
+| Traps | trap_spike, trap_pit, pressure_plate, web | 4 |
+| Hazards | miasma, blight, toxic_marsh, cursed_ground | 6 |
+| Structures | pillar, altar_dark, brazier, wall_torch | 8 |
+| Decay | blood, bone_pile, rubble, lichen | 7 |
+| Special | chasm, ice, crystal, petrified_tree | 8 |
+
+**Texture Fallback**: 43 tiles reuse 14 base SVGs. See `utils/tileTextures.ts`.
+
+**To add a tile**:
+1. Add to `tiles/registry.ts` → `TILE_REGISTRY`
+2. Add glyph to `utils/tileGlyphs.ts`
+3. Either add SVG to `assets/tiles/` or add fallback to `tileTextures.ts`
+
+## Visibility Delta Optimization
+
+Player visibility uses **incremental delta** instead of full recalculation:
+
+```typescript
+// gameStore.ts
+getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Position[] }
+```
+
+For 1-tile moves, calculates only the ring difference. For large jumps, compares full sets.
+
+**Visibility Hash**: `playerX * 10000 + playerY` — stable value for memoization.
+
+## Dual-Layer Map Architecture
+
+Maps have **two layers**:
+- `layers[0]` = terrain (base tiles)
+- `layers[1]` = features (overlays, structures)
+
+Rendered as separate `TileLayer` and `FeatureLayer` in PixiViewport
