@@ -6,13 +6,14 @@ import { useKeyboard } from '../../hooks/useKeyboard';
 import { usePerformanceMetrics, useStatsOverlay } from '../../hooks/usePerformanceMetrics';
 import { generateMapAsync, terminateWorker } from '../../utils/generateMapAsync';
 import { clearColorNoiseCache } from '../../utils/colorNoiseCache';
+import { getMapSeed, updateUrlWithSeed } from '../../utils/seedUtils';
 import { PixiViewport } from './PixiViewport';
 import { DebugInfo } from '../ui/DebugInfo';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import styles from '../../styles/game.module.css';
 
 export function GameContainer() {
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -20,6 +21,7 @@ export function GameContainer() {
       timeOfDay: state.timeOfDay,
       visibilityHash: state.visibilityHash,
       lightSources: state.lightSources,
+      mapSeed: state.mapSeed,
     }))
   );
 
@@ -39,8 +41,10 @@ export function GameContainer() {
 
   useEffect(() => {
     clearColorNoiseCache();
-    generateMapAsync(MAP_WIDTH, MAP_HEIGHT, 42).then((mapData) => {
-      setMap(mapData);
+    const seed = getMapSeed();
+    updateUrlWithSeed(seed);
+    generateMapAsync(MAP_WIDTH, MAP_HEIGHT, seed).then((mapData) => {
+      setMap(mapData, seed);
       generateTileLights();
     });
     return () => terminateWorker();
@@ -129,6 +133,7 @@ export function GameContainer() {
           viewport={viewport}
           currentTile={currentTile}
           metrics={metrics}
+          mapSeed={mapSeed}
         />
       )}
     </div>

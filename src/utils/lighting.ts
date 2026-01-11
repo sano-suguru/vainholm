@@ -98,12 +98,58 @@ export const LIGHT_PRESETS: Record<string, Omit<LightSource, 'id' | 'position'>>
     flickerSpeed: 0.2,
     flickerAmount: 0.03,
   },
+
+  brazier: {
+    color: 0xff6622,
+    minRadius: 4,
+    maxRadius: 7,
+    intensity: 0.4,
+    colorVariance: 0.15,
+    flickerSpeed: 1.0,
+    flickerAmount: 0.22,
+  },
+
+  crystal: {
+    color: 0x88aaff,
+    minRadius: 2,
+    maxRadius: 3,
+    intensity: 0.25,
+    colorVariance: 0.08,
+    flickerSpeed: 0.5,
+    flickerAmount: 0.1,
+  },
+
+  altarDark: {
+    color: 0x8822aa,
+    minRadius: 2,
+    maxRadius: 4,
+    intensity: 0.2,
+    colorVariance: 0.12,
+    flickerSpeed: 0.4,
+    flickerAmount: 0.15,
+  },
+
+  cursedGround: {
+    color: 0x8844aa,
+    minRadius: 1,
+    maxRadius: 2,
+    intensity: 0.1,
+    colorVariance: 0.1,
+    flickerSpeed: 0.3,
+    flickerAmount: 0.08,
+  },
 };
 
 export const TILE_LIGHT_SOURCES: Partial<Record<TileType, keyof typeof LIGHT_PRESETS>> = {
   lava: 'lava',
   stairs_down: 'stairs',
   stairs_up: 'stairs',
+  wall_torch: 'wallTorch',
+  brazier: 'brazier',
+  crystal: 'crystal',
+  altar_dark: 'altarDark',
+  cursed_ground: 'cursedGround',
+  blight: 'blight',
 };
 
 export function createLightSource(
@@ -122,10 +168,23 @@ export function createLightSource(
   };
 }
 
-// Cache for getLightFlicker results
-// Key: lightId + quantized time (16ms intervals for ~60fps)
+/**
+ * Cache for getLightFlicker results to avoid redundant flicker calculations.
+ *
+ * Key format: `${lightId}:${seedX}:${seedY}:${quantizedTime}`
+ *
+ * Uses FIFO eviction when cache reaches FLICKER_CACHE_MAX_SIZE.
+ * JavaScript Map maintains insertion order, so Map.keys().next().value
+ * always returns the oldest entry for eviction.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map#description
+ */
 const flickerCache = new Map<string, LightState>();
-const FLICKER_TIME_QUANTUM = 16; // ms
+
+/** Time quantization interval in milliseconds (~60fps) */
+const FLICKER_TIME_QUANTUM = 16;
+
+/** Maximum cache entries before FIFO eviction begins */
 const FLICKER_CACHE_MAX_SIZE = 500;
 
 export function getLightFlicker(

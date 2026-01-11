@@ -1,42 +1,14 @@
+import type { TileType } from '../tiles';
+
+export type { TileType };
+
 export interface Position {
   x: number;
   y: number;
 }
 
-export type TileType =
-  | 'grass'
-  | 'water'
-  | 'shallow_water'
-  | 'deep_water'
-  | 'forest'
-  | 'mountain'
-  | 'hills'
-  | 'wall'
-  | 'floor'
-  | 'road'
-  | 'bridge'
-  | 'sand'
-  | 'lava'
-  | 'swamp'
-  | 'chasm'
-  | 'ruins'
-  | 'graveyard'
-  | 'blight'
-  | 'snow'
-  | 'ice'
-  | 'frozen_water'
-  | 'flowers'
-  | 'dungeon_floor'
-  | 'dungeon_wall'
-  | 'stairs_down'
-  | 'stairs_up';
-
-export interface TileDefinition {
-  type: TileType;
-  walkable: boolean;
-  movementCost: number;
-  name: string;
-  char: string;
+export interface TilePosition extends Position {
+  tileType: TileType;
 }
 
 export type TileId = number;

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tile Preview - Vainholm v2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    
+    h1 {
+      margin-bottom: 10px;
+      color: #88cc88;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 40px;
+    }
+    
+    h2 {
+      margin: 40px 0 20px;
+      color: #aaa;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .tile-section {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .tile-grid {
+      display: flex;
+      gap: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .tile-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .tile-name {
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .tile-sizes {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    
+    .tile-preview {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 1px solid #333;
+      background: #000;
+    }
+    
+    .tile-map {
+      margin-top: 40px;
+      padding: 30px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    
+    .tile-map h2 {
+      margin-top: 0;
+    }
+    
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(40, 16px);
+      gap: 0;
+      margin-top: 20px;
+    }
+    
+    .map-grid img {
+      width: 16px;
+      height: 16px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    
+    .section-divider {
+      border: none;
+      border-top: 1px solid #333;
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Vainholm Tiles v2</h1>
+  <p class="subtitle">Modern 16x16 Pixel Art Style</p>
+  
+  <div class="tile-section">
+    <h2>All Tiles (16px / 32px / 64px)</h2>
+    <div class="tile-grid">
+      
+      <div class="tile-card">
+        <div class="tile-name">Grass</div>
+        <div class="tile-sizes">
+          <img src="grass.svg" width="16" height="16" class="tile-preview">
+          <img src="grass.svg" width="32" height="32" class="tile-preview">
+          <img src="grass.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Water</div>
+        <div class="tile-sizes">
+          <img src="water.svg" width="16" height="16" class="tile-preview">
+          <img src="water.svg" width="32" height="32" class="tile-preview">
+          <img src="water.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Forest</div>
+        <div class="tile-sizes">
+          <img src="forest.svg" width="16" height="16" class="tile-preview">
+          <img src="forest.svg" width="32" height="32" class="tile-preview">
+          <img src="forest.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Wall</div>
+        <div class="tile-sizes">
+          <img src="wall.svg" width="16" height="16" class="tile-preview">
+          <img src="wall.svg" width="32" height="32" class="tile-preview">
+          <img src="wall.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Road</div>
+        <div class="tile-sizes">
+          <img src="road.svg" width="16" height="16" class="tile-preview">
+          <img src="road.svg" width="32" height="32" class="tile-preview">
+          <img src="road.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Sand</div>
+        <div class="tile-sizes">
+          <img src="sand.svg" width="16" height="16" class="tile-preview">
+          <img src="sand.svg" width="32" height="32" class="tile-preview">
+          <img src="sand.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Mountain</div>
+        <div class="tile-sizes">
+          <img src="mountain.svg" width="16" height="16" class="tile-preview">
+          <img src="mountain.svg" width="32" height="32" class="tile-preview">
+          <img src="mountain.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Snow</div>
+        <div class="tile-sizes">
+          <img src="snow.svg" width="16" height="16" class="tile-preview">
+          <img src="snow.svg" width="32" height="32" class="tile-preview">
+          <img src="snow.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Lava</div>
+        <div class="tile-sizes">
+          <img src="lava.svg" width="16" height="16" class="tile-preview">
+          <img src="lava.svg" width="32" height="32" class="tile-preview">
+          <img src="lava.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Swamp</div>
+        <div class="tile-sizes">
+          <img src="swamp.svg" width="16" height="16" class="tile-preview">
+          <img src="swamp.svg" width="32" height="32" class="tile-preview">
+          <img src="swamp.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Bridge</div>
+        <div class="tile-sizes">
+          <img src="bridge.svg" width="16" height="16" class="tile-preview">
+          <img src="bridge.svg" width="32" height="32" class="tile-preview">
+          <img src="bridge.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+      <div class="tile-card">
+        <div class="tile-name">Floor</div>
+        <div class="tile-sizes">
+          <img src="floor.svg" width="16" height="16" class="tile-preview">
+          <img src="floor.svg" width="32" height="32" class="tile-preview">
+          <img src="floor.svg" width="64" height="64" class="tile-preview">
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <hr class="section-divider">
+  
+  <div class="tile-map">
+    <h2>Sample World Map (40x20 @ 16px)</h2>
+    <div class="map-grid">
+      <img src="mountain.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="snow.svg"><img src="snow.svg"><img src="snow.svg"><img src="snow.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg">
+      <img src="mountain.svg"><img src="snow.svg"><img src="snow.svg"><img src="snow.svg"><img src="grass.svg"><img src="grass.svg"><img src="snow.svg"><img src="snow.svg"><img src="mountain.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="swamp.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg">
+      <img src="mountain.svg"><img src="snow.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="snow.svg"><img src="mountain.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="water.svg"><img src="water.svg"><img src="bridge.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="swamp.svg"><img src="grass.svg"><img src="grass.svg"><img src="swamp.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="mountain.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="bridge.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="wall.svg"><img src="wall.svg"><img src="wall.svg"><img src="grass.svg"><img src="road.svg"><img src="grass.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="lava.svg"><img src="lava.svg"><img src="lava.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="mountain.svg">
+      <img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="wall.svg"><img src="floor.svg"><img src="floor.svg"><img src="wall.svg"><img src="wall.svg"><img src="road.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="lava.svg"><img src="lava.svg"><img src="lava.svg"><img src="lava.svg"><img src="lava.svg"><img src="grass.svg"><img src="grass.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="mountain.svg">
+      <img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="floor.svg"><img src="floor.svg"><img src="floor.svg"><img src="floor.svg"><img src="wall.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="lava.svg"><img src="lava.svg"><img src="grass.svg"><img src="grass.svg"><img src="lava.svg"><img src="lava.svg"><img src="grass.svg"><img src="grass.svg"><img src="mountain.svg"><img src="mountain.svg"><img src="grass.svg">
+      <img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="floor.svg"><img src="floor.svg"><img src="floor.svg"><img src="floor.svg"><img src="wall.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="lava.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="wall.svg"><img src="floor.svg"><img src="floor.svg"><img src="wall.svg"><img src="wall.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="wall.svg"><img src="wall.svg"><img src="wall.svg"><img src="wall.svg"><img src="grass.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="bridge.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="road.svg"><img src="road.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg">
+      <img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg">
+      <img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg">
+      <img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg">
+      <img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg">
+      <img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg">
+      <img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg">
+      <img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="road.svg"><img src="road.svg"><img src="grass.svg"><img src="grass.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="forest.svg"><img src="forest.svg"><img src="grass.svg"><img src="grass.svg"><img src="sand.svg"><img src="sand.svg"><img src="sand.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg"><img src="water.svg">
+    </div>
+  </div>
+  
+</body>
+</html>

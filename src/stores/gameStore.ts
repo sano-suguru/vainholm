@@ -3,6 +3,8 @@ import type { Direction, MapData, MapLayer, Position, TileType } from '../types'
 import type { LightSource } from '../utils/lighting';
 import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/lighting';
 import { TILE_DEFINITIONS } from '../utils/constants';
+import { processTrigger } from '../utils/tileInteractions';
+import type { TriggerEffect } from '../utils/tileInteractions';
 
 interface PlayerState {
   position: Position;
@@ -89,6 +91,8 @@ interface GameStore {
   player: PlayerState;
   map: MapData | null;
   terrainLayer: MapLayer | null;
+  featureLayer: MapLayer | null;
+  mapSeed: number;
   debugMode: boolean;
   tick: number;
   weather: WeatherType;
@@ -97,8 +101,9 @@ interface GameStore {
   visibleTiles: Set<string>;
   visibilityHash: number;
   lightSources: LightSource[];
+  lastInteractionEffects: TriggerEffect[];
 
-  setMap: (map: MapData) => void;
+  setMap: (map: MapData, seed: number) => void;
   movePlayer: (dx: number, dy: number) => void;
   setPlayerPosition: (position: Position) => void;
   toggleDebugMode: () => void;
@@ -112,6 +117,7 @@ interface GameStore {
   addLightSource: (light: LightSource) => void;
   removeLightSource: (id: string) => void;
   generateTileLights: () => void;
+  clearInteractionEffects: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -121,6 +127,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   map: null,
   terrainLayer: null,
+  featureLayer: null,
+  mapSeed: 0,
   debugMode: false,
   tick: 0,
   weather: 'clear',
@@ -129,13 +137,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   visibleTiles: new Set<string>(),
   visibilityHash: 0,
   lightSources: [],
+  lastInteractionEffects: [],
 
-  setMap: (map) => {
+  setMap: (map, seed) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
+    const featureLayer = map.layers.find((l) => l.name === 'features') ?? null;
     const spawnVisible = getVisibleTiles(map.spawnPoint.x, map.spawnPoint.y);
     set({
       map,
       terrainLayer,
+      featureLayer,
+      mapSeed: seed,
       player: {
         position: { ...map.spawnPoint },
         facing: 'down',
@@ -173,6 +185,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
         newExploredTiles.add(key);
       }
 
+      const tileType = get().getTileAt(newX, newY);
+      let interactionEffects: TriggerEffect[] = [];
+      
+      if (tileType) {
+        const result = processTrigger(
+          { x: newX, y: newY },
+          tileType,
+          'player_step'
+        );
+        if (result) {
+          interactionEffects = result.effects;
+        }
+      }
+
       set({
         player: {
           position: { x: newX, y: newY },
@@ -181,6 +207,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         visibleTiles: newVisibleTiles,
         exploredTiles: newExploredTiles,
         visibilityHash: newX * 10000 + newY,
+        lastInteractionEffects: interactionEffects,
       });
     }
   },
@@ -222,11 +249,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   getTileAt: (x, y) => {
-    const { map, terrainLayer } = get();
+    const { map, terrainLayer, featureLayer } = get();
     if (!map || !terrainLayer) return null;
 
     if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
       return null;
+    }
+
+    if (featureLayer) {
+      const featureId = featureLayer.data[y]?.[x];
+      if (featureId !== undefined && featureId !== 0) {
+        return map.tileMapping[String(featureId)] || null;
+      }
     }
 
     const tileId = terrainLayer.data[y]?.[x];
@@ -258,17 +292,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   generateTileLights: () => {
-    const { map, terrainLayer } = get();
+    const { map, terrainLayer, featureLayer } = get();
     if (!map || !terrainLayer) return;
 
     const tileLights: LightSource[] = [];
     
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
-        const tileId = terrainLayer.data[y]?.[x];
-        if (tileId === undefined) continue;
+        let tileType: TileType | undefined;
         
-        const tileType = map.tileMapping[String(tileId)] as TileType | undefined;
+        if (featureLayer) {
+          const featureId = featureLayer.data[y]?.[x];
+          if (featureId !== undefined && featureId !== 0) {
+            tileType = map.tileMapping[String(featureId)] as TileType | undefined;
+          }
+        }
+        
+        if (!tileType) {
+          const tileId = terrainLayer.data[y]?.[x];
+          if (tileId !== undefined) {
+            tileType = map.tileMapping[String(tileId)] as TileType | undefined;
+          }
+        }
+        
         if (!tileType) continue;
         
         const presetKey = TILE_LIGHT_SOURCES[tileType];
@@ -281,5 +327,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     
     set({ lightSources: tileLights });
+  },
+
+  clearInteractionEffects: () => {
+    set({ lastInteractionEffects: [] });
   },
 }));

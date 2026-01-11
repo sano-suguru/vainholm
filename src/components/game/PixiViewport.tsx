@@ -1,43 +1,43 @@
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Application, extend, useTick } from '@pixi/react';
-import { Container, Graphics, Text, TextStyle, BlurFilter } from 'pixi.js';
-import type { MapData, Position, ViewportBounds, TileType } from '../../types';
+import { Container, Graphics, Text, TextStyle, BlurFilter, Sprite } from 'pixi.js';
+import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '../../types';
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import { LightLayer } from './LightLayer';
 import { ParticleLayer } from './ParticleLayer';
 import { 
-  TILE_GLYPHS, 
   PLAYER_GLYPH, 
-  getGlyphAtTime, 
-  isAnimatedTile,
-  getStaticGlyph,
+  getGlowAtTime, 
+  hasGlow, 
 } from '../../utils/tileGlyphs';
-import { applyColorWithCachedNoise } from '../../utils/colorNoiseCache';
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
+import { 
+  getBaseTileTexture, 
+  loadTileTextures,
+  getTransitionTexture,
+  getTransitionDirections,
+  getConnectedTileTexture,
+  getConnectionType,
+  getOverlayTexture,
+  type TransitionDirection,
+} from '../../utils/tileTextures';
+import {
+  selectOverlay,
+  shouldSpawnOverlay,
+  type OverlayId,
+} from '../../utils/overlayConfig';
 
-extend({ Container, Graphics, Text });
+extend({ Container, Graphics, Text, Sprite });
 
 const FONT_FAMILY = 'Courier New, monospace';
-
-const SHARED_TEXT_STYLE = new TextStyle({
-  fontFamily: FONT_FAMILY,
-  fontSize: TILE_SIZE,
-  fill: 0xffffff,
-});
 
 const PLAYER_TEXT_STYLE = new TextStyle({
   fontFamily: FONT_FAMILY,
   fontSize: TILE_SIZE + 4,
-  fill: PLAYER_GLYPH.fg,
+  fill: PLAYER_GLYPH.color,
   fontWeight: 'bold',
 });
-
-
-
-
-
-
 
 const FOG_BLUR_FILTER = (() => {
   const filter = new BlurFilter({ strength: 30, quality: 1 });
@@ -83,9 +83,9 @@ interface TimeOfDayProps {
   timeOfDay: TimeOfDay;
 }
 
-type StaticTileLayerProps = MapViewportProps;
-
-type AnimatedTileLayerProps = MapViewportProps & AnimatedProps;
+interface TexturesReadyProps {
+  texturesReady: boolean;
+}
 
 type GlowLayerProps = MapViewportProps & AnimatedProps;
 
@@ -101,18 +101,15 @@ type FireflyLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
 
 type DayNightLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
 
-interface StaticTileData {
-  x: number;
-  y: number;
-  tileType: TileType;
-}
 
-const StaticTileLayer = memo(function StaticTileLayer({ 
+
+const TileLayer = memo(function TileLayer({ 
   map, 
   viewport,
-}: StaticTileLayerProps) {
-  const staticTilePositions = useMemo(() => {
-    const positions: StaticTileData[] = [];
+}: MapViewportProps) {
+  
+  const tilePositions = useMemo(() => {
+    const positions: TilePosition[] = [];
     const layer = map.layers[0];
     if (!layer) return positions;
     
@@ -124,89 +121,202 @@ const StaticTileLayer = memo(function StaticTileLayer({
         if (tileId === undefined) continue;
         
         const tileType = map.tileMapping[String(tileId)] as TileType;
-        if (!isAnimatedTile(tileType)) {
-          positions.push({ x, y, tileType });
-        }
+        positions.push({ x, y, tileType });
       }
     }
     return positions;
   }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
 
-  const drawBackgrounds = useCallback((g: Graphics) => {
-    g.clear();
-    for (const { x, y, tileType } of staticTilePositions) {
-      const glyph = getStaticGlyph(tileType);
-      const screenX = (x - viewport.startX) * TILE_SIZE;
-      const screenY = (y - viewport.startY) * TILE_SIZE;
-      const bgColor = applyColorWithCachedNoise(glyph.bg, x, y, 0.12);
-      
-      g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-      g.fill(bgColor);
-    }
-  }, [staticTilePositions, viewport.startX, viewport.startY]);
-
-  const textElements = useMemo(() => {
+  const tileElements = useMemo(() => {
     const elements: React.ReactNode[] = [];
     
-    for (const { x, y, tileType } of staticTilePositions) {
-      const glyph = getStaticGlyph(tileType);
+    for (const { x, y, tileType } of tilePositions) {
       const screenX = (x - viewport.startX) * TILE_SIZE;
       const screenY = (y - viewport.startY) * TILE_SIZE;
-      const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
       const key = `${x}-${y}`;
       
-      if (glyph.detail) {
-        const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
+      const texture = getBaseTileTexture(tileType);
+      if (texture) {
         elements.push(
-          <pixiText
-            key={`detail-${key}`}
-            text={glyph.char}
-            x={screenX + 1}
-            y={screenY - 1}
-            style={SHARED_TEXT_STYLE}
-            tint={detailColor}
-            alpha={0.3}
+          <pixiSprite
+            key={key}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
           />
         );
       }
-      
-      elements.push(
-        <pixiText
-          key={`fg-${key}`}
-          text={glyph.char}
-          x={screenX}
-          y={screenY}
-          style={SHARED_TEXT_STYLE}
-          tint={fgColor}
-        />
-      );
     }
     return elements;
-  }, [staticTilePositions, viewport.startX, viewport.startY]);
+  }, [tilePositions, viewport.startX, viewport.startY]);
   
-  return (
-    <pixiContainer>
-      <pixiGraphics draw={drawBackgrounds} />
-      {textElements}
-    </pixiContainer>
-  );
+  return <pixiContainer>{tileElements}</pixiContainer>;
 });
 
-interface AnimatedTileData {
-  x: number;
-  y: number;
-  tileType: TileType;
-}
+const NO_FEATURE = 0;
 
-const AnimatedTileLayer = memo(function AnimatedTileLayer({
+
+
+const FeatureLayer = memo(function FeatureLayer({
   map,
   viewport,
-  animationTime,
-}: AnimatedTileLayerProps) {
-  const animatedTilePositions = useMemo(() => {
-    const positions: AnimatedTileData[] = [];
+}: MapViewportProps) {
+
+  const featureTilePositions = useMemo(() => {
+    const positions: TilePosition[] = [];
+    const featureLayer = map.layers[1];
+    if (!featureLayer) return positions;
+
+    for (let y = viewport.startY; y < viewport.endY; y++) {
+      for (let x = viewport.startX; x < viewport.endX; x++) {
+        if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
+
+        const featureId = featureLayer.data[y]?.[x];
+        if (featureId === undefined || featureId === NO_FEATURE) continue;
+
+        const tileType = map.tileMapping[String(featureId)] as TileType;
+        positions.push({ x, y, tileType });
+      }
+    }
+    return positions;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+
+  const featureElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+
+    for (const { x, y, tileType } of featureTilePositions) {
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const key = `feature-${x}-${y}`;
+
+      const texture = getBaseTileTexture(tileType);
+      if (texture) {
+        elements.push(
+          <pixiSprite
+            key={key}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+          />
+        );
+      }
+    }
+    return elements;
+  }, [featureTilePositions, viewport.startX, viewport.startY]);
+
+  if (featureTilePositions.length === 0) return null;
+
+  return <pixiContainer>{featureElements}</pixiContainer>;
+});
+
+const WATER_TILES = new Set<TileType>(['water', 'shallow_water', 'deep_water']);
+
+interface TransitionData {
+  x: number;
+  y: number;
+  directions: TransitionDirection[];
+}
+
+const TransitionLayer = memo(function TransitionLayer({
+  map,
+  viewport,
+  texturesReady,
+}: MapViewportProps & TexturesReadyProps) {
+  
+  const getTileTypeAt = useCallback((x: number, y: number): TileType | null => {
     const layer = map.layers[0];
-    if (!layer) return positions;
+    if (!layer) return null;
+    if (y < 0 || y >= map.height || x < 0 || x >= map.width) return null;
+    
+    const tileId = layer.data[y]?.[x];
+    if (tileId === undefined) return null;
+    
+    return map.tileMapping[String(tileId)] as TileType;
+  }, [map]);
+  
+  const transitionData = useMemo(() => {
+    const data: TransitionData[] = [];
+    if (!texturesReady) return data;
+    
+    const layer = map.layers[0];
+    if (!layer) return data;
+    
+    for (let y = viewport.startY; y < viewport.endY; y++) {
+      for (let x = viewport.startX; x < viewport.endX; x++) {
+        const tileType = getTileTypeAt(x, y);
+        if (!tileType || !WATER_TILES.has(tileType)) continue;
+        
+        const neighbors = {
+          n: getTileTypeAt(x, y - 1),
+          s: getTileTypeAt(x, y + 1),
+          e: getTileTypeAt(x + 1, y),
+          w: getTileTypeAt(x - 1, y),
+          ne: getTileTypeAt(x + 1, y - 1),
+          nw: getTileTypeAt(x - 1, y - 1),
+          se: getTileTypeAt(x + 1, y + 1),
+          sw: getTileTypeAt(x - 1, y + 1),
+        };
+        
+        const directions = getTransitionDirections(neighbors);
+        if (directions.length > 0) {
+          data.push({ x, y, directions });
+        }
+      }
+    }
+    return data;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady, getTileTypeAt]);
+
+  const transitionElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+    
+    for (const { x, y, directions } of transitionData) {
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      
+      for (const direction of directions) {
+        const texture = getTransitionTexture('water', 'grass', direction);
+        if (texture) {
+          elements.push(
+            <pixiSprite
+              key={`trans-${x}-${y}-${direction}`}
+              texture={texture}
+              x={screenX}
+              y={screenY}
+              width={TILE_SIZE}
+              height={TILE_SIZE}
+            />
+          );
+        }
+      }
+    }
+    return elements;
+  }, [transitionData, viewport.startX, viewport.startY]);
+
+  if (!texturesReady || transitionData.length === 0) return null;
+  
+  return <pixiContainer>{transitionElements}</pixiContainer>;
+});
+
+interface ConnectedTileData extends TilePosition {
+  connectionType: ReturnType<typeof getConnectionType>;
+}
+
+const ConnectedTileLayer = memo(function ConnectedTileLayer({
+  map,
+  viewport,
+  texturesReady,
+}: MapViewportProps & TexturesReadyProps) {
+  
+  const connectedTileData = useMemo(() => {
+    const data: ConnectedTileData[] = [];
+    if (!texturesReady) return data;
+    
+    const layer = map.layers[0];
+    if (!layer) return data;
     
     for (let y = viewport.startY; y < viewport.endY; y++) {
       for (let x = viewport.startX; x < viewport.endX; x++) {
@@ -216,77 +326,137 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
         if (tileId === undefined) continue;
         
         const tileType = map.tileMapping[String(tileId)] as TileType;
-        if (isAnimatedTile(tileType)) {
-          positions.push({ x, y, tileType });
-        }
+        if (tileType !== 'road') continue;
+        
+        const getTileAt = (tx: number, ty: number): TileType | null => {
+          if (ty < 0 || ty >= map.height || tx < 0 || tx >= map.width) return null;
+          const id = layer.data[ty]?.[tx];
+          if (id === undefined) return null;
+          return map.tileMapping[String(id)] as TileType;
+        };
+        
+        const neighbors = {
+          n: getTileAt(x, y - 1) === 'road',
+          s: getTileAt(x, y + 1) === 'road',
+          e: getTileAt(x + 1, y) === 'road',
+          w: getTileAt(x - 1, y) === 'road',
+        };
+        
+        const connectionType = getConnectionType(neighbors);
+        data.push({ x, y, tileType, connectionType });
       }
     }
-    return positions;
-  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+    return data;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady]);
 
-  const drawBackgrounds = useCallback((g: Graphics) => {
-    g.clear();
-    for (const { x, y, tileType } of animatedTilePositions) {
-      const glyphData = TILE_GLYPHS[tileType];
-      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
-      const screenX = (x - viewport.startX) * TILE_SIZE;
-      const screenY = (y - viewport.startY) * TILE_SIZE;
-      const bgColor = applyColorWithCachedNoise(glyph.bg, x, y, 0.12);
-      
-      g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-      g.fill(bgColor);
-    }
-  }, [animatedTilePositions, animationTime, viewport.startX, viewport.startY]);
-
-  const textElements = useMemo(() => {
+  const connectedElements = useMemo(() => {
     const elements: React.ReactNode[] = [];
     
-    for (const { x, y, tileType } of animatedTilePositions) {
-      const glyphData = TILE_GLYPHS[tileType];
-      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+    for (const { x, y, tileType, connectionType } of connectedTileData) {
       const screenX = (x - viewport.startX) * TILE_SIZE;
       const screenY = (y - viewport.startY) * TILE_SIZE;
-      const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
-      const key = `${x}-${y}-${glyph.char}`;
       
-      if (glyph.detail) {
-        const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
+      const texture = getConnectedTileTexture(tileType, connectionType);
+      if (texture) {
         elements.push(
-          <pixiText
-            key={`detail-${key}`}
-            text={glyph.char}
-            x={screenX + 1}
-            y={screenY - 1}
-            style={SHARED_TEXT_STYLE}
-            tint={detailColor}
-            alpha={0.3}
+          <pixiSprite
+            key={`conn-${x}-${y}`}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
           />
         );
       }
-      
-      elements.push(
-        <pixiText
-          key={`fg-${key}`}
-          text={glyph.char}
-          x={screenX}
-          y={screenY}
-          style={SHARED_TEXT_STYLE}
-          tint={fgColor}
-        />
-      );
     }
     return elements;
-  }, [animatedTilePositions, animationTime, viewport.startX, viewport.startY]);
+  }, [connectedTileData, viewport.startX, viewport.startY]);
+
+  if (!texturesReady || connectedTileData.length === 0) return null;
   
-  return (
-    <pixiContainer>
-      <pixiGraphics draw={drawBackgrounds} />
-      {textElements}
-    </pixiContainer>
-  );
+  return <pixiContainer>{connectedElements}</pixiContainer>;
 });
 
+/**
+ * Deterministic spatial hash function for consistent overlay spawning.
+ * Uses large primes to minimize collision patterns in 2D grid positions.
+ * Returns value in [0, 1) range.
+ */
+function positionHash(x: number, y: number): number {
+  const hash = (x * 374761393 + y * 668265263) ^ (x * 1274126177);
+  return ((hash & 0x7fffffff) % 1000) / 1000;
+}
 
+interface OverlayData {
+  x: number;
+  y: number;
+  overlayType: OverlayId;
+}
+
+const OverlayLayer = memo(function OverlayLayer({
+  map,
+  viewport,
+  texturesReady,
+}: MapViewportProps & TexturesReadyProps) {
+  
+  const overlayData = useMemo(() => {
+    const data: OverlayData[] = [];
+    if (!texturesReady) return data;
+    
+    const layer = map.layers[0];
+    if (!layer) return data;
+    
+    for (let y = viewport.startY; y < viewport.endY; y++) {
+      for (let x = viewport.startX; x < viewport.endX; x++) {
+        if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
+        
+        const tileId = layer.data[y]?.[x];
+        if (tileId === undefined) continue;
+        
+        const tileType = map.tileMapping[String(tileId)] as TileType;
+        
+        const spawnRand = positionHash(x, y);
+        if (!shouldSpawnOverlay(tileType, spawnRand)) continue;
+        
+        const selectRand = positionHash(x + 1000, y + 1000);
+        const overlayType = selectOverlay(tileType, selectRand);
+        if (overlayType) {
+          data.push({ x, y, overlayType });
+        }
+      }
+    }
+    return data;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady]);
+
+  const overlayElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+    
+    for (const { x, y, overlayType } of overlayData) {
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      
+      const texture = getOverlayTexture(overlayType);
+      if (texture) {
+        elements.push(
+          <pixiSprite
+            key={`overlay-${x}-${y}`}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+          />
+        );
+      }
+    }
+    return elements;
+  }, [overlayData, viewport.startX, viewport.startY]);
+
+  if (!texturesReady || overlayData.length === 0) return null;
+  
+  return <pixiContainer>{overlayElements}</pixiContainer>;
+});
 
 interface PlayerLayerProps {
   playerPosition: Position;
@@ -334,15 +504,11 @@ const GLOW_BLUR_INNER = (() => {
   return [filter];
 })();
 
-interface GlowTileData {
-  x: number;
-  y: number;
-  tileType: TileType;
-}
 
-function useGlowTilePositions(map: MapData, viewport: ViewportBounds): GlowTileData[] {
+
+function useGlowTilePositions(map: MapData, viewport: ViewportBounds): TilePosition[] {
   return useMemo(() => {
-    const positions: GlowTileData[] = [];
+    const positions: TilePosition[] = [];
     const layer = map.layers[0];
     if (!layer) return positions;
 
@@ -354,10 +520,7 @@ function useGlowTilePositions(map: MapData, viewport: ViewportBounds): GlowTileD
         if (tileId === undefined) continue;
 
         const tileType = map.tileMapping[String(tileId)] as TileType;
-        const glyphData = TILE_GLYPHS[tileType] || TILE_GLYPHS.grass;
-        const glyph = 'frames' in glyphData ? glyphData.frames[0] : glyphData;
-
-        if (glyph.glow) {
+        if (hasGlow(tileType)) {
           positions.push({ x, y, tileType });
         }
       }
@@ -367,7 +530,7 @@ function useGlowTilePositions(map: MapData, viewport: ViewportBounds): GlowTileD
 }
 
 function useGlowDrawer(
-  glowTiles: GlowTileData[],
+  glowTiles: TilePosition[],
   viewport: ViewportBounds,
   animationTime: number,
   radiusMultiplier: number,
@@ -377,10 +540,8 @@ function useGlowDrawer(
     g.clear();
 
     for (const { x, y, tileType } of glowTiles) {
-      const glyphData = TILE_GLYPHS[tileType];
-      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
-
-      if (!glyph.glow) continue;
+      const glowColor = getGlowAtTime(tileType, animationTime, x, y);
+      if (glowColor === null) continue;
 
       const screenX = (x - viewport.startX) * TILE_SIZE;
       const screenY = (y - viewport.startY) * TILE_SIZE;
@@ -391,7 +552,7 @@ function useGlowDrawer(
       const pulse = Math.sin(animationTime * 0.005 + phaseOffset) * 0.3 + 0.7;
 
       g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
-      g.fill({ color: glyph.glow, alpha: alphaMultiplier * pulse });
+      g.fill({ color: glowColor, alpha: alphaMultiplier * pulse });
     }
   }, [glowTiles, viewport.startX, viewport.startY, animationTime, radiusMultiplier, alphaMultiplier]);
 }
@@ -737,24 +898,22 @@ const DayNightLayer = memo(function DayNightLayer({
 }: DayNightLayerProps) {
   const tint = TIME_OF_DAY_TINTS[timeOfDay];
   
-  if (tint.alpha === 0) return null;
-
   const pulse = timeOfDay === 'night' 
     ? Math.sin(animationTime * 0.0005) * 0.03 
     : 0;
 
-  return (
-    <pixiGraphics
-      draw={(g) => {
-        g.clear();
-        g.rect(0, 0, width, height);
-        g.fill({ color: tint.color, alpha: tint.alpha + pulse });
-      }}
-    />
-  );
+  const drawDayNight = useCallback((g: Graphics) => {
+    g.clear();
+    g.rect(0, 0, width, height);
+    g.fill({ color: tint.color, alpha: tint.alpha + pulse });
+  }, [width, height, tint.color, tint.alpha, pulse]);
+
+  if (tint.alpha === 0) return null;
+
+  return <pixiGraphics draw={drawDayNight} />;
 });
 
-interface GameSceneProps extends Omit<PixiViewportProps, 'animationTime'> {
+interface GameSceneProps extends Omit<PixiViewportProps, 'visibilityHash'> {
   width: number;
   height: number;
   lightSources: LightSource[];
@@ -774,9 +933,11 @@ function GameScene({
 }: GameSceneProps) {
   const [animationTime, setAnimationTime] = useState(0);
   const startTimeRef = useRef(0);
+  const [texturesReady, setTexturesReady] = useState(false);
   
   useEffect(() => {
     startTimeRef.current = Date.now();
+    loadTileTextures().then(() => setTexturesReady(true));
   }, []);
   
   useTick(() => {
@@ -785,10 +946,15 @@ function GameScene({
     setAnimationTime(now - startTimeRef.current);
   });
 
+  if (!texturesReady) return null;
+
   return (
     <pixiContainer>
-      <StaticTileLayer map={map} viewport={viewport} />
-      <AnimatedTileLayer map={map} viewport={viewport} animationTime={animationTime} />
+      <TileLayer map={map} viewport={viewport} />
+      <FeatureLayer map={map} viewport={viewport} />
+      <TransitionLayer map={map} viewport={viewport} texturesReady={texturesReady} />
+      <ConnectedTileLayer map={map} viewport={viewport} texturesReady={texturesReady} />
+      <OverlayLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ShadowLayer map={map} viewport={viewport} timeOfDay={timeOfDay} />
       <GlowLayer map={map} viewport={viewport} animationTime={animationTime} />
       <FogOfWarLayer 
@@ -823,7 +989,6 @@ export function PixiViewport({
   viewport,
   weather,
   timeOfDay,
-  visibilityHash,
   isTileVisible,
   isTileExplored,
   lightSources,
@@ -846,7 +1011,6 @@ export function PixiViewport({
         viewport={viewport}
         weather={weather}
         timeOfDay={timeOfDay}
-        visibilityHash={visibilityHash}
         isTileVisible={isTileVisible}
         isTileExplored={isTileExplored}
         width={width}

@@ -1,66 +1,56 @@
 import type { MapData, TileId } from '../types';
+import { TILE_ID_BY_TYPE, TILE_MAPPING } from '../tiles';
+import { createSeededNoise2D, fbm, normalizeNoise } from './noise';
+import { getBiomeTiles, applyIslandMask } from './biomes';
+import { seededRandom } from './seedUtils';
 
-const TILE_MAPPING = {
-  '0': 'grass',
-  '1': 'water',
-  '2': 'forest',
-  '3': 'mountain',
-  '4': 'sand',
-  '5': 'road',
-  '6': 'swamp',
-  '7': 'ruins',
-  '8': 'graveyard',
-  '9': 'blight',
-  '10': 'lava',
-  '11': 'chasm',
-  '12': 'dungeon_floor',
-  '13': 'dungeon_wall',
-  '14': 'stairs_down',
-  '15': 'stairs_up',
-} as const;
+const T = TILE_ID_BY_TYPE;
 
-function seededRandom(seed: number): () => number {
-  return () => {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    return seed / 0x7fffffff;
-  };
+const NO_FEATURE = 0;
+
+
+interface BiomeLayerData {
+  terrain: TileId[][];
+  features: TileId[][];
 }
 
-function generateTile(
-  x: number,
-  y: number,
+function generateBiomeData(
   width: number,
   height: number,
-  random: () => number
-): TileId {
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const distFromCenter = Math.sqrt(
-    Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
-  );
-  const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-  const normalizedDist = distFromCenter / maxDist;
+  seed: number
+): BiomeLayerData {
+  const elevationNoise = createSeededNoise2D(seed);
+  const moistureNoise = createSeededNoise2D(seed + 1000);
 
-  if (normalizedDist > 0.85) {
-    return random() < 0.7 ? 1 : 3;
+  const terrain: TileId[][] = [];
+  const features: TileId[][] = [];
+
+  for (let y = 0; y < height; y++) {
+    const terrainRow: TileId[] = [];
+    const featureRow: TileId[] = [];
+    for (let x = 0; x < width; x++) {
+      const rawElevation = fbm(elevationNoise, x, y, { scale: 0.02, octaves: 5 });
+      const elevation = applyIslandMask(
+        normalizeNoise(rawElevation),
+        x, y, width, height
+      );
+
+      const rawMoisture = fbm(moistureNoise, x, y, { scale: 0.015, octaves: 4 });
+      const moisture = normalizeNoise(rawMoisture);
+
+      const biome = getBiomeTiles(elevation, moisture);
+      terrainRow.push(biome.terrain);
+      featureRow.push(biome.feature);
+    }
+    terrain.push(terrainRow);
+    features.push(featureRow);
   }
 
-  if (normalizedDist > 0.7) {
-    const r = random();
-    if (r < 0.3) return 3;
-    if (r < 0.5) return 2;
-    return 0;
-  }
-
-  const noise = random();
-  if (noise < 0.6) return 0;
-  if (noise < 0.75) return 2;
-  if (noise < 0.85) return 4;
-  return 0;
+  return { terrain, features };
 }
 
 function addRiver(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
@@ -72,7 +62,8 @@ function addRiver(
     for (let dx = -1; dx <= 1; dx++) {
       const nx = x + dx;
       if (nx >= 0 && nx < width) {
-        data[y][nx] = 1;
+        layers.terrain[y][nx] = T.water;
+        layers.features[y][nx] = NO_FEATURE;
       }
     }
 
@@ -84,7 +75,7 @@ function addRiver(
 }
 
 function addLakes(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
@@ -103,7 +94,8 @@ function addLakes(
           const nx = cx + dx;
           const ny = cy + dy;
           if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
-            data[ny][nx] = 1;
+            layers.terrain[ny][nx] = T.water;
+            layers.features[ny][nx] = NO_FEATURE;
           }
         }
       }
@@ -111,39 +103,48 @@ function addLakes(
   }
 }
 
-function addRoads(data: TileId[][], width: number, height: number): void {
+function addRoads(
+  layers: BiomeLayerData,
+  width: number,
+  height: number,
+  random: () => number
+): void {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
 
-  for (let x = centerX - 15; x <= centerX + 15; x++) {
-    if (x >= 0 && x < width && data[centerY][x] !== 1) {
-      data[centerY][x] = 5;
+  const roadLength = 15 + Math.floor(random() * 10);
+
+  for (let x = centerX - roadLength; x <= centerX + roadLength; x++) {
+    if (x >= 0 && x < width && layers.terrain[centerY][x] !== T.water && layers.terrain[centerY][x] !== T.deep_water) {
+      layers.terrain[centerY][x] = T.road;
+      layers.features[centerY][x] = NO_FEATURE;
     }
   }
 
-  for (let y = centerY - 15; y <= centerY + 15; y++) {
-    if (y >= 0 && y < height && data[y][centerX] !== 1) {
-      data[y][centerX] = 5;
+  for (let y = centerY - roadLength; y <= centerY + roadLength; y++) {
+    if (y >= 0 && y < height && layers.terrain[y][centerX] !== T.water && layers.terrain[y][centerX] !== T.deep_water) {
+      layers.terrain[y][centerX] = T.road;
+      layers.features[y][centerX] = NO_FEATURE;
     }
   }
 }
 
 function addSwamps(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
 ): void {
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      if (data[y][x] === 1) {
+      if (layers.terrain[y][x] === T.water) {
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             const nx = x + dx;
             const ny = y + dy;
             if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              if (data[ny][nx] === 0 && random() < 0.3) {
-                data[ny][nx] = 6;
+              if (layers.terrain[ny][nx] === T.grass && layers.features[ny][nx] === NO_FEATURE && random() < 0.3) {
+                layers.terrain[ny][nx] = T.swamp;
               }
             }
           }
@@ -154,7 +155,7 @@ function addSwamps(
 }
 
 function addRuins(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
@@ -171,8 +172,8 @@ function addRuins(
         const nx = cx + dx;
         const ny = cy + dy;
         if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
-          if (data[ny][nx] === 0 && random() < 0.6) {
-            data[ny][nx] = 7;
+          if (layers.terrain[ny][nx] === T.grass && layers.features[ny][nx] === NO_FEATURE && random() < 0.6) {
+            layers.features[ny][nx] = T.ruins;
           }
         }
       }
@@ -181,7 +182,7 @@ function addRuins(
 }
 
 function addGraveyards(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
@@ -199,8 +200,8 @@ function addGraveyards(
         const nx = cx + dx;
         const ny = cy + dy;
         if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
-          if (data[ny][nx] === 0) {
-            data[ny][nx] = 8;
+          if (layers.terrain[ny][nx] === T.grass && layers.features[ny][nx] === NO_FEATURE) {
+            layers.features[ny][nx] = T.graveyard;
           }
         }
       }
@@ -209,7 +210,7 @@ function addGraveyards(
 }
 
 function addBlightedAreas(
-  data: TileId[][],
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
@@ -228,8 +229,9 @@ function addBlightedAreas(
           const nx = cx + dx;
           const ny = cy + dy;
           if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
-            if ((data[ny][nx] === 0 || data[ny][nx] === 2) && random() < 0.7) {
-              data[ny][nx] = 9;
+            const terrain = layers.terrain[ny][nx];
+            if (terrain === T.grass && random() < 0.7) {
+              layers.features[ny][nx] = T.blight;
             }
           }
         }
@@ -238,19 +240,200 @@ function addBlightedAreas(
   }
 }
 
-function addFeatures(
-  data: TileId[][],
+function addDeadForestPatches(
+  layers: BiomeLayerData,
   width: number,
   height: number,
   random: () => number
 ): void {
-  addRiver(data, width, height, random);
-  addLakes(data, width, height, random);
-  addRoads(data, width, height);
-  addSwamps(data, width, height, random);
-  addRuins(data, width, height, random);
-  addGraveyards(data, width, height, random);
-  addBlightedAreas(data, width, height, random);
+  const patchCount = 2 + Math.floor(random() * 3);
+
+  for (let i = 0; i < patchCount; i++) {
+    const cx = 15 + Math.floor(random() * (width - 30));
+    const cy = 15 + Math.floor(random() * (height - 30));
+    const radius = 3 + Math.floor(random() * 3);
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= radius) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
+            const feature = layers.features[ny][nx];
+            const terrain = layers.terrain[ny][nx];
+            if (feature === T.forest && random() < 0.8) {
+              layers.features[ny][nx] = T.dead_forest;
+            } else if (terrain === T.grass && feature === NO_FEATURE && random() < 0.6) {
+              layers.terrain[ny][nx] = T.withered_grass;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function addToxicMarshes(
+  layers: BiomeLayerData,
+  width: number,
+  height: number,
+  random: () => number
+): void {
+  const marshCount = 1 + Math.floor(random() * 2);
+
+  for (let i = 0; i < marshCount; i++) {
+    const cx = 10 + Math.floor(random() * (width - 20));
+    const cy = 10 + Math.floor(random() * (height - 20));
+    const radius = 2 + Math.floor(random() * 3);
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= radius + random() * 0.5) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
+            const terrain = layers.terrain[ny][nx];
+            if ((terrain === T.swamp || terrain === T.grass) && layers.features[ny][nx] === NO_FEATURE && random() < 0.7) {
+              layers.terrain[ny][nx] = T.toxic_marsh;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function addCharredAreas(
+  layers: BiomeLayerData,
+  width: number,
+  height: number,
+  random: () => number
+): void {
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (layers.terrain[y][x] === T.lava) {
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
+              const terrain = layers.terrain[ny][nx];
+              const feature = layers.features[ny][nx];
+              if ((terrain === T.grass || feature === T.forest) && random() < 0.5) {
+                layers.terrain[ny][nx] = T.charred_ground;
+                layers.features[ny][nx] = NO_FEATURE;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function addEnvironmentDetails(
+  layers: BiomeLayerData,
+  width: number,
+  height: number,
+  random: () => number
+): void {
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const terrain = layers.terrain[y][x];
+      const feature = layers.features[y][x];
+
+      if (feature === T.graveyard && random() < 0.15) {
+        layers.features[y][x] = T.bone_pile;
+        continue;
+      }
+
+      if (feature === T.ruins) {
+        const roll = random();
+        if (roll < 0.2) {
+          layers.features[y][x] = T.rubble;
+          continue;
+        } else if (roll < 0.3) {
+          layers.features[y][x] = T.web;
+          continue;
+        }
+      }
+
+      if (terrain === T.swamp && random() < 0.08) {
+        layers.terrain[y][x] = T.miasma;
+        continue;
+      }
+
+      if (feature === T.blight) {
+        const roll = random();
+        if (roll < 0.1) {
+          layers.features[y][x] = T.cursed_ground;
+          continue;
+        } else if (roll < 0.25) {
+          layers.features[y][x] = T.lichen;
+          continue;
+        }
+      }
+
+      if (terrain === T.grass && feature === NO_FEATURE && random() < 0.03) {
+        layers.features[y][x] = T.flowers;
+      }
+    }
+  }
+}
+
+function addFeatures(
+  layers: BiomeLayerData,
+  width: number,
+  height: number,
+  random: () => number
+): void {
+  addRiver(layers, width, height, random);
+  addLakes(layers, width, height, random);
+  addRoads(layers, width, height, random);
+  addSwamps(layers, width, height, random);
+  addRuins(layers, width, height, random);
+  addGraveyards(layers, width, height, random);
+  addBlightedAreas(layers, width, height, random);
+  addDeadForestPatches(layers, width, height, random);
+  addToxicMarshes(layers, width, height, random);
+  addCharredAreas(layers, width, height, random);
+  addEnvironmentDetails(layers, width, height, random);
+}
+
+function findSpawnPoint(layers: BiomeLayerData, width: number, height: number): { x: number; y: number } {
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+
+  const walkableTerrains = [T.grass, T.sand, T.road, T.swamp];
+  const walkableFeatures = [T.forest, T.ruins, T.graveyard, T.hills];
+  const blockingFeatures = [T.mountain, T.water, T.deep_water, T.lava, T.chasm];
+
+  for (let radius = 0; radius < Math.max(width, height) / 2; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const x = centerX + dx;
+        const y = centerY + dy;
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          const terrain = layers.terrain[y][x];
+          const feature = layers.features[y][x];
+
+          if (blockingFeatures.includes(feature)) continue;
+
+          if (walkableFeatures.includes(feature)) {
+            return { x, y };
+          }
+          if (feature === NO_FEATURE && walkableTerrains.includes(terrain)) {
+            return { x, y };
+          }
+        }
+      }
+    }
+  }
+
+  return { x: centerX, y: centerY };
 }
 
 export function generateMapData(
@@ -259,25 +442,22 @@ export function generateMapData(
   seed: number = 12345
 ): MapData {
   const random = seededRandom(seed);
-  const data: TileId[][] = [];
+  const layers = generateBiomeData(width, height, seed);
 
-  for (let y = 0; y < height; y++) {
-    const row: TileId[] = [];
-    for (let x = 0; x < width; x++) {
-      row.push(generateTile(x, y, width, height, random));
-    }
-    data.push(row);
-  }
+  addFeatures(layers, width, height, random);
 
-  addFeatures(data, width, height, random);
+  const spawnPoint = findSpawnPoint(layers, width, height);
 
   return {
     name: 'Generated World',
     width,
     height,
     tileSize: 32,
-    layers: [{ name: 'terrain', data }],
+    layers: [
+      { name: 'terrain', data: layers.terrain },
+      { name: 'features', data: layers.features },
+    ],
     tileMapping: TILE_MAPPING,
-    spawnPoint: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
+    spawnPoint,
   };
 }
