@@ -122,18 +122,30 @@ export function createLightSource(
   };
 }
 
+// Cache for getLightFlicker results
+// Key: lightId + quantized time (16ms intervals for ~60fps)
+const flickerCache = new Map<string, LightState>();
+const FLICKER_TIME_QUANTUM = 16; // ms
+const FLICKER_CACHE_MAX_SIZE = 500;
+
 export function getLightFlicker(
   light: LightSource,
   time: number,
   seedX: number = 0,
   seedY: number = 0
 ): LightState {
+  const quantizedTime = Math.floor(time / FLICKER_TIME_QUANTUM) * FLICKER_TIME_QUANTUM;
+  const cacheKey = `${light.id}:${seedX}:${seedY}:${quantizedTime}`;
+  
+  const cached = flickerCache.get(cacheKey);
+  if (cached) return cached;
+  
   const speed = light.flickerSpeed;
   const amount = light.flickerAmount;
   
-  const t1 = Math.sin(time * 0.0015 * speed) * 0.5 + 0.5;
-  const t2 = Math.sin(time * 0.002 * speed + 1.5) * 0.5 + 0.5;
-  const t3 = Math.sin(time * 0.003 * speed + seedX * 0.1 + seedY * 0.1) * 0.5 + 0.5;
+  const t1 = Math.sin(quantizedTime * 0.0015 * speed) * 0.5 + 0.5;
+  const t2 = Math.sin(quantizedTime * 0.002 * speed + 1.5) * 0.5 + 0.5;
+  const t3 = Math.sin(quantizedTime * 0.003 * speed + seedX * 0.1 + seedY * 0.1) * 0.5 + 0.5;
   
   const flicker = t1 * 0.5 + t2 * 0.3 + t3 * 0.2;
   
@@ -144,7 +156,16 @@ export function getLightFlicker(
   
   const color = applyColorVariance(light.color, light.colorVariance, flicker);
   
-  return { radius, intensity, color };
+  const result = { radius, intensity, color };
+  
+  // Evict old entries if cache gets too large
+  if (flickerCache.size >= FLICKER_CACHE_MAX_SIZE) {
+    const firstKey = flickerCache.keys().next().value;
+    if (firstKey) flickerCache.delete(firstKey);
+  }
+  
+  flickerCache.set(cacheKey, result);
+  return result;
 }
 
 function applyColorVariance(baseColor: number, variance: number, flicker: number): number {

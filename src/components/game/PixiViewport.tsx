@@ -101,121 +101,63 @@ type FireflyLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
 
 type DayNightLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
 
+interface StaticTileData {
+  x: number;
+  y: number;
+  tileType: TileType;
+}
+
 const StaticTileLayer = memo(function StaticTileLayer({ 
   map, 
   viewport,
 }: StaticTileLayerProps) {
-  const tiles = useMemo(() => {
-    const result: React.ReactNode[] = [];
+  const staticTilePositions = useMemo(() => {
+    const positions: StaticTileData[] = [];
+    const layer = map.layers[0];
+    if (!layer) return positions;
     
     for (let y = viewport.startY; y < viewport.endY; y++) {
       for (let x = viewport.startX; x < viewport.endX; x++) {
         if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
         
-        const layer = map.layers[0];
-        if (!layer) continue;
-        
         const tileId = layer.data[y]?.[x];
         if (tileId === undefined) continue;
         
         const tileType = map.tileMapping[String(tileId)] as TileType;
-        
-        if (isAnimatedTile(tileType)) continue;
-        
-        const glyph = getStaticGlyph(tileType);
-        const screenX = (x - viewport.startX) * TILE_SIZE;
-        const screenY = (y - viewport.startY) * TILE_SIZE;
-        const bgColor = applyColorWithCachedNoise(glyph.bg, x, y, 0.12);
-        const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
-        const key = `${x}-${y}`;
-        
-        result.push(
-          <pixiGraphics
-            key={`bg-${key}`}
-            draw={(g) => {
-              g.clear();
-              g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-              g.fill(bgColor);
-            }}
-          />
-        );
-        
-        if (glyph.detail) {
-          const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
-          result.push(
-            <pixiText
-              key={`detail-${key}`}
-              text={glyph.char}
-              x={screenX + 1}
-              y={screenY - 1}
-              style={SHARED_TEXT_STYLE}
-              tint={detailColor}
-              alpha={0.3}
-            />
-          );
+        if (!isAnimatedTile(tileType)) {
+          positions.push({ x, y, tileType });
         }
-        
-        result.push(
-          <pixiText
-            key={`fg-${key}`}
-            text={glyph.char}
-            x={screenX}
-            y={screenY}
-            style={SHARED_TEXT_STYLE}
-            tint={fgColor}
-          />
-        );
       }
     }
-    return result;
+    return positions;
   }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
-  
-  return <pixiContainer>{tiles}</pixiContainer>;
-});
 
-const AnimatedTileLayer = memo(function AnimatedTileLayer({
-  map,
-  viewport,
-  animationTime,
-}: AnimatedTileLayerProps) {
-  const tiles: React.ReactNode[] = [];
-  
-  for (let y = viewport.startY; y < viewport.endY; y++) {
-    for (let x = viewport.startX; x < viewport.endX; x++) {
-      if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
-      
-      const layer = map.layers[0];
-      if (!layer) continue;
-      
-      const tileId = layer.data[y]?.[x];
-      if (tileId === undefined) continue;
-      
-      const tileType = map.tileMapping[String(tileId)] as TileType;
-      
-      if (!isAnimatedTile(tileType)) continue;
-      
-      const glyphData = TILE_GLYPHS[tileType];
-      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+  const drawBackgrounds = useCallback((g: Graphics) => {
+    g.clear();
+    for (const { x, y, tileType } of staticTilePositions) {
+      const glyph = getStaticGlyph(tileType);
       const screenX = (x - viewport.startX) * TILE_SIZE;
       const screenY = (y - viewport.startY) * TILE_SIZE;
       const bgColor = applyColorWithCachedNoise(glyph.bg, x, y, 0.12);
-      const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
-      const key = `${x}-${y}-${glyph.char}`;
       
-      tiles.push(
-        <pixiGraphics
-          key={`bg-${key}`}
-          draw={(g) => {
-            g.clear();
-            g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-            g.fill(bgColor);
-          }}
-        />
-      );
+      g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+      g.fill(bgColor);
+    }
+  }, [staticTilePositions, viewport.startX, viewport.startY]);
+
+  const textElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+    
+    for (const { x, y, tileType } of staticTilePositions) {
+      const glyph = getStaticGlyph(tileType);
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
+      const key = `${x}-${y}`;
       
       if (glyph.detail) {
         const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
-        tiles.push(
+        elements.push(
           <pixiText
             key={`detail-${key}`}
             text={glyph.char}
@@ -228,7 +170,7 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
         );
       }
       
-      tiles.push(
+      elements.push(
         <pixiText
           key={`fg-${key}`}
           text={glyph.char}
@@ -239,9 +181,109 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
         />
       );
     }
-  }
+    return elements;
+  }, [staticTilePositions, viewport.startX, viewport.startY]);
   
-  return <pixiContainer>{tiles}</pixiContainer>;
+  return (
+    <pixiContainer>
+      <pixiGraphics draw={drawBackgrounds} />
+      {textElements}
+    </pixiContainer>
+  );
+});
+
+interface AnimatedTileData {
+  x: number;
+  y: number;
+  tileType: TileType;
+}
+
+const AnimatedTileLayer = memo(function AnimatedTileLayer({
+  map,
+  viewport,
+  animationTime,
+}: AnimatedTileLayerProps) {
+  const animatedTilePositions = useMemo(() => {
+    const positions: AnimatedTileData[] = [];
+    const layer = map.layers[0];
+    if (!layer) return positions;
+    
+    for (let y = viewport.startY; y < viewport.endY; y++) {
+      for (let x = viewport.startX; x < viewport.endX; x++) {
+        if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
+        
+        const tileId = layer.data[y]?.[x];
+        if (tileId === undefined) continue;
+        
+        const tileType = map.tileMapping[String(tileId)] as TileType;
+        if (isAnimatedTile(tileType)) {
+          positions.push({ x, y, tileType });
+        }
+      }
+    }
+    return positions;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+
+  const drawBackgrounds = useCallback((g: Graphics) => {
+    g.clear();
+    for (const { x, y, tileType } of animatedTilePositions) {
+      const glyphData = TILE_GLYPHS[tileType];
+      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const bgColor = applyColorWithCachedNoise(glyph.bg, x, y, 0.12);
+      
+      g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+      g.fill(bgColor);
+    }
+  }, [animatedTilePositions, animationTime, viewport.startX, viewport.startY]);
+
+  const textElements = useMemo(() => {
+    const elements: React.ReactNode[] = [];
+    
+    for (const { x, y, tileType } of animatedTilePositions) {
+      const glyphData = TILE_GLYPHS[tileType];
+      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const fgColor = applyColorWithCachedNoise(glyph.fg, x, y, 0.08);
+      const key = `${x}-${y}-${glyph.char}`;
+      
+      if (glyph.detail) {
+        const detailColor = applyColorWithCachedNoise(glyph.detail, x, y, 0.05);
+        elements.push(
+          <pixiText
+            key={`detail-${key}`}
+            text={glyph.char}
+            x={screenX + 1}
+            y={screenY - 1}
+            style={SHARED_TEXT_STYLE}
+            tint={detailColor}
+            alpha={0.3}
+          />
+        );
+      }
+      
+      elements.push(
+        <pixiText
+          key={`fg-${key}`}
+          text={glyph.char}
+          x={screenX}
+          y={screenY}
+          style={SHARED_TEXT_STYLE}
+          tint={fgColor}
+        />
+      );
+    }
+    return elements;
+  }, [animatedTilePositions, animationTime, viewport.startX, viewport.startY]);
+  
+  return (
+    <pixiContainer>
+      <pixiGraphics draw={drawBackgrounds} />
+      {textElements}
+    </pixiContainer>
+  );
 });
 
 
@@ -258,15 +300,15 @@ const PlayerLayer = memo(function PlayerLayer({
   const screenX = (playerPosition.x - viewport.startX) * TILE_SIZE;
   const screenY = (playerPosition.y - viewport.startY) * TILE_SIZE;
 
+  const drawBackground = useCallback((g: Graphics) => {
+    g.clear();
+    g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+    g.fill({ color: 0x1a1a18, alpha: 1 });
+  }, [screenX, screenY]);
+
   return (
     <pixiContainer>
-      <pixiGraphics
-        draw={(g) => {
-          g.clear();
-          g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-          g.fill({ color: 0x1a1a18, alpha: 1 });
-        }}
-      />
+      <pixiGraphics draw={drawBackground} />
       <pixiText
         text={PLAYER_GLYPH.char}
         x={screenX}
@@ -278,32 +320,31 @@ const PlayerLayer = memo(function PlayerLayer({
 });
 
 const GLOW_BLUR_OUTER = (() => {
-  const filter = new BlurFilter({ strength: 16, quality: 2 });
+  const filter = new BlurFilter({ strength: 16, quality: 1 });
   return [filter];
 })();
 
 const GLOW_BLUR_MID = (() => {
-  const filter = new BlurFilter({ strength: 8, quality: 2 });
+  const filter = new BlurFilter({ strength: 8, quality: 1 });
   return [filter];
 })();
 
 const GLOW_BLUR_INNER = (() => {
-  const filter = new BlurFilter({ strength: 4, quality: 2 });
+  const filter = new BlurFilter({ strength: 4, quality: 1 });
   return [filter];
 })();
 
-function useGlowDrawer(
-  map: MapData,
-  viewport: ViewportBounds,
-  animationTime: number,
-  radiusMultiplier: number,
-  alphaMultiplier: number
-) {
-  return useCallback((g: Graphics) => {
-    g.clear();
-    
+interface GlowTileData {
+  x: number;
+  y: number;
+  tileType: TileType;
+}
+
+function useGlowTilePositions(map: MapData, viewport: ViewportBounds): GlowTileData[] {
+  return useMemo(() => {
+    const positions: GlowTileData[] = [];
     const layer = map.layers[0];
-    if (!layer) return;
+    if (!layer) return positions;
 
     for (let y = viewport.startY; y < viewport.endY; y++) {
       for (let x = viewport.startX; x < viewport.endX; x++) {
@@ -314,23 +355,45 @@ function useGlowDrawer(
 
         const tileType = map.tileMapping[String(tileId)] as TileType;
         const glyphData = TILE_GLYPHS[tileType] || TILE_GLYPHS.grass;
-        const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+        const glyph = 'frames' in glyphData ? glyphData.frames[0] : glyphData;
 
-        if (!glyph.glow) continue;
-
-        const screenX = (x - viewport.startX) * TILE_SIZE;
-        const screenY = (y - viewport.startY) * TILE_SIZE;
-        const centerX = screenX + TILE_SIZE / 2;
-        const centerY = screenY + TILE_SIZE / 2;
-
-        const phaseOffset = (x * 7 + y * 13) * 0.1;
-        const pulse = Math.sin(animationTime * 0.005 + phaseOffset) * 0.3 + 0.7;
-
-        g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
-        g.fill({ color: glyph.glow, alpha: alphaMultiplier * pulse });
+        if (glyph.glow) {
+          positions.push({ x, y, tileType });
+        }
       }
     }
-  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, animationTime, radiusMultiplier, alphaMultiplier]);
+    return positions;
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+}
+
+function useGlowDrawer(
+  glowTiles: GlowTileData[],
+  viewport: ViewportBounds,
+  animationTime: number,
+  radiusMultiplier: number,
+  alphaMultiplier: number
+) {
+  return useCallback((g: Graphics) => {
+    g.clear();
+
+    for (const { x, y, tileType } of glowTiles) {
+      const glyphData = TILE_GLYPHS[tileType];
+      const glyph = getGlyphAtTime(glyphData, animationTime, x, y);
+
+      if (!glyph.glow) continue;
+
+      const screenX = (x - viewport.startX) * TILE_SIZE;
+      const screenY = (y - viewport.startY) * TILE_SIZE;
+      const centerX = screenX + TILE_SIZE / 2;
+      const centerY = screenY + TILE_SIZE / 2;
+
+      const phaseOffset = (x * 7 + y * 13) * 0.1;
+      const pulse = Math.sin(animationTime * 0.005 + phaseOffset) * 0.3 + 0.7;
+
+      g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
+      g.fill({ color: glyph.glow, alpha: alphaMultiplier * pulse });
+    }
+  }, [glowTiles, viewport.startX, viewport.startY, animationTime, radiusMultiplier, alphaMultiplier]);
 }
 
 const GlowLayer = memo(function GlowLayer({
@@ -338,9 +401,13 @@ const GlowLayer = memo(function GlowLayer({
   viewport,
   animationTime,
 }: GlowLayerProps) {
-  const drawOuter = useGlowDrawer(map, viewport, animationTime, 3.0, 0.2);
-  const drawMid = useGlowDrawer(map, viewport, animationTime, 2.0, 0.35);
-  const drawInner = useGlowDrawer(map, viewport, animationTime, 1.2, 0.5);
+  const glowTiles = useGlowTilePositions(map, viewport);
+  
+  const drawOuter = useGlowDrawer(glowTiles, viewport, animationTime, 3.0, 0.2);
+  const drawMid = useGlowDrawer(glowTiles, viewport, animationTime, 2.0, 0.35);
+  const drawInner = useGlowDrawer(glowTiles, viewport, animationTime, 1.2, 0.5);
+
+  if (glowTiles.length === 0) return null;
 
   return (
     <pixiContainer>

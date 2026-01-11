@@ -1,4 +1,4 @@
-const noiseCache = new Map<string, number>();
+const noiseCache = new Map<number, number>();
 
 function hashPosition(x: number, y: number): number {
   const n = x * 374761393 + y * 668265263;
@@ -14,8 +14,20 @@ export function clearColorNoiseCache(): void {
   noiseCache.clear();
 }
 
+/**
+ * Generates a numeric cache key from x,y coordinates.
+ * Uses 16-bit packing: upper 16 bits for x, lower 16 bits for y.
+ * 
+ * @warning Coordinates must be in range 0-65535 (16-bit unsigned).
+ * Coordinates outside this range will cause key collisions.
+ * Current map size (200x200) is safe.
+ */
+function positionKey(x: number, y: number): number {
+  return (x << 16) | (y & 0xffff);
+}
+
 function getCachedNoise(x: number, y: number): number {
-  const key = `${x},${y}`;
+  const key = positionKey(x, y);
   let variation = noiseCache.get(key);
   if (variation === undefined) {
     variation = computeNoise(x, y);

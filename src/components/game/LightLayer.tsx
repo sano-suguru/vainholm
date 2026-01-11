@@ -109,25 +109,38 @@ export const LightLayer = memo(function LightLayer({
   animationTime,
   playerPosition,
 }: LightLayerProps) {
-  const allLights = useMemo(() => {
-    if (!playerPosition) return lights;
-    
-    const playerLight = createLightSource('player-torch', playerPosition, 'torch');
-    return [...lights, playerLight];
-  }, [lights, playerPosition]);
+  const playerX = playerPosition?.x;
+  const playerY = playerPosition?.y;
   
-  const visibleLights = useMemo(() => 
-    getVisibleLights(allLights, viewport),
-    [allLights, viewport]
+  const playerLight = useMemo(() => {
+    if (playerX === undefined || playerY === undefined) return null;
+    return createLightSource('player-torch', { x: playerX, y: playerY }, 'torch');
+  }, [playerX, playerY]);
+  
+  const visibleTileLights = useMemo(() => 
+    getVisibleLights(lights, viewport),
+    [lights, viewport]
   );
   
-  if (visibleLights.length === 0) return null;
+  const allVisibleLights = useMemo(() => {
+    if (!playerLight) return visibleTileLights;
+    const isPlayerVisible = 
+      playerLight.position.x >= viewport.startX - 10 &&
+      playerLight.position.x < viewport.endX + 10 &&
+      playerLight.position.y >= viewport.startY - 10 &&
+      playerLight.position.y < viewport.endY + 10;
+    
+    if (!isPlayerVisible) return visibleTileLights;
+    return [...visibleTileLights, playerLight];
+  }, [visibleTileLights, playerLight, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
+  
+  if (allVisibleLights.length === 0) return null;
   
   return (
     <pixiContainer>
-      <LightLayerOuter visibleLights={visibleLights} viewport={viewport} animationTime={animationTime} />
-      <LightLayerMid visibleLights={visibleLights} viewport={viewport} animationTime={animationTime} />
-      <LightLayerInner visibleLights={visibleLights} viewport={viewport} animationTime={animationTime} />
+      <LightLayerOuter visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
+      <LightLayerMid visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
+      <LightLayerInner visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
     </pixiContainer>
   );
 });
