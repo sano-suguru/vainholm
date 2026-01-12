@@ -1,10 +1,11 @@
 import { memo, useCallback, useMemo } from 'react';
 import type { Graphics } from 'pixi.js';
 import { BlurFilter } from 'pixi.js';
-import type { Position, AnimatedViewportProps, ViewportBounds } from '../../types';
+import type { Position, ViewportBounds } from '../../types';
 import type { LightSource } from '../../utils/lighting';
 import { getLightFlicker, getVisibleLights, createLightSource } from '../../utils/lighting';
 import { TILE_SIZE } from '../../utils/constants';
+import { getAnimationTime } from './animationTime';
 
 const LIGHT_BLUR_OUTER = (() => {
   const filter = new BlurFilter({ strength: 20, quality: 2 });
@@ -21,24 +22,24 @@ const LIGHT_BLUR_INNER = (() => {
   return [filter];
 })();
 
-interface LightLayerProps extends AnimatedViewportProps {
+interface LightLayerProps {
   lights: LightSource[];
+  viewport: ViewportBounds;
   playerPosition?: Position;
 }
 
 interface LightSubLayerProps {
   visibleLights: LightSource[];
   viewport: ViewportBounds;
-  animationTime: number;
 }
 
 const LightLayerOuter = memo(function LightLayerOuter({
   visibleLights,
   viewport,
-  animationTime,
 }: LightSubLayerProps) {
   const drawOuter = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     for (const light of visibleLights) {
       const state = getLightFlicker(light, animationTime, light.position.x, light.position.y);
@@ -48,7 +49,7 @@ const LightLayerOuter = memo(function LightLayerOuter({
       g.circle(screenX, screenY, TILE_SIZE * state.radius * 2.5);
       g.fill({ color: state.color, alpha: state.intensity * 0.15 });
     }
-  }, [visibleLights, viewport, animationTime]);
+  }, [visibleLights, viewport]);
   
   return <pixiGraphics filters={LIGHT_BLUR_OUTER} draw={drawOuter} blendMode="add" />;
 });
@@ -56,10 +57,10 @@ const LightLayerOuter = memo(function LightLayerOuter({
 const LightLayerMid = memo(function LightLayerMid({
   visibleLights,
   viewport,
-  animationTime,
 }: LightSubLayerProps) {
   const drawMid = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     for (const light of visibleLights) {
       const state = getLightFlicker(light, animationTime, light.position.x, light.position.y);
@@ -69,7 +70,7 @@ const LightLayerMid = memo(function LightLayerMid({
       g.circle(screenX, screenY, TILE_SIZE * state.radius * 1.5);
       g.fill({ color: state.color, alpha: state.intensity * 0.25 });
     }
-  }, [visibleLights, viewport, animationTime]);
+  }, [visibleLights, viewport]);
   
   return <pixiGraphics filters={LIGHT_BLUR_MID} draw={drawMid} blendMode="add" />;
 });
@@ -77,10 +78,10 @@ const LightLayerMid = memo(function LightLayerMid({
 const LightLayerInner = memo(function LightLayerInner({
   visibleLights,
   viewport,
-  animationTime,
 }: LightSubLayerProps) {
   const drawInner = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     for (const light of visibleLights) {
       const state = getLightFlicker(light, animationTime, light.position.x, light.position.y);
@@ -91,7 +92,7 @@ const LightLayerInner = memo(function LightLayerInner({
       g.circle(screenX, screenY, TILE_SIZE * state.radius * 0.7);
       g.fill({ color: coreColor, alpha: state.intensity * 0.35 });
     }
-  }, [visibleLights, viewport, animationTime]);
+  }, [visibleLights, viewport]);
   
   return <pixiGraphics filters={LIGHT_BLUR_INNER} draw={drawInner} blendMode="add" />;
 });
@@ -106,7 +107,6 @@ function brightenColor(color: number, amount: number): number {
 export const LightLayer = memo(function LightLayer({
   lights,
   viewport,
-  animationTime,
   playerPosition,
 }: LightLayerProps) {
   const playerX = playerPosition?.x;
@@ -131,16 +131,16 @@ export const LightLayer = memo(function LightLayer({
       playerLight.position.y < viewport.endY + 10;
     
     if (!isPlayerVisible) return visibleTileLights;
-    return [...visibleTileLights, playerLight];
+    return visibleTileLights.concat(playerLight);
   }, [visibleTileLights, playerLight, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
   
   if (allVisibleLights.length === 0) return null;
   
   return (
     <pixiContainer>
-      <LightLayerOuter visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
-      <LightLayerMid visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
-      <LightLayerInner visibleLights={allVisibleLights} viewport={viewport} animationTime={animationTime} />
+      <LightLayerOuter visibleLights={allVisibleLights} viewport={viewport} />
+      <LightLayerMid visibleLights={allVisibleLights} viewport={viewport} />
+      <LightLayerInner visibleLights={allVisibleLights} viewport={viewport} />
     </pixiContainer>
   );
 });

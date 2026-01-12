@@ -17,13 +17,16 @@ export type MapType = 'world' | 'dungeon';
 
 const VISION_RADIUS = 8;
 const VISION_RADIUS_SQ = VISION_RADIUS * VISION_RADIUS;
+const POS_KEY_MULTIPLIER = 100000;
 
-function getVisibleTiles(x: number, y: number): Set<string> {
-  const visible = new Set<string>();
+const posKey = (x: number, y: number): number => y * POS_KEY_MULTIPLIER + x;
+
+function getVisibleTiles(x: number, y: number): Set<number> {
+  const visible = new Set<number>();
   for (let dy = -VISION_RADIUS; dy <= VISION_RADIUS; dy++) {
     for (let dx = -VISION_RADIUS; dx <= VISION_RADIUS; dx++) {
       if (dx * dx + dy * dy <= VISION_RADIUS_SQ) {
-        visible.add(`${x + dx},${y + dy}`);
+        visible.add(posKey(x + dx, y + dy));
       }
     }
   }
@@ -31,8 +34,8 @@ function getVisibleTiles(x: number, y: number): Set<string> {
 }
 
 interface VisibilityDelta {
-  toAdd: string[];
-  toRemove: string[];
+  toAdd: number[];
+  toRemove: number[];
 }
 
 function getVisibilityDelta(
@@ -51,8 +54,8 @@ function getVisibilityDelta(
   if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
     const oldVisible = getVisibleTiles(oldX, oldY);
     const newVisible = getVisibleTiles(newX, newY);
-    const toAdd: string[] = [];
-    const toRemove: string[] = [];
+    const toAdd: number[] = [];
+    const toRemove: number[] = [];
     
     newVisible.forEach((key) => {
       if (!oldVisible.has(key)) toAdd.push(key);
@@ -64,8 +67,8 @@ function getVisibilityDelta(
     return { toAdd, toRemove };
   }
 
-  const toAdd: string[] = [];
-  const toRemove: string[] = [];
+  const toAdd: number[] = [];
+  const toRemove: number[] = [];
 
   for (let i = -VISION_RADIUS; i <= VISION_RADIUS; i++) {
     for (let j = -VISION_RADIUS; j <= VISION_RADIUS; j++) {
@@ -78,9 +81,9 @@ function getVisibilityDelta(
       const isVisible = newDistSq <= VISION_RADIUS_SQ;
 
       if (isVisible && !wasVisible) {
-        toAdd.push(`${newX + newI},${newY + newJ}`);
+        toAdd.push(posKey(newX + newI, newY + newJ));
       } else if (wasVisible && !isVisible) {
-        toRemove.push(`${oldX + i},${oldY + j}`);
+        toRemove.push(posKey(oldX + i, oldY + j));
       }
     }
   }
@@ -99,13 +102,13 @@ interface GameStore {
   weather: WeatherType;
   timeOfDay: TimeOfDay;
   currentMapType: MapType;
-  exploredTiles: Set<string>;
-  visibleTiles: Set<string>;
+  exploredTiles: Set<number>;
+  visibleTiles: Set<number>;
   visibilityHash: number;
   lightSources: LightSource[];
   lastInteractionEffects: TriggerEffect[];
   worldMapCache: MapData | null;
-  worldExploredTilesCache: Set<string> | null;
+  worldExploredTilesCache: Set<number> | null;
   dungeonEntrancePosition: Position | null;
 
   setMap: (map: MapData, seed: number, entryPoint?: Position) => void;
@@ -142,8 +145,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   weather: 'clear',
   timeOfDay: 'day',
   currentMapType: 'world',
-  exploredTiles: new Set<string>(),
-  visibleTiles: new Set<string>(),
+  exploredTiles: new Set<number>(),
+  visibleTiles: new Set<number>(),
   visibilityHash: 0,
   lightSources: [],
   lastInteractionEffects: [],
@@ -288,12 +291,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   isTileVisible: (x, y) => {
     const { visibleTiles } = get();
-    return visibleTiles.has(`${x},${y}`);
+    return visibleTiles.has(posKey(x, y));
   },
 
   isTileExplored: (x, y) => {
     const { exploredTiles } = get();
-    return exploredTiles.has(`${x},${y}`);
+    return exploredTiles.has(posKey(x, y));
   },
 
   addLightSource: (light) => {

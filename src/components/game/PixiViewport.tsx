@@ -28,6 +28,7 @@ import {
   shouldSpawnOverlay,
   type OverlayId,
 } from '../../utils/overlayConfig';
+import { getAnimationTime, setAnimationTime } from './animationTime';
 
 extend({ Container, Graphics, Text, Sprite });
 
@@ -72,10 +73,6 @@ interface ScreenSizeProps {
   height: number;
 }
 
-interface AnimatedProps {
-  animationTime: number;
-}
-
 interface WeatherProps {
   weather: WeatherType;
 }
@@ -88,19 +85,19 @@ interface TexturesReadyProps {
   texturesReady: boolean;
 }
 
-type GlowLayerProps = MapViewportProps & AnimatedProps;
+type GlowLayerProps = MapViewportProps;
 
 type ShadowLayerProps = MapViewportProps & TimeOfDayProps;
 
 type VignetteLayerProps = ScreenSizeProps;
 
-type RainLayerProps = ScreenSizeProps & AnimatedProps & WeatherProps;
+type RainLayerProps = ScreenSizeProps & WeatherProps;
 
-type FogLayerProps = ScreenSizeProps & AnimatedProps & WeatherProps;
+type FogLayerProps = ScreenSizeProps & WeatherProps;
 
-type FireflyLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
+type FireflyLayerProps = ScreenSizeProps & TimeOfDayProps;
 
-type DayNightLayerProps = ScreenSizeProps & AnimatedProps & TimeOfDayProps;
+type DayNightLayerProps = ScreenSizeProps & TimeOfDayProps;
 
 
 
@@ -160,13 +157,18 @@ const TileLayer = memo(function TileLayer({
 const ANIMATION_FRAME_INTERVAL = 250;
 const ANIMATION_FRAME_COUNT = 4;
 
-type AnimatedTileLayerProps = MapViewportProps & AnimatedProps;
-
 const AnimatedTileLayer = memo(function AnimatedTileLayer({ 
   map, 
   viewport,
-  animationTime,
-}: AnimatedTileLayerProps) {
+}: MapViewportProps) {
+  const [frameIndex, setFrameIndex] = useState(0);
+  
+  useTick(() => {
+    const newFrameIndex = Math.floor(getAnimationTime() / ANIMATION_FRAME_INTERVAL) % ANIMATION_FRAME_COUNT;
+    if (newFrameIndex !== frameIndex) {
+      setFrameIndex(newFrameIndex);
+    }
+  });
   
   const animatedTilePositions = useMemo(() => {
     const positions: TilePosition[] = [];
@@ -187,8 +189,6 @@ const AnimatedTileLayer = memo(function AnimatedTileLayer({
     }
     return positions;
   }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
-
-  const frameIndex = Math.floor(animationTime / ANIMATION_FRAME_INTERVAL) % ANIMATION_FRAME_COUNT;
 
   const tileElements = useMemo(() => {
     const elements: React.ReactNode[] = [];
@@ -377,6 +377,15 @@ const ConnectedTileLayer = memo(function ConnectedTileLayer({
   texturesReady,
 }: MapViewportProps & TexturesReadyProps) {
   
+  const getTileAt = useCallback((tx: number, ty: number): TileType | null => {
+    const layer = map.layers[0];
+    if (!layer) return null;
+    if (ty < 0 || ty >= map.height || tx < 0 || tx >= map.width) return null;
+    const id = layer.data[ty]?.[tx];
+    if (id === undefined) return null;
+    return map.tileMapping[String(id)] as TileType;
+  }, [map]);
+  
   const connectedTileData = useMemo(() => {
     const data: ConnectedTileData[] = [];
     if (!texturesReady) return data;
@@ -394,13 +403,6 @@ const ConnectedTileLayer = memo(function ConnectedTileLayer({
         const tileType = map.tileMapping[String(tileId)] as TileType;
         if (tileType !== 'road') continue;
         
-        const getTileAt = (tx: number, ty: number): TileType | null => {
-          if (ty < 0 || ty >= map.height || tx < 0 || tx >= map.width) return null;
-          const id = layer.data[ty]?.[tx];
-          if (id === undefined) return null;
-          return map.tileMapping[String(id)] as TileType;
-        };
-        
         const neighbors = {
           n: getTileAt(x, y - 1) === 'road',
           s: getTileAt(x, y + 1) === 'road',
@@ -413,7 +415,7 @@ const ConnectedTileLayer = memo(function ConnectedTileLayer({
       }
     }
     return data;
-  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady]);
+  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady, getTileAt]);
 
   const connectedElements = useMemo(() => {
     const elements: React.ReactNode[] = [];
@@ -598,12 +600,12 @@ function useGlowTilePositions(map: MapData, viewport: ViewportBounds): TilePosit
 function useGlowDrawer(
   glowTiles: TilePosition[],
   viewport: ViewportBounds,
-  animationTime: number,
   radiusMultiplier: number,
   alphaMultiplier: number
 ) {
   return useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
 
     for (const { x, y, tileType } of glowTiles) {
       const glowColor = getGlowAtTime(tileType, animationTime, x, y);
@@ -620,19 +622,18 @@ function useGlowDrawer(
       g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
       g.fill({ color: glowColor, alpha: alphaMultiplier * pulse });
     }
-  }, [glowTiles, viewport.startX, viewport.startY, animationTime, radiusMultiplier, alphaMultiplier]);
+  }, [glowTiles, viewport.startX, viewport.startY, radiusMultiplier, alphaMultiplier]);
 }
 
 const GlowLayer = memo(function GlowLayer({
   map,
   viewport,
-  animationTime,
 }: GlowLayerProps) {
   const glowTiles = useGlowTilePositions(map, viewport);
   
-  const drawOuter = useGlowDrawer(glowTiles, viewport, animationTime, 3.0, 0.2);
-  const drawMid = useGlowDrawer(glowTiles, viewport, animationTime, 2.0, 0.35);
-  const drawInner = useGlowDrawer(glowTiles, viewport, animationTime, 1.2, 0.5);
+  const drawOuter = useGlowDrawer(glowTiles, viewport, 3.0, 0.2);
+  const drawMid = useGlowDrawer(glowTiles, viewport, 2.0, 0.35);
+  const drawInner = useGlowDrawer(glowTiles, viewport, 1.2, 0.5);
 
   if (glowTiles.length === 0) return null;
 
@@ -782,11 +783,11 @@ const RAIN_DENSITY = 80;
 const RainLayer = memo(function RainLayer({
   width,
   height,
-  animationTime,
   weather,
 }: RainLayerProps) {
   const drawRain = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     g.rect(0, 0, width, height);
     g.fill({ color: 0x223344, alpha: 0.15 });
@@ -807,7 +808,7 @@ const RainLayer = memo(function RainLayer({
       g.lineTo(x + 1, y + length);
       g.stroke({ color: 0x6688aa, alpha, width: 1 });
     }
-  }, [width, height, animationTime]);
+  }, [width, height]);
 
   if (weather !== 'rain') return null;
 
@@ -819,11 +820,11 @@ const FOG_PATCH_COUNT = 12;
 const FogLayer = memo(function FogLayer({
   width,
   height,
-  animationTime,
   weather,
 }: FogLayerProps) {
   const drawFog = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     g.rect(0, 0, width, height);
     g.fill({ color: 0x667788, alpha: 0.25 });
@@ -845,7 +846,7 @@ const FogLayer = memo(function FogLayer({
       g.ellipse(x + patchWidth / 2, y + patchHeight / 2, patchWidth / 2, patchHeight / 2);
       g.fill({ color: 0x889999, alpha });
     }
-  }, [width, height, animationTime]);
+  }, [width, height]);
 
   if (weather !== 'fog') return null;
 
@@ -857,11 +858,11 @@ const FIREFLY_COUNT = 25;
 const FireflyLayer = memo(function FireflyLayer({
   width,
   height,
-  animationTime,
   timeOfDay,
 }: FireflyLayerProps) {
   const drawFireflies = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     const seed = 98765;
     const color = timeOfDay === 'night' ? 0xaaffaa : 0xffddaa;
@@ -887,7 +888,7 @@ const FireflyLayer = memo(function FireflyLayer({
         g.fill({ color, alpha: alpha * 0.8 });
       }
     }
-  }, [width, height, animationTime, timeOfDay]);
+  }, [width, height, timeOfDay]);
 
   if (timeOfDay !== 'night' && timeOfDay !== 'dusk') return null;
 
@@ -901,15 +902,11 @@ const DUST_BLUR_FILTER = (() => {
   return [filter];
 })();
 
-interface AmbientDustLayerProps extends ScreenSizeProps {
-  animationTime: number;
-  timeOfDay: TimeOfDay;
-}
+type AmbientDustLayerProps = ScreenSizeProps & TimeOfDayProps;
 
 const AmbientDustLayer = memo(function AmbientDustLayer({
   width,
   height,
-  animationTime,
   timeOfDay,
 }: AmbientDustLayerProps) {
   const dustColor = timeOfDay === 'dawn' ? 0xffddaa 
@@ -919,6 +916,7 @@ const AmbientDustLayer = memo(function AmbientDustLayer({
   
   const drawDust = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
     
     const seed = 11111;
     
@@ -944,7 +942,7 @@ const AmbientDustLayer = memo(function AmbientDustLayer({
       g.circle(x, y, size);
       g.fill({ color: dustColor, alpha });
     }
-  }, [width, height, animationTime, dustColor]);
+  }, [width, height, dustColor]);
 
   return <pixiGraphics filters={DUST_BLUR_FILTER} draw={drawDust} />;
 });
@@ -960,19 +958,18 @@ const DayNightLayer = memo(function DayNightLayer({
   width,
   height,
   timeOfDay,
-  animationTime,
 }: DayNightLayerProps) {
   const tint = TIME_OF_DAY_TINTS[timeOfDay];
-  
-  const pulse = timeOfDay === 'night' 
-    ? Math.sin(animationTime * 0.0005) * 0.03 
-    : 0;
 
   const drawDayNight = useCallback((g: Graphics) => {
     g.clear();
+    const animationTime = getAnimationTime();
+    const pulse = timeOfDay === 'night' 
+      ? Math.sin(animationTime * 0.0005) * 0.03 
+      : 0;
     g.rect(0, 0, width, height);
     g.fill({ color: tint.color, alpha: tint.alpha + pulse });
-  }, [width, height, tint.color, tint.alpha, pulse]);
+  }, [width, height, tint.color, tint.alpha, timeOfDay]);
 
   if (tint.alpha === 0) return null;
 
@@ -997,7 +994,6 @@ function GameScene({
   height,
   lightSources,
 }: GameSceneProps) {
-  const [animationTime, setAnimationTime] = useState(0);
   const startTimeRef = useRef(0);
   const [texturesReady, setTexturesReady] = useState(false);
   
@@ -1008,8 +1004,7 @@ function GameScene({
   
   useTick(() => {
     if (startTimeRef.current === 0) return;
-    const now = Date.now();
-    setAnimationTime(now - startTimeRef.current);
+    setAnimationTime(Date.now() - startTimeRef.current);
   });
 
   if (!texturesReady) return null;
@@ -1017,13 +1012,13 @@ function GameScene({
   return (
     <pixiContainer>
       <TileLayer map={map} viewport={viewport} />
-      <AnimatedTileLayer map={map} viewport={viewport} animationTime={animationTime} />
+      <AnimatedTileLayer map={map} viewport={viewport} />
       <FeatureLayer map={map} viewport={viewport} />
       <TransitionLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ConnectedTileLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <OverlayLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ShadowLayer map={map} viewport={viewport} timeOfDay={timeOfDay} />
-      <GlowLayer map={map} viewport={viewport} animationTime={animationTime} />
+      <GlowLayer map={map} viewport={viewport} />
       <FogOfWarLayer 
         key={visibilityHash}
         viewport={viewport} 
@@ -1037,14 +1032,13 @@ function GameScene({
       <LightLayer 
         lights={lightSources} 
         viewport={viewport} 
-        animationTime={animationTime}
         playerPosition={playerPosition}
       />
-      <DayNightLayer width={width} height={height} timeOfDay={timeOfDay} animationTime={animationTime} />
-      <RainLayer width={width} height={height} animationTime={animationTime} weather={weather} />
-      <FogLayer width={width} height={height} animationTime={animationTime} weather={weather} />
-      <FireflyLayer width={width} height={height} animationTime={animationTime} timeOfDay={timeOfDay} />
-      <AmbientDustLayer width={width} height={height} animationTime={animationTime} timeOfDay={timeOfDay} />
+      <DayNightLayer width={width} height={height} timeOfDay={timeOfDay} />
+      <RainLayer width={width} height={height} weather={weather} />
+      <FogLayer width={width} height={height} weather={weather} />
+      <FireflyLayer width={width} height={height} timeOfDay={timeOfDay} />
+      <AmbientDustLayer width={width} height={height} timeOfDay={timeOfDay} />
       <VignetteLayer width={width} height={height} />
     </pixiContainer>
   );

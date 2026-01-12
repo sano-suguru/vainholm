@@ -20,7 +20,9 @@ export function usePerformanceMetrics(enabled: boolean = true) {
     memory: null,
   });
 
-  const frameTimes = useRef<number[]>([]);
+  const frameTimes = useRef<Float64Array>(new Float64Array(SAMPLE_SIZE));
+  const ringIndex = useRef(0);
+  const sampleCount = useRef(0);
   const lastFrameTime = useRef(0);
   const updateCounter = useRef(0);
   const isFirstFrame = useRef(true);
@@ -39,19 +41,27 @@ export function usePerformanceMetrics(enabled: boolean = true) {
     const frameTime = now - lastFrameTime.current;
     lastFrameTime.current = now;
 
-    frameTimes.current.push(frameTime);
-    if (frameTimes.current.length > SAMPLE_SIZE) {
-      frameTimes.current.shift();
+    frameTimes.current[ringIndex.current] = frameTime;
+    ringIndex.current = (ringIndex.current + 1) % SAMPLE_SIZE;
+    if (sampleCount.current < SAMPLE_SIZE) {
+      sampleCount.current++;
     }
 
     updateCounter.current++;
-    if (updateCounter.current >= UPDATE_INTERVAL && frameTimes.current.length >= SAMPLE_SIZE) {
+    if (updateCounter.current >= UPDATE_INTERVAL && sampleCount.current >= SAMPLE_SIZE) {
       updateCounter.current = 0;
 
       const times = frameTimes.current;
-      const avgFrameTime = times.reduce((a, b) => a + b, 0) / times.length;
-      const minFrameTime = Math.min(...times);
-      const maxFrameTime = Math.max(...times);
+      let sum = 0;
+      let minFrameTime = times[0];
+      let maxFrameTime = times[0];
+      for (let i = 0; i < SAMPLE_SIZE; i++) {
+        const t = times[i];
+        sum += t;
+        if (t < minFrameTime) minFrameTime = t;
+        if (t > maxFrameTime) maxFrameTime = t;
+      }
+      const avgFrameTime = sum / SAMPLE_SIZE;
 
       const memoryInfo = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
       const memory = memoryInfo ? memoryInfo.usedJSHeapSize / 1048576 : null;
@@ -88,7 +98,9 @@ export function usePerformanceMetrics(enabled: boolean = true) {
   }, []);
 
   const reset = useCallback(() => {
-    frameTimes.current = [];
+    frameTimes.current.fill(0);
+    ringIndex.current = 0;
+    sampleCount.current = 0;
     updateCounter.current = 0;
     lastFrameTime.current = performance.now();
   }, []);

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../stores/gameStore';
 import { useDungeonStore } from '../../dungeon';
@@ -27,8 +27,12 @@ export function GameContainer() {
     }))
   );
 
-  const debugMode = useGameStore((state) => state.debugMode);
-
+  const { debugMode } = useGameStore(
+    useShallow((state) => ({
+      debugMode: state.debugMode,
+    }))
+  );
+  
   const setMap = useGameStore((state) => state.setMap);
   const setMapType = useGameStore((state) => state.setMapType);
   const movePlayer = useGameStore((state) => state.movePlayer);
@@ -38,12 +42,13 @@ export function GameContainer() {
   const isTileExplored = useGameStore((state) => state.isTileExplored);
   const generateTileLights = useGameStore((state) => state.generateTileLights);
 
-  const { isInDungeon, getCurrentFloor } = useDungeonStore(
-    useShallow((state) => ({
-      isInDungeon: state.isInDungeon,
-      getCurrentFloor: state.getCurrentFloor,
-    }))
-  );
+  const isInDungeon = useDungeonStore((state) => state.isInDungeon);
+  const dungeon = useDungeonStore((state) => state.dungeon);
+  
+  const currentFloor = useMemo(() => {
+    if (!dungeon) return null;
+    return dungeon.floors.get(dungeon.currentFloor) ?? null;
+  }, [dungeon]);
 
   const { metrics, updateMetrics } = usePerformanceMetrics(debugMode);
   
@@ -114,6 +119,18 @@ export function GameContainer() {
     [player.position, movePlayer, viewport]
   );
 
+  const currentTile = useMemo(
+    () => map ? getTileAt(player.position.x, player.position.y) : null,
+    [map, getTileAt, player.position.x, player.position.y]
+  );
+  
+  const floorInfo = useMemo(
+    () => isInDungeon && currentFloor 
+      ? `${currentFloor.map.name} (${currentFloor.level}F)`
+      : undefined,
+    [isInDungeon, currentFloor]
+  );
+
   if (!map) {
     return (
       <div className={styles.gameContainer}>
@@ -121,12 +138,6 @@ export function GameContainer() {
       </div>
     );
   }
-
-  const currentTile = getTileAt(player.position.x, player.position.y);
-  const currentFloor = getCurrentFloor();
-  const floorInfo = isInDungeon && currentFloor 
-    ? `${currentFloor.map.name} (${currentFloor.level}F)`
-    : undefined;
 
   return (
     <div className={styles.gameContainer}>
