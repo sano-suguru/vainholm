@@ -23,7 +23,7 @@ Utility layer for Vainholm. 13 specialized modules with cross-cutting concerns.
 | `noise.ts` | Simplex noise, FBM | mapGeneratorCore |
 | `biomes.ts` | Elevation/moisture lookup tables | mapGeneratorCore |
 | `tileTextures.ts` | SVG loading, fallback chains | PixiViewport |
-| `tileGlyphs.ts` | Glow configs, animation timing | PixiViewport |
+| `tileGlyphs.ts` | Player glyph definition | PixiViewport |
 | `overlayConfig.ts` | Weighted overlay selection | PixiViewport |
 | `lighting.ts` | Light sources, flicker cache | gameStore, PixiViewport |
 | `tileInteractions.ts` | Triggers, effects, chain reactions | gameStore |
@@ -139,7 +139,6 @@ Later functions overwrite earlier. Check order when adding features.
 |------|----------|-------|
 | Add game constant | `constants.ts` | Centralized config |
 | Add tile texture | `tileTextures.ts` → `BASE_TILE_URLS` | Or add fallback |
-| Add tile glow | `tileGlyphs.ts` → `TILE_GLYPHS` | Include animation frames |
 | Add overlay type | `overlayConfig.ts` | Both spawn chance + rules |
 | Add light preset | `lighting.ts` → `LIGHT_SOURCE_PRESETS` | Flicker params |
 | Add tile interaction | `tileInteractions.ts` | Trigger + effects |

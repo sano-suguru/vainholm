@@ -15,7 +15,7 @@ Pixi.js rendering layer for Vainholm. ALL visual game content rendered here.
 | File | Purpose |
 |------|---------|
 | `GameContainer.tsx` | Orchestrator: map init, keyboard/click handlers, state subscriptions |
-| `PixiViewport.tsx` | Pixi Application + 11-layer scene graph |
+| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph |
 | `index.ts` | Barrel exports |
 | `LightLayer.tsx` | Light source rendering with flicker |
 
@@ -43,17 +43,22 @@ Rendered bottom-to-top:
 
 | # | Layer | Purpose |
 |---|-------|---------|
-| 1 | `StaticTileLayer` | Non-animated terrain (grass, walls) |
+| 1 | `TileLayer` | Non-animated terrain (grass, walls) |
 | 2 | `AnimatedTileLayer` | Animated tiles (water, lava, swamp) |
-| 3 | `ShadowLayer` | Time-of-day shadows |
-| 4 | `GlowLayer` | Tile glow effects (lava, magic) |
-| 5 | `FogOfWarLayer` | Visibility/exploration overlay |
-| 6 | `PlayerLayer` | Player sprite + torch glow |
-| 7 | `DayNightLayer` | Global time-of-day tint |
-| 8 | `RainLayer` | Weather: rain drops |
-| 9 | `FogLayer` | Weather: fog patches |
-| 10 | `FireflyLayer` | Ambient: night/dusk fireflies |
-| 11 | `VignetteLayer` | Screen-edge darkening |
+| 3 | `FeatureLayer` | Feature overlay (structures, objects) |
+| 4 | `TransitionLayer` | Water-to-land edge transitions |
+| 5 | `ConnectedTileLayer` | Connected tiles (roads) |
+| 6 | `OverlayLayer` | Decorative overlays (flowers, grass) |
+| 7 | `ShadowLayer` | Time-of-day shadows |
+| 8 | `FogOfWarLayer` | Visibility/exploration overlay |
+| 9 | `PlayerLayer` | Player sprite |
+| 10 | `LightLayer` | Light sources (torches, player torch) |
+| 11 | `DayNightLayer` | Global time-of-day tint |
+| 12 | `RainLayer` | Weather: rain drops |
+| 13 | `FogLayer` | Weather: fog patches |
+| 14 | `FireflyLayer` | Ambient: night/dusk fireflies |
+| 15 | `AmbientDustLayer` | Floating dust particles |
+| 16 | `VignetteLayer` | Screen-edge darkening |
 
 ## Graphics Draw Pattern
 
@@ -139,7 +144,6 @@ visibilityHash: playerX * 10000 + playerY
 |--------|----------|-----|
 | Ambient | 25px | Soft torch outer glow |
 | Torch | 12px | Bright torch core |
-| Glow | 8px | Tile effects (lava) |
 | Fog | 30px | Weather fog patches |
 | Firefly | 4px | Subtle ambient |
 
@@ -150,9 +154,8 @@ visibilityHash: playerX * 10000 + playerY
 | TransitionLayer | 224-302 | 8-directional neighbor checking |
 | ConnectedTileLayer | 308-379 | 16-state connection detection |
 | OverlayLayer | 397-459 | Deterministic spatial hashing |
-| GlowLayer | 560-580 | Multi-layer blur with phase pulsing |
-| ShadowLayer | 603-650 | Time-of-day shadow casting |
-| WeatherLayers | 716-829 | Rain/fog/firefly animations |
+| ShadowLayer | 560-610 | Time-of-day shadow casting |
+| WeatherLayers | 680-790 | Rain/fog/firefly animations |
 
 ## useShallow Optimization
 

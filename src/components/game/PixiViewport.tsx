@@ -5,11 +5,7 @@ import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import { LightLayer } from './LightLayer';
-import { 
-  PLAYER_GLYPH, 
-  getGlowAtTime, 
-  hasGlow, 
-} from '../../utils/tileGlyphs';
+import { PLAYER_GLYPH } from '../../utils/tileGlyphs';
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
 import { 
   getBaseTileTexture, 
@@ -85,7 +81,7 @@ interface TexturesReadyProps {
   texturesReady: boolean;
 }
 
-type GlowLayerProps = MapViewportProps;
+
 
 type ShadowLayerProps = MapViewportProps & TimeOfDayProps;
 
@@ -557,95 +553,6 @@ const PlayerLayer = memo(function PlayerLayer({
   );
 });
 
-const GLOW_BLUR_OUTER = (() => {
-  const filter = new BlurFilter({ strength: 16, quality: 1 });
-  return [filter];
-})();
-
-const GLOW_BLUR_MID = (() => {
-  const filter = new BlurFilter({ strength: 8, quality: 1 });
-  return [filter];
-})();
-
-const GLOW_BLUR_INNER = (() => {
-  const filter = new BlurFilter({ strength: 4, quality: 1 });
-  return [filter];
-})();
-
-
-
-function useGlowTilePositions(map: MapData, viewport: ViewportBounds): TilePosition[] {
-  return useMemo(() => {
-    const positions: TilePosition[] = [];
-    const layer = map.layers[0];
-    if (!layer) return positions;
-
-    for (let y = viewport.startY; y < viewport.endY; y++) {
-      for (let x = viewport.startX; x < viewport.endX; x++) {
-        if (y < 0 || y >= map.height || x < 0 || x >= map.width) continue;
-
-        const tileId = layer.data[y]?.[x];
-        if (tileId === undefined) continue;
-
-        const tileType = map.tileMapping[String(tileId)] as TileType;
-        if (hasGlow(tileType)) {
-          positions.push({ x, y, tileType });
-        }
-      }
-    }
-    return positions;
-  }, [map, viewport.startX, viewport.startY, viewport.endX, viewport.endY]);
-}
-
-function useGlowDrawer(
-  glowTiles: TilePosition[],
-  viewport: ViewportBounds,
-  radiusMultiplier: number,
-  alphaMultiplier: number
-) {
-  return useCallback((g: Graphics) => {
-    g.clear();
-    const animationTime = getAnimationTime();
-
-    for (const { x, y, tileType } of glowTiles) {
-      const glowColor = getGlowAtTime(tileType, animationTime, x, y);
-      if (glowColor === null) continue;
-
-      const screenX = (x - viewport.startX) * TILE_SIZE;
-      const screenY = (y - viewport.startY) * TILE_SIZE;
-      const centerX = screenX + TILE_SIZE / 2;
-      const centerY = screenY + TILE_SIZE / 2;
-
-      const phaseOffset = (x * 7 + y * 13) * 0.1;
-      const pulse = Math.sin(animationTime * 0.005 + phaseOffset) * 0.3 + 0.7;
-
-      g.circle(centerX, centerY, TILE_SIZE * radiusMultiplier * pulse);
-      g.fill({ color: glowColor, alpha: alphaMultiplier * pulse });
-    }
-  }, [glowTiles, viewport.startX, viewport.startY, radiusMultiplier, alphaMultiplier]);
-}
-
-const GlowLayer = memo(function GlowLayer({
-  map,
-  viewport,
-}: GlowLayerProps) {
-  const glowTiles = useGlowTilePositions(map, viewport);
-  
-  const drawOuter = useGlowDrawer(glowTiles, viewport, 3.0, 0.2);
-  const drawMid = useGlowDrawer(glowTiles, viewport, 2.0, 0.35);
-  const drawInner = useGlowDrawer(glowTiles, viewport, 1.2, 0.5);
-
-  if (glowTiles.length === 0) return null;
-
-  return (
-    <pixiContainer>
-      <pixiGraphics filters={GLOW_BLUR_OUTER} draw={drawOuter} />
-      <pixiGraphics filters={GLOW_BLUR_MID} draw={drawMid} />
-      <pixiGraphics filters={GLOW_BLUR_INNER} draw={drawInner} />
-    </pixiContainer>
-  );
-});
-
 const SHADOW_CASTING_TILES = new Set<TileType>(['mountain', 'wall', 'dungeon_wall', 'forest']);
 
 interface ShadowDirection {
@@ -1018,7 +925,6 @@ function GameScene({
       <ConnectedTileLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <OverlayLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ShadowLayer map={map} viewport={viewport} timeOfDay={timeOfDay} />
-      <GlowLayer map={map} viewport={viewport} />
       <FogOfWarLayer 
         key={visibilityHash}
         viewport={viewport} 
