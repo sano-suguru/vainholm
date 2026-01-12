@@ -1,8 +1,8 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-12 | **Commit**: ab1e938 | **Branch**: main
+**Generated**: 2026-01-13 | **Commit**: 0a6382d | **Branch**: main
 
-Guidelines for AI agents working in this React + TypeScript + Pixi.js tile-based game codebase.
+Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
 ## Quick Reference
 
@@ -11,24 +11,11 @@ Guidelines for AI agents working in this React + TypeScript + Pixi.js tile-based
 | `pnpm dev` | Vite dev server with HMR |
 | `pnpm build` | Type-check (`tsc -b`) + Vite build |
 | `pnpm lint` | ESLint on all files |
-| `pnpm preview` | Preview production build |
+| `pnpm test` | Vitest run (61 tests) |
 | `pnpm similarity` | Detect duplicate code (threshold 0.7) |
-| `pnpm similarity:types` | Duplicate detection with type analysis |
-| `pnpm deadcode` | Detect unused files, exports, dependencies |
-| `pnpm deadcode:fix` | Auto-fix unused exports |
+| `pnpm deadcode` | Detect unused files/exports (knip) |
 
-**Package Manager**: pnpm 10.12.1 (enforced via `packageManager` field)
-**No test framework configured.**
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | React 19 + Vite 7 |
-| Rendering | Pixi.js 8 via `@pixi/react` (WebGL 2D) |
-| Language | TypeScript 5.9 (strict, all flags) |
-| State | Zustand 5 |
-| Styling | CSS Modules (`.module.css`) |
+**Package Manager**: pnpm 10.28.0 (enforced)
 
 ## Architecture: Dual Rendering
 
@@ -37,7 +24,7 @@ Guidelines for AI agents working in this React + TypeScript + Pixi.js tile-based
 | System | Handles | Location |
 |--------|---------|----------|
 | React DOM | Layout, events, debug overlays | `GameContainer.tsx` |
-| Pixi.js Canvas | All visual game content | `PixiViewport.tsx` |
+| Pixi.js Canvas | ALL visual game content | `PixiViewport.tsx` (16 layers) |
 
 See `src/components/game/AGENTS.md` for Pixi.js patterns.
 
@@ -46,61 +33,56 @@ See `src/components/game/AGENTS.md` for Pixi.js patterns.
 ```
 src/
 ├── components/
-│   ├── game/          # Pixi.js rendering + React container (see game/AGENTS.md)
-│   └── ui/            # Debug overlays (DebugInfo)
-├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics
-├── stores/            # Zustand gameStore (single store pattern)
-├── styles/            # CSS modules + variables
-├── types/             # Type definitions barrel (index.ts)
-├── tiles/             # Tile registry: 57 types, ID mapping, definitions
-├── utils/             # Map generation, constants, glyphs (see utils/AGENTS.md)
-└── assets/tiles/      # SVG textures: terrain, connected, transitions, overlays, structures
+│   ├── game/          # Pixi.js rendering (see game/AGENTS.md)
+│   └── ui/            # Debug overlay (DebugInfo)
+├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics, useEffectProcessor
+├── stores/            # Zustand gameStore (single store)
+├── dungeon/           # Dungeon generation system (see dungeon/AGENTS.md)
+├── tiles/             # Tile registry: 59 types, ID mapping
+├── types/             # Type definitions barrel
+├── utils/             # Map generation, constants, textures (see utils/AGENTS.md)
+└── assets/tiles/      # SVG textures (terrain, connected, transitions, overlays, animated)
 
 docs/
-└── GAME_DESIGN.md     # World setting, dungeon structure, design decisions
+└── GAME_DESIGN.md     # World setting (Vainholm), 4 regions, 16 floors
 ```
 
-## Code Map (Key Symbols)
+## Code Map
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
 | `useGameStore` | Hook | `stores/gameStore.ts` | Global state access |
-| `GameStore` | Interface | `stores/gameStore.ts` | State shape definition |
-| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (11 layers) |
+| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers) |
 | `GameContainer` | Component | `components/game/GameContainer.tsx` | React orchestrator |
-| `generateMapData` | Function | `utils/mapGeneratorCore.ts` | Procedural map generation |
-| `TILE_DEFINITIONS` | Constant | `utils/constants.ts` | Tile properties (walkable, cost, glyph) |
-| `TILE_GLYPHS` | Constant | `utils/tileGlyphs.ts` | Glyph rendering data |
-| `Position` | Interface | `types/index.ts` | `{ x: number, y: number }` |
-| `MapData` | Interface | `types/index.ts` | Map structure definition |
-| `ViewportBounds` | Interface | `types/index.ts` | Camera bounds |
-| `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 57 tile definitions |
-| `TILE_MAPPING` | Constant | `tiles/registry.ts` | ID → type lookup |
-| `TILE_ID_BY_TYPE` | Constant | `tiles/registry.ts` | Type → ID lookup |
+| `generateMapAsync` | Function | `utils/generateMapAsync.ts` | Web Worker map generation |
+| `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 59 tile definitions |
+| `TILE_DEFINITIONS` | Constant | `utils/constants.ts` | Tile properties (walkable, cost) |
+| `useDungeonStore` | Hook | `dungeon/dungeonStore.ts` | Dungeon state (separate store) |
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add tile type | `utils/constants.ts` + `utils/tileGlyphs.ts` | Define properties then glyph |
-| Change rendering | `components/game/PixiViewport.tsx` | 11 layers, add after appropriate layer |
-| Modify player movement | `stores/gameStore.ts` → `movePlayer` | Handles collision + visibility |
-| Add keyboard binding | `utils/constants.ts` → `KEY_BINDINGS` | Then handle in `useKeyboard.ts` |
-| Change viewport size | `utils/constants.ts` → `VIEWPORT_*_TILES` | Affects camera bounds |
-| Add game state | `stores/gameStore.ts` | Add to interface + implementation |
-| Debug rendering | Enable `debugMode` (F3 key) | Shows FPS, frame time, memory |
+| Add tile type | `tiles/registry.ts` + `utils/tileGlyphs.ts` + `utils/tileTextures.ts` | ID, glyph, texture/fallback |
+| Change rendering | `components/game/PixiViewport.tsx` | 16 layers, add after appropriate layer |
+| Modify player movement | `stores/gameStore.ts` → `movePlayer` | Collision + visibility delta |
+| Add keyboard binding | `utils/constants.ts` → `KEY_BINDINGS` | Then `hooks/useKeyboard.ts` |
+| Add game state | `stores/gameStore.ts` | Interface + implementation |
+| Add tile interaction | `utils/tileInteractions.ts` | Triggers, effects, chain reactions |
+| Add dungeon region | `dungeon/config/` | Region config + generator |
+| Debug rendering | Press F3 | Shows FPS, frame time, memory |
 
 ## Import Order (ENFORCED)
 
 ```typescript
 // 1. React
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 
 // 2. External libraries
 import { create } from 'zustand';
 
-// 3. Types (type imports first)
-import type { Direction, MapData, Position } from '../types';
+// 3. Types (type imports)
+import type { Position, MapData } from '../types';
 
 // 4. Internal modules
 import { useGameStore } from '../../stores/gameStore';
@@ -112,160 +94,50 @@ import styles from '../../styles/game.module.css';
 
 ## TypeScript Patterns
 
-**Strict mode enabled** - all flags active:
-- `noUnusedLocals`, `noUnusedParameters`
-- `noFallthroughCasesInSwitch`
-- `noUncheckedSideEffectImports`
-- `verbatimModuleSyntax`
+**Strict mode** — all flags active:
+- `noUnusedLocals`, `noUnusedParameters` (use `_` prefix to ignore)
+- `verbatimModuleSyntax` (enforces `import type`)
+- `erasableSyntaxOnly` (TypeScript 5.9)
 
 ```typescript
 // Use type imports for type-only
 import type { Position } from '../types';
 
-// Interface for props
-interface TileProps {
-  type: TileType;
-  position: Position;
-}
-
-// Export types from barrel
-export type { Position, MapData, TileType } from './types';
-```
-
-## React Component Pattern
-
-```typescript
-// Function declaration + memo for performance-critical components
+// Function declaration + memo for components
 export const Tile = memo(function Tile({ type }: TileProps) {
-  return <div className={`${styles.tile} ${tileStyleMap[type]}`} />;
+  return <div />;
 });
 ```
 
-- **Function declarations** (not arrow functions)
-- **`memo()`** for frequently re-rendered components
-- **Named function inside memo** for debugging
-- **Barrel exports** via `index.ts`
+## Web Worker Pattern
 
-## Custom Hook Pattern
+Map generation runs in Web Worker (CPU-intensive):
 
+```
+generateMapAsync.ts  →  mapGenerator.worker.ts  →  mapGeneratorCore.ts
+     Public API              Worker entry            Pure function
+```
+
+**Never**: Import `mapGeneratorCore` directly in main thread.
+
+## Visibility Delta Optimization
+
+Player visibility uses incremental delta for 1-tile moves:
 ```typescript
-interface UseKeyboardOptions {
-  onMove: (dx: number, dy: number) => void;
-  moveDelay?: number;
-}
-
-export function useKeyboard({ onMove, moveDelay = 150 }: UseKeyboardOptions) {
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // implementation
-  }, [onMove, moveDelay]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-}
+getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Position[] }
 ```
 
-## Zustand Store Pattern
-
-```typescript
-export const useGameStore = create<GameStore>((set, get) => ({
-  player: { position: { x: 50, y: 50 }, facing: 'down' },
-  map: null,
-
-  movePlayer: (dx, dy) => {
-    const { player, canMoveTo } = get();
-    if (!canMoveTo(player.position.x + dx, player.position.y + dy)) return;
-    set({ player: { ...player, position: { x: newX, y: newY } } });
-  },
-
-  getTileAt: (x, y) => {
-    const { map } = get();
-    if (!map) return null;
-    // defensive null checks
-    return map.tileMapping[String(tileId)] || null;
-  },
-}));
-```
-
-## Web Worker Pattern (Map Generation)
-
-Map generation uses Web Workers to prevent UI blocking:
-
-```
-mapGenerator.ts          → Thin wrapper (public API)
-mapGenerator.worker.ts   → Worker entry point
-mapGeneratorCore.ts      → Actual generation logic
-generateMapAsync.ts      → Async orchestrator
-```
-
-**Usage**:
-```typescript
-import { generateMapAsync } from '../utils/generateMapAsync';
-
-const map = await generateMapAsync(MAP_WIDTH, MAP_HEIGHT, seed);
-```
-
-**Why**: Procedural generation is CPU-intensive. Worker keeps UI responsive.
-
-## Constants Pattern
-
-```typescript
-// utils/constants.ts
-export const TILE_SIZE = 16;
-export const MAP_WIDTH = 200;
-export const MAP_HEIGHT = 200;
-
-export const KEY_BINDINGS = {
-  up: ['KeyW', 'ArrowUp'],
-  down: ['KeyS', 'ArrowDown'],
-  left: ['KeyA', 'ArrowLeft'],
-  right: ['KeyD', 'ArrowRight'],
-  debug: ['F3'],
-} as const;
-
-export const TILE_DEFINITIONS = {
-  grass: { type: 'grass', walkable: true, movementCost: 1, name: 'Grass', char: '.' },
-  // ...
-} as const;
-```
+**Visibility Hash**: `playerX * 10000 + playerY` — memoization key for FogOfWarLayer.
 
 ## Naming Conventions
 
 | Entity | Convention | Example |
 |--------|------------|---------|
-| Components | PascalCase | `GameContainer`, `PixiViewport` |
-| Hooks | camelCase + `use` | `useKeyboard`, `useViewport` |
-| Store | camelCase + `Store` | `gameStore` |
+| Components | PascalCase | `GameContainer` |
+| Hooks | camelCase + `use` | `useKeyboard` |
 | Types | PascalCase | `Position`, `MapData` |
 | Constants | SCREAMING_SNAKE | `TILE_SIZE`, `MAP_WIDTH` |
-| CSS classes | camelCase | `.gameContainer` |
-| Functions | camelCase | `generateMap`, `seededRandom` |
 | Files | camelCase (utils), PascalCase (components) | `useKeyboard.ts`, `GameContainer.tsx` |
-
-## Error Handling
-
-- **Early returns** with null checks
-- **Defensive coding** over try/catch for expected states
-- **Return null** from stores/utils when data unavailable
-
-```typescript
-getTileAt: (x, y) => {
-  const { map } = get();
-  if (!map) return null;
-  if (x < 0 || x >= map.width || y < 0 || y >= map.height) return null;
-  return map.tileMapping[String(tileId)] || null;
-};
-```
-
-## Performance
-
-- **`memo()`** on frequently re-rendered components
-- **`useCallback`** for handlers passed as props
-- **`useRef`** for mutable values that don't need re-renders
-- **`useMemo`** for expensive computations
-- **Avoid inline object/array creation** in JSX props
-- **Visibility hashing** for fog-of-war optimization
 
 ## Anti-Patterns (FORBIDDEN)
 
@@ -273,89 +145,66 @@ getTileAt: (x, y) => {
 |---------|-----|
 | `any` type | Use proper types or `unknown` with guards |
 | `@ts-ignore` / `@ts-expect-error` | Fix the type error properly |
-| Inline styles (complex) | Use CSS modules |
-| Business logic in components | Extract to hooks or utils |
-| Deep imports (`../../..`) | Max `../` depth, refactor if deeper |
+| Inline TextStyle/BlurFilter | Recreated every render — memoize at module level |
 | React DOM in PixiViewport | Pixi handles ALL visual rendering |
+| Import `mapGeneratorCore` in main thread | CPU-intensive, blocks UI |
+| Deep imports (`../../../..`) | Max 3 levels, refactor if deeper |
+| Business logic in components | Extract to hooks or utils |
 
-## Code Quality Tools
+## Tile System
 
-### similarity-ts
-
-Detect duplicate code:
-
-```bash
-pnpm similarity              # Basic (threshold 0.7)
-pnpm similarity:types        # Include type analysis
-similarity-ts src/ --threshold 0.9 --print  # Stricter
-```
-
-| Similarity | Action |
-|------------|--------|
-| 100% | Extract to shared module immediately |
-| 80-99% | Strong refactoring candidate |
-| 70-79% | Review for abstraction |
-| <70% | Usually false positive |
-
-### knip
-
-Detect dead code (unused files, exports, dependencies):
-
-```bash
-pnpm deadcode           # Report unused code
-pnpm deadcode:fix       # Auto-remove unused exports
-```
-
-| Detection Target | Description |
-|------------------|-------------|
-| Unused files | Files not imported anywhere |
-| Unused exports | Exported but never imported |
-| Unused dependencies | Listed in package.json but unused |
-| Unused types | Type exports never referenced |
-
-Configuration: `knip.json`
-
-## Tile System Architecture
-
-**57 tile types** organized into 10 categories:
+**59 tile types** across 10 categories:
 
 | Category | Examples | Count |
 |----------|----------|-------|
 | Terrain | grass, water, sand, snow, lava | 9 |
 | Features | forest, mountain, hills, wall | 4 |
-| Water | shallow_water, deep_water, frozen_water | 3 |
 | Dungeon | dungeon_floor, dungeon_wall, stairs_* | 4 |
 | Doors | door, door_open, door_locked, door_secret | 4 |
 | Traps | trap_spike, trap_pit, pressure_plate, web | 4 |
 | Hazards | miasma, blight, toxic_marsh, cursed_ground | 6 |
 | Structures | pillar, altar_dark, brazier, wall_torch | 8 |
 | Decay | blood, bone_pile, rubble, lichen | 7 |
-| Special | chasm, ice, crystal, petrified_tree | 8 |
 
 **Texture Fallback**: 43 tiles reuse 14 base SVGs. See `utils/tileTextures.ts`.
 
-**To add a tile**:
-1. Add to `tiles/registry.ts` → `TILE_REGISTRY`
-2. Add glyph to `utils/tileGlyphs.ts`
-3. Either add SVG to `assets/tiles/` or add fallback to `tileTextures.ts`
+## Testing
 
-## Visibility Delta Optimization
+**Framework**: Vitest 4.0.16 (61 tests passing)
 
-Player visibility uses **incremental delta** instead of full recalculation:
+| Test File | Coverage |
+|-----------|----------|
+| `mapGeneratorCore.test.ts` | 56 tests — procedural generation, determinism |
+| `floorGenerator.test.ts` | 5 tests — dungeon connectivity, reachability |
 
-```typescript
-// gameStore.ts
-getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Position[] }
+```bash
+pnpm test        # Run once
+pnpm test:watch  # Watch mode
 ```
 
-For 1-tile moves, calculates only the ring difference. For large jumps, compares full sets.
+## Performance
 
-**Visibility Hash**: `playerX * 10000 + playerY` — stable value for memoization.
+- **`memo()`** on frequently re-rendered components (all Pixi layers)
+- **`useCallback`** for handlers passed as props
+- **`useMemo`** for expensive computations
+- **Visibility hashing** for FogOfWarLayer memoization
+- **Texture caching** — SVGs loaded once, reused
 
-## Dual-Layer Map Architecture
+## Code Quality
 
-Maps have **two layers**:
-- `layers[0]` = terrain (base tiles)
-- `layers[1]` = features (overlays, structures)
+| Tool | Purpose | Command |
+|------|---------|---------|
+| similarity-ts | Duplicate detection | `pnpm similarity` |
+| knip | Dead code detection | `pnpm deadcode` |
+| ESLint | Linting (flat config) | `pnpm lint` |
+| TypeScript | Type checking | `pnpm build` |
 
-Rendered as separate `TileLayer` and `FeatureLayer` in PixiViewport
+## Complexity Hotspots
+
+| File | Lines | Notes |
+|------|-------|-------|
+| `PixiViewport.tsx` | 991 | 16 layers — candidate for splitting |
+| `tileTextures.ts` | 480 | 168 imports — fallback chain |
+| `gameStore.ts` | 395 | Visibility delta, map caching |
+| `bspGenerator.ts` | 355 | BSP algorithm, Union-Find |
+| `tileInteractions.ts` | 323 | 35+ interactions, chain reactions |

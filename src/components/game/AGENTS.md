@@ -1,86 +1,70 @@
 # AGENTS.md - src/components/game
 
-**Generated**: 2026-01-12 | **Parent**: [../../../AGENTS.md](../../../AGENTS.md)
+**Generated**: 2026-01-13 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
-Pixi.js rendering layer for Vainholm. ALL visual game content rendered here.
+Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 
 ## Architecture
 
-**Dual Rendering System**:
-- `GameContainer.tsx` — React DOM (layout, events, debug, Zustand connection)
-- `PixiViewport.tsx` — Pixi.js WebGL (tiles, player, effects, weather)
+| File | Role |
+|------|------|
+| `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions |
+| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph (991 lines) |
+| `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) |
+| `animationTime.ts` | Global animation time state |
 
-## File Roles
-
-| File | Purpose |
-|------|---------|
-| `GameContainer.tsx` | Orchestrator: map init, keyboard/click handlers, state subscriptions |
-| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph |
-| `index.ts` | Barrel exports |
-| `LightLayer.tsx` | Light source rendering with flicker |
-
-## Pixi.js Setup
+## Pixi.js Setup (CRITICAL)
 
 ```typescript
 import { Application, extend, useTick } from '@pixi/react';
-import { Container, Graphics, Text, TextStyle, BlurFilter } from 'pixi.js';
+import { Container, Graphics, Text, Sprite, TextStyle, BlurFilter } from 'pixi.js';
 
-extend({ Container, Graphics, Text }); // MUST call before JSX usage
+extend({ Container, Graphics, Text, Sprite }); // MUST call before JSX
 ```
 
-## JSX Element Naming (CRITICAL)
-
-Use **lowercase prefix** for Pixi elements:
-- `<pixiContainer>` not `<Container>`
-- `<pixiGraphics>` not `<Graphics>`
-- `<pixiText>` not `<Text>`
-
-Required by `@pixi/react`.
+**JSX Element Naming**: Use lowercase prefix — `<pixiContainer>`, `<pixiGraphics>`, `<pixiText>`, `<pixiSprite>`.
 
 ## Layer Order (Z-Index)
 
-Rendered bottom-to-top:
+Bottom-to-top rendering:
 
 | # | Layer | Purpose |
 |---|-------|---------|
-| 1 | `TileLayer` | Non-animated terrain (grass, walls) |
-| 2 | `AnimatedTileLayer` | Animated tiles (water, lava, swamp) |
-| 3 | `FeatureLayer` | Feature overlay (structures, objects) |
-| 4 | `TransitionLayer` | Water-to-land edge transitions |
-| 5 | `ConnectedTileLayer` | Connected tiles (roads) |
-| 6 | `OverlayLayer` | Decorative overlays (flowers, grass) |
-| 7 | `ShadowLayer` | Time-of-day shadows |
-| 8 | `FogOfWarLayer` | Visibility/exploration overlay |
-| 9 | `PlayerLayer` | Player sprite |
-| 10 | `LightLayer` | Light sources (torches, player torch) |
-| 11 | `DayNightLayer` | Global time-of-day tint |
-| 12 | `RainLayer` | Weather: rain drops |
-| 13 | `FogLayer` | Weather: fog patches |
-| 14 | `FireflyLayer` | Ambient: night/dusk fireflies |
-| 15 | `AmbientDustLayer` | Floating dust particles |
-| 16 | `VignetteLayer` | Screen-edge darkening |
+| 1 | TileLayer | Non-animated terrain (grass, walls) |
+| 2 | AnimatedTileLayer | Animated tiles (water, lava, swamp) |
+| 3 | FeatureLayer | Feature overlay (structures, objects) |
+| 4 | TransitionLayer | Water-to-land edge transitions (8-direction) |
+| 5 | ConnectedTileLayer | Connected tiles (roads, 16-state) |
+| 6 | OverlayLayer | Decorative overlays (flowers, grass) |
+| 7 | ShadowLayer | Time-of-day shadows |
+| 8 | FogOfWarLayer | Visibility/exploration overlay |
+| 9 | PlayerLayer | Player sprite |
+| 10 | LightLayer | Light sources (torches, player torch, 3 sub-layers) |
+| 11 | DayNightLayer | Global time-of-day tint |
+| 12 | RainLayer | Weather: rain drops |
+| 13 | FogLayer | Weather: fog patches |
+| 14 | FireflyLayer | Ambient: night/dusk fireflies |
+| 15 | AmbientDustLayer | Floating dust particles |
+| 16 | VignetteLayer | Screen-edge darkening |
 
 ## Graphics Draw Pattern
 
 ```typescript
 <pixiGraphics
-  draw={(g) => {
-    g.clear();           // ALWAYS clear first
+  draw={useCallback((g) => {
+    g.clear();           // ALWAYS first
     g.rect(x, y, w, h);
     g.fill({ color: 0xffffff, alpha: 0.5 });
-  }}
+  }, [dependencies])}
 />
 ```
 
-**Rules**:
-- `g.clear()` MUST be first
-- Wrap draw in `useCallback` for performance
-- Use `filters` prop for blur effects
+**Rules**: `g.clear()` MUST be first. Wrap in `useCallback`.
 
-## Text/Filter Memoization (CRITICAL)
+## Filter/Style Memoization (CRITICAL)
 
 ```typescript
-// DO: Create once, reuse
+// DO: Module-level, created once
 const SHARED_TEXT_STYLE = new TextStyle({
   fontFamily: 'Courier New, monospace',
   fontSize: TILE_SIZE,
@@ -92,7 +76,7 @@ const BLUR_FILTER = (() => {
   return [filter];
 })();
 
-// DON'T: Create inline (recreates every render)
+// DON'T: Inline (recreates every render)
 <pixiText style={new TextStyle({ ... })} />  // BAD
 ```
 
@@ -102,72 +86,47 @@ const BLUR_FILTER = (() => {
 const [animationTime, setAnimationTime] = useState(0);
 const startTimeRef = useRef(0);
 
-useEffect(() => {
-  startTimeRef.current = Date.now();
-}, []);
+useEffect(() => { startTimeRef.current = Date.now(); }, []);
 
 useTick(() => {
   setAnimationTime(Date.now() - startTimeRef.current);
 });
 ```
 
-Pass `animationTime` to all animated layers.
-
-## Coordinate System
-
-- **Tile coords**: `(x, y)` in map space (0 to MAP_WIDTH/HEIGHT)
-- **Screen coords**: `(screenX, screenY)` in pixels
-- **Conversion**: `screenX = (tileX - viewport.startX) * TILE_SIZE`
-
-## Torch Flicker
-
-```typescript
-function getTorchFlicker(time: number) {
-  const t1 = Math.sin(time * 0.0015) * 0.5 + 0.5;
-  const t2 = Math.sin(time * 0.002 + 1.5) * 0.5 + 0.5;
-  return t1 * 0.6 + t2 * 0.4; // Multi-frequency blend
-}
-```
-
 ## Visibility Hashing
 
+FogOfWarLayer memoization key:
 ```typescript
-// gameStore.ts
 visibilityHash: playerX * 10000 + playerY
+```
 
-// PixiViewport.tsx - FogOfWarLayer only re-renders on hash change
+Only re-renders on player position change.
+
+## Coordinate Conversion
+
+```typescript
+screenX = (tileX - viewport.startX) * TILE_SIZE
+screenY = (tileY - viewport.startY) * TILE_SIZE
 ```
 
 ## Blur Filter Strengths
 
 | Filter | Strength | Use |
 |--------|----------|-----|
-| Ambient | 25px | Soft torch outer glow |
-| Torch | 12px | Bright torch core |
+| Ambient light | 25px | Soft torch outer glow |
+| Torch core | 12px | Bright torch center |
 | Fog | 30px | Weather fog patches |
 | Firefly | 4px | Subtle ambient |
 
-## Complexity Hotspots (PixiViewport.tsx)
+## Complexity Hotspots
 
 | Component | Lines | Complexity |
 |-----------|-------|------------|
-| TransitionLayer | 224-302 | 8-directional neighbor checking |
-| ConnectedTileLayer | 308-379 | 16-state connection detection |
-| OverlayLayer | 397-459 | Deterministic spatial hashing |
-| ShadowLayer | 560-610 | Time-of-day shadow casting |
-| WeatherLayers | 680-790 | Rain/fog/firefly animations |
-
-## useShallow Optimization
-
-GameContainer uses Zustand's `useShallow` for selective state subscriptions:
-
-```typescript
-const { player, map, weather } = useGameStore(
-  useShallow((state) => ({ player: state.player, map: state.map, weather: state.weather }))
-);
-```
-
-Prevents re-renders when unrelated store fields change.
+| TransitionLayer | 80 | 8-directional neighbor checking |
+| ConnectedTileLayer | 71 | 16-state connection detection |
+| OverlayLayer | 62 | Deterministic spatial hashing |
+| ShadowLayer | 50 | Time-of-day shadow casting |
+| WeatherLayers | 110 | Rain/fog/firefly animations |
 
 ## Anti-Patterns
 
@@ -176,6 +135,5 @@ Prevents re-renders when unrelated store fields change.
 | React DOM elements in PixiViewport | Pixi handles ALL visuals |
 | Forget `g.clear()` in draw | Graphics accumulate |
 | Inline TextStyle/BlurFilter | Recreated every render |
-| Mix `<pixiText>` with `<Text>` | Inconsistent, breaks |
+| `<Text>` instead of `<pixiText>` | Breaks JSX resolution |
 | Skip `extend()` call | JSX elements won't work |
-| Direct layer imports | Layers are internal to PixiViewport |
