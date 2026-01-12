@@ -55,6 +55,9 @@ src/
 ├── tiles/             # Tile registry: 57 types, ID mapping, definitions
 ├── utils/             # Map generation, constants, glyphs (see utils/AGENTS.md)
 └── assets/tiles/      # SVG textures: terrain, connected, transitions, overlays, structures
+
+docs/
+└── GAME_DESIGN.md     # World setting, dungeon structure, design decisions
 ```
 
 ## Code Map (Key Symbols)
