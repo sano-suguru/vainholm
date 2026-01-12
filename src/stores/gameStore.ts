@@ -13,6 +13,7 @@ interface PlayerState {
 
 export type WeatherType = 'clear' | 'rain' | 'fog';
 export type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
+export type MapType = 'world' | 'dungeon';
 
 const VISION_RADIUS = 8;
 const VISION_RADIUS_SQ = VISION_RADIUS * VISION_RADIUS;
@@ -97,13 +98,18 @@ interface GameStore {
   tick: number;
   weather: WeatherType;
   timeOfDay: TimeOfDay;
+  currentMapType: MapType;
   exploredTiles: Set<string>;
   visibleTiles: Set<string>;
   visibilityHash: number;
   lightSources: LightSource[];
   lastInteractionEffects: TriggerEffect[];
+  worldMapCache: MapData | null;
+  worldExploredTilesCache: Set<string> | null;
+  dungeonEntrancePosition: Position | null;
 
-  setMap: (map: MapData, seed: number) => void;
+  setMap: (map: MapData, seed: number, entryPoint?: Position) => void;
+  setMapType: (mapType: MapType) => void;
   movePlayer: (dx: number, dy: number) => void;
   setPlayerPosition: (position: Position) => void;
   toggleDebugMode: () => void;
@@ -118,6 +124,8 @@ interface GameStore {
   removeLightSource: (id: string) => void;
   generateTileLights: () => void;
   clearInteractionEffects: () => void;
+  cacheWorldMap: () => void;
+  restoreWorldMap: () => Position | null;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -133,29 +141,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tick: 0,
   weather: 'clear',
   timeOfDay: 'day',
+  currentMapType: 'world',
   exploredTiles: new Set<string>(),
   visibleTiles: new Set<string>(),
   visibilityHash: 0,
   lightSources: [],
   lastInteractionEffects: [],
+  worldMapCache: null,
+  worldExploredTilesCache: null,
+  dungeonEntrancePosition: null,
 
-  setMap: (map, seed) => {
+  setMap: (map, seed, entryPoint) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
     const featureLayer = map.layers.find((l) => l.name === 'features') ?? null;
-    const spawnVisible = getVisibleTiles(map.spawnPoint.x, map.spawnPoint.y);
+    const spawnAt = entryPoint ?? map.spawnPoint;
+    const spawnVisible = getVisibleTiles(spawnAt.x, spawnAt.y);
     set({
       map,
       terrainLayer,
       featureLayer,
       mapSeed: seed,
       player: {
-        position: { ...map.spawnPoint },
+        position: { ...spawnAt },
         facing: 'down',
       },
       visibleTiles: spawnVisible,
       exploredTiles: new Set(spawnVisible),
-      visibilityHash: map.spawnPoint.x * 10000 + map.spawnPoint.y,
+      visibilityHash: spawnAt.x * 10000 + spawnAt.y,
     });
+  },
+
+  setMapType: (mapType) => {
+    set({ currentMapType: mapType });
   },
 
   movePlayer: (dx, dy) => {
@@ -331,5 +348,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   clearInteractionEffects: () => {
     set({ lastInteractionEffects: [] });
+  },
+
+  cacheWorldMap: () => {
+    const { map, exploredTiles } = get();
+    if (map) {
+      set({
+        worldMapCache: map,
+        worldExploredTilesCache: new Set(exploredTiles),
+        dungeonEntrancePosition: map.dungeonEntrance ?? null,
+      });
+    }
+  },
+
+  restoreWorldMap: () => {
+    const { worldMapCache, worldExploredTilesCache, dungeonEntrancePosition, mapSeed } = get();
+    if (!worldMapCache) return null;
+
+    const terrainLayer = worldMapCache.layers.find((l) => l.name === 'terrain') ?? null;
+    const featureLayer = worldMapCache.layers.find((l) => l.name === 'features') ?? null;
+    const returnPosition = dungeonEntrancePosition ?? worldMapCache.spawnPoint;
+    const returnVisible = getVisibleTiles(returnPosition.x, returnPosition.y);
+
+    const restoredExplored = worldExploredTilesCache
+      ? new Set([...worldExploredTilesCache, ...returnVisible])
+      : new Set(returnVisible);
+
+    set({
+      map: worldMapCache,
+      terrainLayer,
+      featureLayer,
+      mapSeed,
+      player: { position: { ...returnPosition }, facing: 'down' },
+      visibleTiles: returnVisible,
+      exploredTiles: restoredExplored,
+      visibilityHash: returnPosition.x * 10000 + returnPosition.y,
+      worldMapCache: null,
+      worldExploredTilesCache: null,
+    });
+
+    return returnPosition;
   },
 }));

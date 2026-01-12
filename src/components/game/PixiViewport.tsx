@@ -979,10 +979,9 @@ const DayNightLayer = memo(function DayNightLayer({
   return <pixiGraphics draw={drawDayNight} />;
 });
 
-interface GameSceneProps extends Omit<PixiViewportProps, 'visibilityHash'> {
+interface GameSceneProps extends PixiViewportProps {
   width: number;
   height: number;
-  lightSources: LightSource[];
 }
 
 function GameScene({
@@ -991,6 +990,7 @@ function GameScene({
   viewport,
   weather,
   timeOfDay,
+  visibilityHash,
   isTileVisible,
   isTileExplored,
   width,
@@ -1025,6 +1025,7 @@ function GameScene({
       <ShadowLayer map={map} viewport={viewport} timeOfDay={timeOfDay} />
       <GlowLayer map={map} viewport={viewport} animationTime={animationTime} />
       <FogOfWarLayer 
+        key={visibilityHash}
         viewport={viewport} 
         isTileVisible={isTileVisible} 
         isTileExplored={isTileExplored} 
@@ -1055,6 +1056,7 @@ export function PixiViewport({
   viewport,
   weather,
   timeOfDay,
+  visibilityHash,
   isTileVisible,
   isTileExplored,
   lightSources,
@@ -1077,6 +1079,7 @@ export function PixiViewport({
         viewport={viewport}
         weather={weather}
         timeOfDay={timeOfDay}
+        visibilityHash={visibilityHash}
         isTileVisible={isTileVisible}
         isTileExplored={isTileExplored}
         width={width}

@@ -26,6 +26,7 @@ export interface MapData {
   layers: MapLayer[];
   tileMapping: Record<string, TileType>;
   spawnPoint: Position;
+  dungeonEntrance?: Position;
 }
 
 export type Direction = 'up' | 'down' | 'left' | 'right';

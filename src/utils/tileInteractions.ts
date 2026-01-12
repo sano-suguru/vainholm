@@ -9,7 +9,7 @@ export type InteractionTrigger =
   | 'ice'
   | 'explosion';
 
-export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain';
+export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain' | 'descend' | 'ascend' | 'enter_dungeon' | 'exit_dungeon';
 
 export interface TriggerEffect {
   type: EffectType;
@@ -29,6 +29,42 @@ interface TriggerInteraction {
 }
 
 const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
+  {
+    tile: 'stairs_down',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'descend' },
+      { type: 'message', message: 'You descend deeper into the dungeon.' },
+    ],
+  },
+  {
+    tile: 'stairs_up',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'ascend' },
+      { type: 'message', message: 'You ascend to the upper floor.' },
+    ],
+  },
+  {
+    tile: 'dungeon_entrance',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'enter_dungeon' },
+      { type: 'message', message: 'You descend into the ancient depths...' },
+    ],
+  },
+  {
+    tile: 'dungeon_exit',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'exit_dungeon' },
+      { type: 'message', message: 'You emerge into daylight.' },
+    ],
+  },
   {
     tile: 'trap_spike',
     trigger: 'player_step',

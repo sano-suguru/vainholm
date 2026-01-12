@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Base terrain (ruins-like ground) -->
+  <rect width="16" height="16" fill="#1e1c18"/>
+  
+  <!-- Stone archway frame -->
+  <rect x="2" y="0" width="3" height="10" fill="#2a2826"/>
+  <rect x="11" y="0" width="3" height="10" fill="#2a2826"/>
+  <rect x="2" y="0" width="12" height="3" fill="#2a2826"/>
+  
+  <!-- Arch keystone -->
+  <rect x="6" y="0" width="4" height="2" fill="#3a3836"/>
+  
+  <!-- Pillar details -->
+  <rect x="2" y="0" width="1" height="10" fill="#1a1816"/>
+  <rect x="14" y="0" width="1" height="10" fill="#1a1816"/>
+  <rect x="3" y="1" width="1" height="1" fill="#3a3836"/>
+  <rect x="12" y="1" width="1" height="1" fill="#3a3836"/>
+  
+  <!-- Dark entrance void -->
+  <rect x="5" y="3" width="6" height="7" fill="#0a0908"/>
+  <rect x="6" y="4" width="4" height="5" fill="#050404"/>
+  
+  <!-- Descending stairs visible in darkness -->
+  <rect x="5" y="6" width="6" height="1" fill="#141210"/>
+  <rect x="5" y="8" width="6" height="1" fill="#0e0c0a"/>
+  
+  <!-- Crumbling stone detail -->
+  <rect x="0" y="9" width="2" height="2" fill="#242220"/>
+  <rect x="14" y="10" width="2" height="1" fill="#242220"/>
+  <rect x="1" y="12" width="1" height="1" fill="#2a2826"/>
+  
+  <!-- Ground rubble -->
+  <rect x="0" y="14" width="3" height="2" fill="#201e1a"/>
+  <rect x="13" y="14" width="3" height="2" fill="#201e1a"/>
+  <rect x="3" y="15" width="1" height="1" fill="#2a2826"/>
+  <rect x="12" y="15" width="1" height="1" fill="#2a2826"/>
+  
+  <!-- Ambient dust/age -->
+  <rect x="7" y="2" width="1" height="1" fill="#4a4642"/>
+  <rect x="4" y="5" width="1" height="1" fill="#181614"/>
+  <rect x="11" y="6" width="1" height="1" fill="#181614"/>
+</svg>

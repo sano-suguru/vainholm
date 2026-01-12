@@ -21,6 +21,8 @@ import ruinsUrl from '../assets/tiles/terrain/ruins.svg';
 import chasmUrl from '../assets/tiles/terrain/chasm.svg';
 import stairsDownUrl from '../assets/tiles/terrain/stairs_down.svg';
 import stairsUpUrl from '../assets/tiles/terrain/stairs_up.svg';
+import dungeonEntranceUrl from '../assets/tiles/terrain/dungeon_entrance.svg';
+import dungeonExitUrl from '../assets/tiles/terrain/dungeon_exit.svg';
 
 // New static tiles - doors and traps
 import doorUrl from '../assets/tiles/terrain/door.svg';
@@ -185,6 +187,8 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   chasm: chasmUrl,
   stairs_down: stairsDownUrl,
   stairs_up: stairsUpUrl,
+  dungeon_entrance: dungeonEntranceUrl,
+  dungeon_exit: dungeonExitUrl,
   // Doors and traps
   door: doorUrl,
   door_open: doorOpenUrl,

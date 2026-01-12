@@ -37,6 +37,11 @@ const TILE_GLOW_CONFIG: Partial<Record<TileType, TileGlowData>> = {
   door_locked: 0xaa8800,
   cursed_ground: 0x662288,
   altar_dark: 0x6600aa,
+  dungeon_entrance: {
+    frames: [{ glow: 0x44ff66 }, { glow: 0x55ff77 }, { glow: 0x33ee55 }],
+    frameInterval: 400,
+  },
+  dungeon_exit: 0xaaddff,
 };
 
 export function getGlowAtTime(tileType: TileType, time: number, x: number, y: number): number | null {

@@ -7,6 +7,19 @@ interface UseKeyboardOptions {
   moveDelay?: number;
 }
 
+interface Direction {
+  dx: number;
+  dy: number;
+}
+
+function getDirectionFromKeys(pressedKeys: Set<string>): Direction {
+  if (KEY_BINDINGS.up.some((k) => pressedKeys.has(k))) return { dx: 0, dy: -1 };
+  if (KEY_BINDINGS.down.some((k) => pressedKeys.has(k))) return { dx: 0, dy: 1 };
+  if (KEY_BINDINGS.left.some((k) => pressedKeys.has(k))) return { dx: -1, dy: 0 };
+  if (KEY_BINDINGS.right.some((k) => pressedKeys.has(k))) return { dx: 1, dy: 0 };
+  return { dx: 0, dy: 0 };
+}
+
 export function useKeyboard({
   onMove,
   onDebugToggle,
@@ -14,6 +27,16 @@ export function useKeyboard({
 }: UseKeyboardOptions) {
   const pressedKeys = useRef<Set<string>>(new Set());
   const lastMoveTime = useRef<number>(0);
+
+  const tryMove = useCallback((now: number) => {
+    if (now - lastMoveTime.current < moveDelay) return;
+
+    const { dx, dy } = getDirectionFromKeys(pressedKeys.current);
+    if (dx !== 0 || dy !== 0) {
+      lastMoveTime.current = now;
+      onMove(dx, dy);
+    }
+  }, [onMove, moveDelay]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.repeat) return;
@@ -25,22 +48,8 @@ export function useKeyboard({
       return;
     }
 
-    const now = Date.now();
-    if (now - lastMoveTime.current < moveDelay) return;
-
-    let dx = 0;
-    let dy = 0;
-
-    if (KEY_BINDINGS.up.some((k) => pressedKeys.current.has(k))) dy = -1;
-    else if (KEY_BINDINGS.down.some((k) => pressedKeys.current.has(k))) dy = 1;
-    else if (KEY_BINDINGS.left.some((k) => pressedKeys.current.has(k))) dx = -1;
-    else if (KEY_BINDINGS.right.some((k) => pressedKeys.current.has(k))) dx = 1;
-
-    if (dx !== 0 || dy !== 0) {
-      lastMoveTime.current = now;
-      onMove(dx, dy);
-    }
-  }, [onMove, onDebugToggle, moveDelay]);
+    tryMove(Date.now());
+  }, [onDebugToggle, tryMove]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     pressedKeys.current.delete(e.code);
@@ -58,23 +67,9 @@ export function useKeyboard({
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      const now = Date.now();
-      if (now - lastMoveTime.current < moveDelay) return;
-
-      let dx = 0;
-      let dy = 0;
-
-      if (KEY_BINDINGS.up.some((k) => pressedKeys.current.has(k))) dy = -1;
-      else if (KEY_BINDINGS.down.some((k) => pressedKeys.current.has(k))) dy = 1;
-      else if (KEY_BINDINGS.left.some((k) => pressedKeys.current.has(k))) dx = -1;
-      else if (KEY_BINDINGS.right.some((k) => pressedKeys.current.has(k))) dx = 1;
-
-      if (dx !== 0 || dy !== 0) {
-        lastMoveTime.current = now;
-        onMove(dx, dy);
-      }
+      tryMove(Date.now());
     }, 50);
 
     return () => clearInterval(intervalId);
-  }, [onMove, moveDelay]);
+  }, [tryMove]);
 }

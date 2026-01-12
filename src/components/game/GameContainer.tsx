@@ -1,8 +1,10 @@
 import { useEffect, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../stores/gameStore';
+import { useDungeonStore } from '../../dungeon';
 import { useViewport } from '../../hooks/useViewport';
 import { useKeyboard } from '../../hooks/useKeyboard';
+import { useEffectProcessor } from '../../hooks/useEffectProcessor';
 import { usePerformanceMetrics, useStatsOverlay } from '../../hooks/usePerformanceMetrics';
 import { generateMapAsync, terminateWorker } from '../../utils/generateMapAsync';
 import { clearColorNoiseCache } from '../../utils/colorNoiseCache';
@@ -28,12 +30,20 @@ export function GameContainer() {
   const debugMode = useGameStore((state) => state.debugMode);
 
   const setMap = useGameStore((state) => state.setMap);
+  const setMapType = useGameStore((state) => state.setMapType);
   const movePlayer = useGameStore((state) => state.movePlayer);
   const toggleDebugMode = useGameStore((state) => state.toggleDebugMode);
   const getTileAt = useGameStore((state) => state.getTileAt);
   const isTileVisible = useGameStore((state) => state.isTileVisible);
   const isTileExplored = useGameStore((state) => state.isTileExplored);
   const generateTileLights = useGameStore((state) => state.generateTileLights);
+
+  const { isInDungeon, getCurrentFloor } = useDungeonStore(
+    useShallow((state) => ({
+      isInDungeon: state.isInDungeon,
+      getCurrentFloor: state.getCurrentFloor,
+    }))
+  );
 
   const { metrics, updateMetrics } = usePerformanceMetrics(debugMode);
   
@@ -43,12 +53,17 @@ export function GameContainer() {
     clearColorNoiseCache();
     const seed = getMapSeed();
     updateUrlWithSeed(seed);
+
+    setMapType('world');
     generateMapAsync(MAP_WIDTH, MAP_HEIGHT, seed).then((mapData) => {
       setMap(mapData, seed);
       generateTileLights();
     });
+
     return () => terminateWorker();
-  }, [setMap, generateTileLights]);
+  }, [setMap, setMapType, generateTileLights]);
+
+  useEffectProcessor();
 
   useEffect(() => {
     let animationId: number;
@@ -108,6 +123,10 @@ export function GameContainer() {
   }
 
   const currentTile = getTileAt(player.position.x, player.position.y);
+  const currentFloor = getCurrentFloor();
+  const floorInfo = isInDungeon && currentFloor 
+    ? `${currentFloor.map.name} (${currentFloor.level}F)`
+    : undefined;
 
   return (
     <div className={styles.gameContainer}>
@@ -134,6 +153,7 @@ export function GameContainer() {
           currentTile={currentTile}
           metrics={metrics}
           mapSeed={mapSeed}
+          floorInfo={floorInfo}
         />
       )}
     </div>

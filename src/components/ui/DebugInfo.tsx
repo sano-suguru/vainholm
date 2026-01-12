@@ -9,6 +9,7 @@ interface DebugInfoProps {
   currentTile: TileType | null;
   metrics: PerformanceMetrics;
   mapSeed: number;
+  floorInfo?: string;
 }
 
 export const DebugInfo = memo(function DebugInfo({
@@ -17,6 +18,7 @@ export const DebugInfo = memo(function DebugInfo({
   currentTile,
   metrics,
   mapSeed,
+  floorInfo,
 }: DebugInfoProps) {
   const fpsColor = metrics.fps >= 55 ? '#6a6' : metrics.fps >= 30 ? '#aa6' : '#a66';
   const frameTimeColor = metrics.frameTime <= 18 ? '#6a6' : metrics.frameTime <= 33 ? '#aa6' : '#a66';
@@ -27,6 +29,7 @@ export const DebugInfo = memo(function DebugInfo({
       <p>Viewport: ({viewport.startX}, {viewport.startY}) - ({viewport.endX}, {viewport.endY})</p>
       <p>Tile: {currentTile || 'none'}</p>
       <p>Seed: {mapSeed}</p>
+      {floorInfo && <p>Floor: {floorInfo}</p>}
       <hr className={styles.debugDivider} />
       <p className={styles.debugMetric}>
         <span>FPS:</span>

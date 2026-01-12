@@ -65,6 +65,8 @@ const TILE_REGISTRY = [
   { id: 54, type: 'salt_flat', walkable: true, movementCost: 1, name: 'Salt Flat', char: ':' },
   { id: 55, type: 'petrified_tree', walkable: false, movementCost: Infinity, name: 'Petrified Tree', char: 'T' },
   { id: 56, type: 'withered_flowers', walkable: true, movementCost: 1, name: 'Withered Flowers', char: '"' },
+  { id: 57, type: 'dungeon_entrance', walkable: true, movementCost: 1, name: 'Dungeon Entrance', char: '>' },
+  { id: 58, type: 'dungeon_exit', walkable: true, movementCost: 1, name: 'Dungeon Exit', char: '<' },
 ] as const satisfies readonly TileEntry[];
 
 export type TileType = (typeof TILE_REGISTRY)[number]['type'];
