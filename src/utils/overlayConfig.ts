@@ -1,6 +1,6 @@
 import type { TileType } from '../types';
 
-export type OverlayId = 'flowers_1' | 'flowers_2' | 'pebbles_1' | 'pebbles_2' | 'leaves' | 'tall_grass';
+export type OverlayId = 'flowers_1' | 'flowers_2' | 'pebbles_1' | 'pebbles_2' | 'leaves' | 'tall_grass' | 'dust_pile' | 'cobweb';
 
 interface OverlayRule {
   type: OverlayId;
@@ -52,6 +52,10 @@ const OVERLAY_RULES: Partial<Record<TileType, OverlayRuleSet>> = {
     { type: 'pebbles_1', weight: 4 },
     { type: 'pebbles_2', weight: 4 },
   ]),
+  dungeon_floor: createRuleSet([
+    { type: 'dust_pile', weight: 6 },
+    { type: 'cobweb', weight: 4 },
+  ]),
 };
 
 const OVERLAY_SPAWN_CHANCE: Partial<Record<TileType, number>> = {
@@ -62,6 +66,7 @@ const OVERLAY_SPAWN_CHANCE: Partial<Record<TileType, number>> = {
   swamp: 0.06,
   sand: 0.05,
   hills: 0.04,
+  dungeon_floor: 0.06,
 };
 
 export function selectOverlay(

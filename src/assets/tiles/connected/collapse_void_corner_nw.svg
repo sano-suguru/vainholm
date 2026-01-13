@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- NW corner void (floor to SE) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- SE floor area with edge -->
+  <rect x="4" y="4" width="12" height="12" fill="#1a1c24"/>
+  <rect x="5" y="5" width="11" height="11" fill="#151820"/>
+  
+  <!-- Top edge -->
+  <rect x="5" y="3" width="11" height="1" fill="#252830"/>
+  <rect x="6" y="2" width="2" height="1" fill="#1a1e28"/>
+  <rect x="10" y="2" width="2" height="1" fill="#202430"/>
+  <rect x="14" y="2" width="2" height="1" fill="#1a1e28"/>
+  <rect x="5" y="2" width="1" height="2" fill="#0a0a0c"/>
+  <rect x="9" y="2" width="1" height="2" fill="#0a0a0c"/>
+  <rect x="13" y="2" width="1" height="2" fill="#0a0a0c"/>
+  
+  <!-- Left edge -->
+  <rect x="4" y="4" width="1" height="11" fill="#252830"/>
+  <rect x="3" y="5" width="1" height="2" fill="#1a1e28"/>
+  <rect x="3" y="9" width="1" height="2" fill="#202430"/>
+  <rect x="3" y="13" width="1" height="2" fill="#1a1e28"/>
+  <rect x="3" y="4" width="2" height="1" fill="#0a0a0c"/>
+  <rect x="3" y="8" width="2" height="1" fill="#0a0a0c"/>
+  <rect x="3" y="12" width="2" height="1" fill="#0a0a0c"/>
+  
+  <!-- Corner -->
+  <rect x="4" y="3" width="1" height="1" fill="#202430"/>
+  <rect x="4" y="2" width="2" height="1" fill="#1a1e28"/>
+  <rect x="3" y="3" width="1" height="2" fill="#1a1e28"/>
+</svg>

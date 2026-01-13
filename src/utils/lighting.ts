@@ -70,13 +70,13 @@ export const LIGHT_PRESETS: Record<string, Omit<LightSource, 'id' | 'position'>>
   },
   
   wallTorch: {
-    color: 0xff9922,
-    minRadius: 3,
-    maxRadius: 5,
-    intensity: 0.3,
-    colorVariance: 0.1,
-    flickerSpeed: 1.1,
-    flickerAmount: 0.18,
+    color: 0xddaa66,
+    minRadius: 4,
+    maxRadius: 6,
+    intensity: 0.4,
+    colorVariance: 0.06,
+    flickerSpeed: 0.7,
+    flickerAmount: 0.12,
   },
   
   mushroom: {
@@ -100,13 +100,13 @@ export const LIGHT_PRESETS: Record<string, Omit<LightSource, 'id' | 'position'>>
   },
 
   brazier: {
-    color: 0xff6622,
-    minRadius: 4,
-    maxRadius: 7,
-    intensity: 0.4,
-    colorVariance: 0.15,
-    flickerSpeed: 1.0,
-    flickerAmount: 0.22,
+    color: 0xeebb55,
+    minRadius: 5,
+    maxRadius: 8,
+    intensity: 0.5,
+    colorVariance: 0.08,
+    flickerSpeed: 0.6,
+    flickerAmount: 0.15,
   },
 
   crystal: {
@@ -120,13 +120,13 @@ export const LIGHT_PRESETS: Record<string, Omit<LightSource, 'id' | 'position'>>
   },
 
   altarDark: {
-    color: 0x8822aa,
-    minRadius: 2,
-    maxRadius: 4,
+    color: 0x8833bb,
+    minRadius: 1.5,
+    maxRadius: 2.5,
     intensity: 0.2,
-    colorVariance: 0.12,
-    flickerSpeed: 0.4,
-    flickerAmount: 0.15,
+    colorVariance: 0.1,
+    flickerSpeed: 0.25,
+    flickerAmount: 0.12,
   },
 
   cursedGround: {

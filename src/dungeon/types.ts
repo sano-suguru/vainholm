@@ -22,6 +22,16 @@ export interface BSPConfig {
   corridorWidth: number;
   allowLCorridors: boolean;
   roomMargin: number;
+  /** Maximum distance between rooms to consider for shortcuts (default: 15) */
+  shortcutMaxDistance?: number;
+  /** Probability of creating a shortcut between eligible rooms (default: 0.3) */
+  shortcutChance?: number;
+  /** Maximum number of shortcut corridors to add (default: 2) */
+  maxShortcuts?: number;
+  /** Probability of adding extra bends to corridors (default: 0) */
+  extraBendChance?: number;
+  /** Maximum extra bends per corridor (default: 1) */
+  maxExtraBends?: number;
 }
 
 export interface FloorSizeConfig {
@@ -39,6 +49,8 @@ export interface TrapConfig {
   trapChance: number;
   trapsPerRoom: number;
   trapTiles: TileWeights;
+  distanceScaling?: boolean;
+  maxDistanceMultiplier?: number;
 }
 
 export interface LightingConfig {
@@ -50,6 +62,8 @@ export interface LightingConfig {
 export interface HazardConfig {
   hazardChance: number;
   hazardTiles: TileWeights;
+  distanceScaling?: boolean;
+  maxDistanceMultiplier?: number;
 }
 
 /**
@@ -91,6 +105,8 @@ export interface RegionConfig {
   lightingConfig?: LightingConfig;
   hazardConfig?: HazardConfig;
   doorConfig?: DoorConfig;
+  multiTileConfig?: MultiTileConfig;
+  collapseConfig?: CollapseConfig;
 }
 
 export type RoomType = 'entrance' | 'exit' | 'boss' | 'treasure';
@@ -110,6 +126,43 @@ export interface Corridor {
   end: Position;
   width: number;
   bend?: Position;
+  bends?: Position[];
+}
+
+export type MultiTileObjectType = 'fallen_pillar' | 'broken_statue' | 'collapsed_arch';
+
+export interface MultiTileObjectDef {
+  type: MultiTileObjectType;
+  width: number;
+  height: number;
+  weight: number;
+}
+
+export interface MultiTileObject {
+  id: string;
+  type: MultiTileObjectType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface MultiTileConfig {
+  objectChance: number;
+  maxObjectsPerFloor: number;
+  objects: MultiTileObjectDef[];
+}
+
+export interface CollapseConfig {
+  collapseChance: number;
+  minCollapseSize: number;
+  maxCollapseSize: number;
+  maxCollapseZones: number;
+  crackedFloorRadius: number;
+  floorScaling?: boolean;
+  maxFloorMultiplier?: number;
+  /** 壁も崩落対象にするか（中心=穴、縁=瓦礫） */
+  affectWalls?: boolean;
 }
 
 export interface DungeonFloor {
@@ -121,6 +174,7 @@ export interface DungeonFloor {
   stairsDown: Position | null;
   rooms: Room[];
   corridors: Corridor[];
+  multiTileObjects: MultiTileObject[];
   visited: boolean;
   seed: number;
 }

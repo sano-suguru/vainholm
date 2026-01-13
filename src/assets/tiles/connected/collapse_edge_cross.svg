@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Cross collapse edge (connects all 4 directions) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Central floor cross -->
+  <rect x="4" y="0" width="8" height="16" fill="#151820"/>
+  <rect x="0" y="4" width="16" height="8" fill="#151820"/>
+  <rect x="5" y="0" width="6" height="16" fill="#1a1c24"/>
+  <rect x="0" y="5" width="16" height="6" fill="#1a1c24"/>
+  
+  <!-- Corner void areas with jagged edges -->
+  <!-- Top-left void -->
+  <rect x="0" y="0" width="4" height="4" fill="#020203"/>
+  <rect x="3" y="3" width="1" height="1" fill="#252830"/>
+  <rect x="2" y="3" width="1" height="1" fill="#202430"/>
+  <rect x="3" y="2" width="1" height="1" fill="#202430"/>
+  
+  <!-- Top-right void -->
+  <rect x="12" y="0" width="4" height="4" fill="#020203"/>
+  <rect x="12" y="3" width="1" height="1" fill="#252830"/>
+  <rect x="13" y="3" width="1" height="1" fill="#202430"/>
+  <rect x="12" y="2" width="1" height="1" fill="#202430"/>
+  
+  <!-- Bottom-left void -->
+  <rect x="0" y="12" width="4" height="4" fill="#020203"/>
+  <rect x="3" y="12" width="1" height="1" fill="#252830"/>
+  <rect x="2" y="12" width="1" height="1" fill="#202430"/>
+  <rect x="3" y="13" width="1" height="1" fill="#202430"/>
+  
+  <!-- Bottom-right void -->
+  <rect x="12" y="12" width="4" height="4" fill="#020203"/>
+  <rect x="12" y="12" width="1" height="1" fill="#252830"/>
+  <rect x="13" y="12" width="1" height="1" fill="#202430"/>
+  <rect x="12" y="13" width="1" height="1" fill="#202430"/>
+  
+  <!-- Shadow lines -->
+  <rect x="3" y="0" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="12" y="0" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="3" y="12" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="12" y="12" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="0" y="3" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="12" y="3" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="0" y="12" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="12" y="12" width="4" height="1" fill="#0a0a0c"/>
+  
+  <!-- Floor details -->
+  <rect x="7" y="7" width="2" height="2" fill="#0c0e14"/>
+</svg>

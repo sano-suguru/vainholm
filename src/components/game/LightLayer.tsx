@@ -18,6 +18,11 @@ const DARKNESS_BLUR = (() => {
   return [filter];
 })();
 
+const GLOW_BLUR = (() => {
+  const filter = new BlurFilter({ strength: 32, quality: 2 });
+  return [filter];
+})();
+
 const CELL_SIZE = TILE_SIZE;
 
 interface LightLayerProps {
@@ -129,5 +134,34 @@ export const LightLayer = memo(function LightLayer({
     [allVisibleLights, viewport.startX, viewport.startY, width, height]
   );
 
-  return <pixiGraphics filters={DARKNESS_BLUR} draw={drawDarkness} />;
+  const drawGlow = useCallback(
+    (g: Graphics) => {
+      g.clear();
+      
+      if (allVisibleLights.length === 0) return;
+
+      const animationTime = getAnimationTime();
+
+      for (const light of allVisibleLights) {
+        const state = getLightFlicker(light, animationTime, light.position.x, light.position.y);
+        const screenX = (light.position.x - viewport.startX) * TILE_SIZE + TILE_SIZE / 2;
+        const screenY = (light.position.y - viewport.startY) * TILE_SIZE + TILE_SIZE / 2;
+        const glowRadius = TILE_SIZE * state.radius * 2;
+        
+        g.ellipse(screenX, screenY, glowRadius, glowRadius);
+        g.fill({ color: 0xffddaa, alpha: 0.02 * state.intensity });
+        
+        g.ellipse(screenX, screenY, glowRadius * 0.5, glowRadius * 0.5);
+        g.fill({ color: 0xffeecc, alpha: 0.03 * state.intensity });
+      }
+    },
+    [allVisibleLights, viewport.startX, viewport.startY]
+  );
+
+  return (
+    <pixiContainer>
+      <pixiGraphics filters={GLOW_BLUR} draw={drawGlow} />
+      <pixiGraphics filters={DARKNESS_BLUR} draw={drawDarkness} />
+    </pixiContainer>
+  );
 });

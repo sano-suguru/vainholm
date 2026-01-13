@@ -31,7 +31,11 @@ export function floodFill(map: MapData, start: Position): Set<string> {
     if (tileId === undefined) return false;
     const tileType = map.tileMapping[String(tileId)];
     if (!tileType) return false;
-    return tileType === 'dungeon_floor';
+    return (
+      tileType === 'dungeon_floor' ||
+      tileType === 'cracked_floor' ||
+      tileType === 'collapse_edge'
+    );
   };
 
   while (queue.length > 0) {
@@ -118,6 +122,15 @@ export function mapToAscii(map: MapData, highlights?: Map<string, string>): stri
         case 'bone_pile':
           line += '%';
           break;
+        case 'collapse_void':
+          line += ' ';
+          break;
+        case 'collapse_edge':
+          line += '~';
+          break;
+        case 'cracked_floor':
+          line += ',';
+          break;
         default:
           line += '?';
       }
@@ -147,7 +160,11 @@ export function countTotalWalkableTiles(map: MapData): number {
       const tileId = terrainLayer.data[y]?.[x];
       if (tileId === undefined) continue;
       const tileType = map.tileMapping[String(tileId)];
-      if (tileType === 'dungeon_floor') count++;
+      if (
+        tileType === 'dungeon_floor' ||
+        tileType === 'cracked_floor' ||
+        tileType === 'collapse_edge'
+      ) count++;
     }
   }
   return count;

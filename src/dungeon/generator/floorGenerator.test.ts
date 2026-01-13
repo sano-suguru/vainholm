@@ -84,7 +84,9 @@ describe('floorGenerator', () => {
     expect(floor.corridors.length).toBeGreaterThan(0);
 
     for (const corridor of floor.corridors) {
-      expect(corridor.bend).toBeDefined();
+      const hasBend = corridor.bend !== undefined;
+      const hasBends = corridor.bends !== undefined && corridor.bends.length > 0;
+      expect(hasBend || hasBends).toBe(true);
     }
   });
 

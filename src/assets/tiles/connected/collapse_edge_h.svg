@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Horizontal collapse edge (connects E-W, void on top/bottom) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Central floor strip -->
+  <rect x="0" y="4" width="16" height="8" fill="#151820"/>
+  <rect x="0" y="5" width="16" height="6" fill="#1a1c24"/>
+  
+  <!-- Jagged top edge -->
+  <rect x="0" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="2" y="3" width="1" height="2" fill="#202430"/>
+  <rect x="3" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="5" y="3" width="2" height="2" fill="#1a1e28"/>
+  <rect x="7" y="4" width="1" height="1" fill="#252830"/>
+  <rect x="8" y="3" width="1" height="2" fill="#202430"/>
+  <rect x="9" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="11" y="3" width="1" height="2" fill="#1a1e28"/>
+  <rect x="12" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="14" y="3" width="2" height="2" fill="#202430"/>
+  
+  <!-- Jagged bottom edge -->
+  <rect x="0" y="11" width="1" height="1" fill="#252830"/>
+  <rect x="1" y="11" width="2" height="2" fill="#202430"/>
+  <rect x="3" y="11" width="3" height="1" fill="#252830"/>
+  <rect x="6" y="11" width="1" height="2" fill="#1a1e28"/>
+  <rect x="7" y="11" width="2" height="1" fill="#252830"/>
+  <rect x="9" y="11" width="2" height="2" fill="#202430"/>
+  <rect x="11" y="11" width="2" height="1" fill="#252830"/>
+  <rect x="13" y="11" width="1" height="2" fill="#1a1e28"/>
+  <rect x="14" y="11" width="2" height="1" fill="#252830"/>
+  
+  <!-- Shadow/depth on edges -->
+  <rect x="0" y="3" width="16" height="1" fill="#0a0a0c"/>
+  <rect x="0" y="12" width="16" height="1" fill="#0a0a0c"/>
+  
+  <!-- Floor details -->
+  <rect x="3" y="6" width="1" height="1" fill="#0c0e14"/>
+  <rect x="7" y="9" width="1" height="1" fill="#0c0e14"/>
+  <rect x="11" y="7" width="1" height="1" fill="#0c0e14"/>
+</svg>

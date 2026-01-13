@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- T-junction west (floor W, void E except middle) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Floor area (left and center strip right) -->
+  <rect x="0" y="0" width="12" height="16" fill="#151820"/>
+  <rect x="0" y="4" width="16" height="8" fill="#151820"/>
+  <rect x="0" y="0" width="11" height="16" fill="#1a1c24"/>
+  <rect x="0" y="5" width="16" height="6" fill="#1a1c24"/>
+  
+  <!-- Void areas top-right and bottom-right -->
+  <rect x="12" y="0" width="4" height="4" fill="#020203"/>
+  <rect x="12" y="12" width="4" height="4" fill="#020203"/>
+  
+  <!-- Top jagged edge (horizontal right) -->
+  <rect x="14" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="13" y="3" width="1" height="2" fill="#202430"/>
+  <rect x="12" y="4" width="1" height="1" fill="#252830"/>
+  
+  <!-- Bottom jagged edge -->
+  <rect x="14" y="11" width="2" height="1" fill="#252830"/>
+  <rect x="13" y="11" width="1" height="2" fill="#202430"/>
+  <rect x="12" y="11" width="1" height="1" fill="#252830"/>
+  
+  <!-- Right jagged edges -->
+  <rect x="11" y="0" width="1" height="2" fill="#252830"/>
+  <rect x="11" y="2" width="2" height="2" fill="#202430"/>
+  <rect x="11" y="14" width="1" height="2" fill="#252830"/>
+  <rect x="11" y="12" width="2" height="2" fill="#202430"/>
+  
+  <!-- Shadows -->
+  <rect x="11" y="3" width="5" height="1" fill="#0a0a0c"/>
+  <rect x="11" y="12" width="5" height="1" fill="#0a0a0c"/>
+  <rect x="12" y="0" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="12" y="12" width="1" height="4" fill="#0a0a0c"/>
+  
+  <!-- Floor details -->
+  <rect x="5" y="7" width="1" height="2" fill="#0c0e14"/>
+  <rect x="13" y="7" width="1" height="1" fill="#0c0e14"/>
+</svg>

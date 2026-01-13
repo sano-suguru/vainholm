@@ -70,8 +70,12 @@ function getVisibilityDelta(
   const toAdd: number[] = [];
   const toRemove: number[] = [];
 
-  for (let i = -VISION_RADIUS; i <= VISION_RADIUS; i++) {
-    for (let j = -VISION_RADIUS; j <= VISION_RADIUS; j++) {
+  // 1タイル移動時、新位置で見える範囲は旧位置から見ると最大 VISION_RADIUS+1 離れている
+  // そのため、ループ範囲を拡張して端のタイルも正しく検出する
+  const DELTA_RANGE = VISION_RADIUS + 1;
+
+  for (let i = -DELTA_RANGE; i <= DELTA_RANGE; i++) {
+    for (let j = -DELTA_RANGE; j <= DELTA_RANGE; j++) {
       const oldDistSq = i * i + j * j;
       const newI = i - dx;
       const newJ = j - dy;

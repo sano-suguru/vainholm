@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Broken statue top-left (head/shoulder) -->
+  <rect width="16" height="16" fill="#1a1815"/>
+  
+  <!-- Pedestal top edge -->
+  <rect x="10" y="12" width="6" height="4" fill="#4a4640"/>
+  <rect x="11" y="13" width="5" height="3" fill="#3a3630"/>
+  
+  <!-- Statue fragment - shoulder/arm -->
+  <rect x="8" y="4" width="6" height="8" fill="#6a6660"/>
+  <rect x="9" y="5" width="5" height="6" fill="#5a5650"/>
+  
+  <!-- Broken edge -->
+  <rect x="8" y="8" width="1" height="4" fill="#4a4640"/>
+  <rect x="7" y="10" width="1" height="2" fill="#4a4640"/>
+  
+  <!-- Detail lines -->
+  <rect x="10" y="6" width="1" height="4" fill="#4a4640"/>
+  <rect x="12" y="5" width="1" height="5" fill="#4a4640"/>
+  
+  <!-- Debris -->
+  <rect x="2" y="12" width="2" height="1" fill="#5a5650"/>
+  <rect x="3" y="13" width="1" height="1" fill="#4a4640"/>
+  <rect x="5" y="14" width="1" height="1" fill="#5a5650"/>
+  <rect x="1" y="14" width="1" height="1" fill="#4a4640"/>
+</svg>

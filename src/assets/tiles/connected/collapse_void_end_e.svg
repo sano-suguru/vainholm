@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- End east (floor on all sides except E) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Floor on N/S/W sides -->
+  <rect x="0" y="0" width="12" height="16" fill="#1a1c24"/>
+  <rect x="0" y="0" width="16" height="4" fill="#1a1c24"/>
+  <rect x="0" y="12" width="16" height="4" fill="#1a1c24"/>
+  <rect x="0" y="0" width="11" height="16" fill="#151820"/>
+  <rect x="0" y="0" width="16" height="3" fill="#151820"/>
+  <rect x="0" y="13" width="16" height="3" fill="#151820"/>
+  
+  <!-- Right edge only -->
+  <rect x="11" y="4" width="1" height="8" fill="#252830"/>
+  <rect x="12" y="5" width="1" height="2" fill="#1a1e28"/>
+  <rect x="12" y="9" width="1" height="2" fill="#202430"/>
+  <rect x="11" y="4" width="2" height="1" fill="#0a0a0c"/>
+  <rect x="11" y="8" width="2" height="1" fill="#0a0a0c"/>
+  <rect x="11" y="11" width="2" height="1" fill="#0a0a0c"/>
+  
+  <!-- Corner transitions -->
+  <rect x="11" y="3" width="1" height="1" fill="#252830"/>
+  <rect x="11" y="12" width="1" height="1" fill="#252830"/>
+</svg>

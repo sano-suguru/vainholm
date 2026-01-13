@@ -151,8 +151,40 @@ function createCorridor(
   const start = room1.center;
   const end = room2.center;
 
-  // Always use L-shaped corridors to ensure proper connectivity
-  // (straight diagonal lines don't carve properly)
+  const extraBendChance = config.extraBendChance ?? 0;
+  const maxExtraBends = config.maxExtraBends ?? 1;
+  const shouldAddExtraBends = random() < extraBendChance && maxExtraBends > 0;
+
+  if (shouldAddExtraBends) {
+    const bends: Position[] = [];
+    const horizontal = random() > 0.5;
+
+    if (horizontal) {
+      const midX = Math.floor(start.x + (end.x - start.x) * (0.3 + random() * 0.4));
+      const offsetY = Math.floor((random() - 0.5) * 6);
+      const midY = Math.floor((start.y + end.y) / 2) + offsetY;
+
+      bends.push({ x: midX, y: start.y });
+      bends.push({ x: midX, y: midY });
+      bends.push({ x: end.x, y: midY });
+    } else {
+      const midY = Math.floor(start.y + (end.y - start.y) * (0.3 + random() * 0.4));
+      const offsetX = Math.floor((random() - 0.5) * 6);
+      const midX = Math.floor((start.x + end.x) / 2) + offsetX;
+
+      bends.push({ x: start.x, y: midY });
+      bends.push({ x: midX, y: midY });
+      bends.push({ x: midX, y: end.y });
+    }
+
+    return {
+      start,
+      end,
+      width: config.corridorWidth,
+      bends,
+    };
+  }
+
   const bend: Position = random() > 0.5
     ? { x: end.x, y: start.y }
     : { x: start.x, y: end.y };
@@ -287,6 +319,53 @@ function ensureConnectivity(
   }
 }
 
+function getManhattanDistance(a: Position, b: Position): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+function addShortcutCorridors(
+  rooms: Room[],
+  corridors: Corridor[],
+  config: BSPConfig,
+  random: () => number
+): Corridor[] {
+  const maxDistance = config.shortcutMaxDistance ?? 15;
+  const shortcutChance = config.shortcutChance ?? 0.3;
+  const maxShortcuts = config.maxShortcuts ?? 2;
+
+  if (rooms.length <= 2 || maxShortcuts <= 0) return [];
+
+  const adjacency = buildRoomAdjacency(rooms, corridors);
+  const shortcuts: Corridor[] = [];
+
+  const candidates: Array<{ room1: Room; room2: Room; distance: number }> = [];
+
+  for (let i = 0; i < rooms.length; i++) {
+    for (let j = i + 1; j < rooms.length; j++) {
+      const room1 = rooms[i];
+      const room2 = rooms[j];
+
+      if (adjacency.get(room1.id)?.has(room2.id)) continue;
+
+      const distance = getManhattanDistance(room1.center, room2.center);
+      if (distance <= maxDistance) {
+        candidates.push({ room1, room2, distance });
+      }
+    }
+  }
+
+  candidates.sort((a, b) => a.distance - b.distance);
+
+  for (const { room1, room2 } of candidates) {
+    if (shortcuts.length >= maxShortcuts) break;
+    if (random() > shortcutChance) continue;
+
+    shortcuts.push(createCorridor(room1, room2, config, random));
+  }
+
+  return shortcuts;
+}
+
 export function generateBSP(
   width: number,
   height: number,
@@ -350,6 +429,9 @@ export function generateBSP(
   connectNodes(root, config, random, corridors);
 
   ensureConnectivity(rooms, corridors, config, random);
+
+  const shortcuts = addShortcutCorridors(rooms, corridors, config, random);
+  corridors.push(...shortcuts);
 
   return { rooms, corridors };
 }

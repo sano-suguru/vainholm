@@ -67,6 +67,10 @@ const TILE_REGISTRY = [
   { id: 56, type: 'withered_flowers', walkable: true, movementCost: 1, name: 'Withered Flowers', char: '"' },
   { id: 57, type: 'dungeon_entrance', walkable: true, movementCost: 1, name: 'Dungeon Entrance', char: '>' },
   { id: 58, type: 'dungeon_exit', walkable: true, movementCost: 1, name: 'Dungeon Exit', char: '<' },
+  { id: 59, type: 'multitile_marker', walkable: false, movementCost: Infinity, name: 'Multi-tile Marker', char: ' ' },
+  { id: 60, type: 'collapse_void', walkable: false, movementCost: Infinity, name: 'Collapse Void', char: ' ' },
+  { id: 61, type: 'collapse_edge', walkable: false, movementCost: Infinity, name: 'Collapse Edge', char: '░' },
+  { id: 62, type: 'cracked_floor', walkable: true, movementCost: 1.2, name: 'Cracked Floor', char: '.' },
 ] as const satisfies readonly TileEntry[];
 
 export type TileType = (typeof TILE_REGISTRY)[number]['type'];

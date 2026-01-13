@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Cross void (void connects all 4 directions, floor at corners) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Corner floors with jagged edges -->
+  <!-- NW corner -->
+  <rect x="0" y="0" width="3" height="3" fill="#1a1c24"/>
+  <rect x="3" y="0" width="1" height="3" fill="#252830"/>
+  <rect x="0" y="3" width="3" height="1" fill="#252830"/>
+  <rect x="3" y="3" width="1" height="1" fill="#202430"/>
+  <rect x="4" y="1" width="1" height="1" fill="#1a1e28"/>
+  <rect x="1" y="4" width="1" height="1" fill="#1a1e28"/>
+  
+  <!-- NE corner -->
+  <rect x="13" y="0" width="3" height="3" fill="#1a1c24"/>
+  <rect x="12" y="0" width="1" height="3" fill="#252830"/>
+  <rect x="13" y="3" width="3" height="1" fill="#252830"/>
+  <rect x="12" y="3" width="1" height="1" fill="#202430"/>
+  <rect x="11" y="1" width="1" height="1" fill="#1a1e28"/>
+  <rect x="14" y="4" width="1" height="1" fill="#1a1e28"/>
+  
+  <!-- SW corner -->
+  <rect x="0" y="13" width="3" height="3" fill="#1a1c24"/>
+  <rect x="3" y="13" width="1" height="3" fill="#252830"/>
+  <rect x="0" y="12" width="3" height="1" fill="#252830"/>
+  <rect x="3" y="12" width="1" height="1" fill="#202430"/>
+  <rect x="4" y="14" width="1" height="1" fill="#1a1e28"/>
+  <rect x="1" y="11" width="1" height="1" fill="#1a1e28"/>
+  
+  <!-- SE corner -->
+  <rect x="13" y="13" width="3" height="3" fill="#1a1c24"/>
+  <rect x="12" y="13" width="1" height="3" fill="#252830"/>
+  <rect x="13" y="12" width="3" height="1" fill="#252830"/>
+  <rect x="12" y="12" width="1" height="1" fill="#202430"/>
+  <rect x="11" y="14" width="1" height="1" fill="#1a1e28"/>
+  <rect x="14" y="11" width="1" height="1" fill="#1a1e28"/>
+  
+  <!-- Shadow lines -->
+  <rect x="3" y="0" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="12" y="0" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="3" y="12" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="12" y="12" width="1" height="4" fill="#0a0a0c"/>
+  <rect x="0" y="3" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="12" y="3" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="0" y="12" width="4" height="1" fill="#0a0a0c"/>
+  <rect x="12" y="12" width="4" height="1" fill="#0a0a0c"/>
+  
+  <!-- Void mist -->
+  <rect x="7" y="7" width="2" height="2" fill="#030304"/>
+</svg>

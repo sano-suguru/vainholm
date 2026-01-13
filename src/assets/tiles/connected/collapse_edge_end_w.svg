@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- End west (floor connects only to E) -->
+  <rect width="16" height="16" fill="#020203"/>
+  
+  <!-- Floor area (center strip, closed at left) -->
+  <rect x="4" y="4" width="12" height="8" fill="#151820"/>
+  <rect x="5" y="5" width="11" height="6" fill="#1a1c24"/>
+  
+  <!-- Left closure -->
+  <rect x="4" y="5" width="1" height="6" fill="#252830"/>
+  <rect x="5" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="5" y="11" width="2" height="1" fill="#252830"/>
+  <rect x="3" y="6" width="1" height="4" fill="#202430"/>
+  <rect x="3" y="5" width="2" height="1" fill="#1a1e28"/>
+  <rect x="3" y="10" width="2" height="1" fill="#1a1e28"/>
+  
+  <!-- Top/bottom edges -->
+  <rect x="7" y="4" width="3" height="1" fill="#252830"/>
+  <rect x="10" y="3" width="2" height="2" fill="#202430"/>
+  <rect x="12" y="4" width="2" height="1" fill="#252830"/>
+  <rect x="14" y="3" width="2" height="2" fill="#1a1e28"/>
+  
+  <rect x="7" y="11" width="3" height="1" fill="#252830"/>
+  <rect x="10" y="11" width="2" height="2" fill="#202430"/>
+  <rect x="12" y="11" width="2" height="1" fill="#252830"/>
+  <rect x="14" y="11" width="2" height="2" fill="#1a1e28"/>
+  
+  <!-- Shadows -->
+  <rect x="4" y="3" width="12" height="1" fill="#0a0a0c"/>
+  <rect x="4" y="12" width="12" height="1" fill="#0a0a0c"/>
+  <rect x="3" y="5" width="1" height="6" fill="#0a0a0c"/>
+  
+  <!-- Floor details -->
+  <rect x="8" y="7" width="1" height="2" fill="#0c0e14"/>
+  <rect x="12" y="7" width="1" height="1" fill="#0c0e14"/>
+</svg>

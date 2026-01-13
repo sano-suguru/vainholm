@@ -155,6 +155,7 @@ export function GameContainer() {
           isTileVisible={isTileVisible}
           isTileExplored={isTileExplored}
           lightSources={lightSources}
+          multiTileObjects={currentFloor?.multiTileObjects}
         />
       </div>
       {debugMode && (

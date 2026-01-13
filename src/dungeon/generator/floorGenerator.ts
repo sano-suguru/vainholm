@@ -1,5 +1,6 @@
 import type { MapData, Position, TileId } from '../../types';
 import type {
+  CollapseConfig,
   Corridor,
   DecorationConfig,
   DoorConfig,
@@ -7,6 +8,9 @@ import type {
   FloorGenerationOptions,
   HazardConfig,
   LightingConfig,
+  MultiTileConfig,
+  MultiTileObject,
+  MultiTileObjectDef,
   Room,
   TrapConfig,
   TileWeights,
@@ -76,7 +80,14 @@ function carveLine(
 }
 
 function carveCorridor(terrain: TileId[][], corridor: Corridor): void {
-  if (corridor.bend) {
+  if (corridor.bends && corridor.bends.length > 0) {
+    let current = corridor.start;
+    for (const bend of corridor.bends) {
+      carveLine(terrain, current, bend, corridor.width);
+      current = bend;
+    }
+    carveLine(terrain, current, corridor.end, corridor.width);
+  } else if (corridor.bend) {
     carveLine(terrain, corridor.start, corridor.bend, corridor.width);
     carveLine(terrain, corridor.bend, corridor.end, corridor.width);
   } else {
@@ -306,17 +317,40 @@ function addDecorations(
   }
 }
 
+function calculateDistanceMultiplier(
+  room: Room,
+  entranceRoom: Room,
+  maxMultiplier: number
+): number {
+  const dx = room.center.x - entranceRoom.center.x;
+  const dy = room.center.y - entranceRoom.center.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const normalizedDistance = Math.min(distance / 50, 1);
+  return 1 + normalizedDistance * (maxMultiplier - 1);
+}
+
 function addTraps(
   features: TileId[][],
   rooms: Room[],
+  entranceRoom: Room,
   random: () => number,
   config?: TrapConfig
 ): void {
   if (!config) return;
 
+  const useScaling = config.distanceScaling ?? false;
+  const maxMultiplier = config.maxDistanceMultiplier ?? 2.0;
+
   for (const room of rooms) {
     if (room.roomType === 'entrance') continue;
-    if (random() > config.trapChance) continue;
+
+    let effectiveChance = config.trapChance;
+    if (useScaling) {
+      const multiplier = calculateDistanceMultiplier(room, entranceRoom, maxMultiplier);
+      effectiveChance = Math.min(config.trapChance * multiplier, 0.9);
+    }
+
+    if (random() > effectiveChance) continue;
 
     for (let i = 0; i < config.trapsPerRoom; i++) {
       const tile = selectWeightedTile(config.trapTiles, random);
@@ -371,14 +405,25 @@ function addHazards(
   features: TileId[][],
   terrain: TileId[][],
   rooms: Room[],
+  entranceRoom: Room,
   random: () => number,
   config?: HazardConfig
 ): void {
   if (!config) return;
 
+  const useScaling = config.distanceScaling ?? false;
+  const maxMultiplier = config.maxDistanceMultiplier ?? 2.0;
+
   for (const room of rooms) {
     if (room.roomType === 'entrance') continue;
-    if (random() > config.hazardChance) continue;
+
+    let effectiveChance = config.hazardChance;
+    if (useScaling) {
+      const multiplier = calculateDistanceMultiplier(room, entranceRoom, maxMultiplier);
+      effectiveChance = Math.min(config.hazardChance * multiplier, 0.8);
+    }
+
+    if (random() > effectiveChance) continue;
 
     const tile = selectWeightedTile(config.hazardTiles, random);
     if (!tile) continue;
@@ -442,6 +487,254 @@ function decorateSpecialRooms(
         }
       }
     }
+  }
+}
+
+function selectWeightedObject(
+  objects: MultiTileObjectDef[],
+  random: () => number
+): MultiTileObjectDef | null {
+  if (objects.length === 0) return null;
+  
+  const total = objects.reduce((sum, obj) => sum + obj.weight, 0);
+  if (total === 0) return null;
+  
+  let roll = random() * total;
+  for (const obj of objects) {
+    roll -= obj.weight;
+    if (roll <= 0) return obj;
+  }
+  return objects[0];
+}
+
+function placeMultiTileObjects(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  config?: MultiTileConfig
+): MultiTileObject[] {
+  if (!config) return [];
+  
+  const placed: MultiTileObject[] = [];
+  const eligibleRooms = rooms.filter(
+    r => r.roomType !== 'entrance' && r.roomType !== 'exit' && r.width >= 4 && r.height >= 4
+  );
+  
+  for (const room of eligibleRooms) {
+    if (placed.length >= config.maxObjectsPerFloor) break;
+    if (random() > config.objectChance) continue;
+    
+    const objDef = selectWeightedObject(config.objects, random);
+    if (!objDef) continue;
+    if (room.width < objDef.width + 2 || room.height < objDef.height + 2) continue;
+    
+    for (let attempts = 0; attempts < 5; attempts++) {
+      const x = room.x + 1 + Math.floor(random() * (room.width - objDef.width - 1));
+      const y = room.y + 1 + Math.floor(random() * (room.height - objDef.height - 1));
+      
+      let canPlace = true;
+      for (let dy = 0; dy < objDef.height && canPlace; dy++) {
+        for (let dx = 0; dx < objDef.width && canPlace; dx++) {
+          if (features[y + dy]?.[x + dx] !== 0) canPlace = false;
+        }
+      }
+      
+      if (canPlace) {
+        for (let dy = 0; dy < objDef.height; dy++) {
+          for (let dx = 0; dx < objDef.width; dx++) {
+            features[y + dy][x + dx] = T.multitile_marker;
+          }
+        }
+        
+        placed.push({
+          id: `${objDef.type}_${x}_${y}`,
+          type: objDef.type,
+          x,
+          y,
+          width: objDef.width,
+          height: objDef.height,
+        });
+        break;
+      }
+    }
+  }
+  
+  return placed;
+}
+
+function floodFill(
+  terrain: TileId[][],
+  startX: number,
+  startY: number,
+  width: number,
+  height: number
+): Set<string> {
+  const visited = new Set<string>();
+  const stack: Position[] = [{ x: startX, y: startY }];
+
+  while (stack.length > 0) {
+    const pos = stack.pop()!;
+    const key = `${pos.x},${pos.y}`;
+
+    if (visited.has(key)) continue;
+    if (pos.x < 0 || pos.x >= width || pos.y < 0 || pos.y >= height) continue;
+
+    const tile = terrain[pos.y]?.[pos.x];
+    if (tile === T.dungeon_wall || tile === T.collapse_void || tile === undefined) continue;
+
+    visited.add(key);
+
+    stack.push({ x: pos.x + 1, y: pos.y });
+    stack.push({ x: pos.x - 1, y: pos.y });
+    stack.push({ x: pos.x, y: pos.y + 1 });
+    stack.push({ x: pos.x, y: pos.y - 1 });
+  }
+
+  return visited;
+}
+
+function isPathConnected(
+  terrain: TileId[][],
+  from: Position,
+  to: Position,
+  width: number,
+  height: number
+): boolean {
+  const reachable = floodFill(terrain, from.x, from.y, width, height);
+  return reachable.has(`${to.x},${to.y}`);
+}
+
+function addCollapseZones(
+  terrain: TileId[][],
+  rooms: Room[],
+  entranceRoom: Room,
+  exitRoom: Room | null,
+  stairsUp: Position | null,
+  stairsDown: Position | null,
+  random: () => number,
+  config: CollapseConfig,
+  regionLevel: number,
+  width: number,
+  height: number
+): void {
+  const minRoomSize = config.affectWalls ? config.minCollapseSize : config.minCollapseSize + 2;
+  const eligibleRooms = rooms.filter(
+    (r) =>
+      r.roomType !== 'entrance' &&
+      r.roomType !== 'exit' &&
+      r.roomType !== 'boss' &&
+      r.width >= minRoomSize &&
+      r.height >= minRoomSize
+  );
+
+  if (eligibleRooms.length === 0) return;
+
+  let effectiveChance = config.collapseChance;
+  if (config.floorScaling) {
+    const multiplier = 1 + (regionLevel - 1) * ((config.maxFloorMultiplier ?? 1.5) - 1) / 2;
+    effectiveChance = Math.min(config.collapseChance * multiplier, 0.9);
+  }
+
+  const shuffledRooms = shuffleArray(eligibleRooms, random);
+  let zonesPlaced = 0;
+
+  for (const room of shuffledRooms) {
+    if (zonesPlaced >= config.maxCollapseZones) break;
+    if (random() > effectiveChance) continue;
+
+    const collapseWidth =
+      config.minCollapseSize +
+      Math.floor(random() * (config.maxCollapseSize - config.minCollapseSize + 1));
+    const collapseHeight =
+      config.minCollapseSize +
+      Math.floor(random() * (config.maxCollapseSize - config.minCollapseSize + 1));
+
+    const margin = config.affectWalls ? 0 : 1;
+    const maxStartX = room.x + room.width - collapseWidth - margin;
+    const maxStartY = room.y + room.height - collapseHeight - margin;
+
+    if (maxStartX <= room.x + margin || maxStartY <= room.y + margin) continue;
+
+    const collapseX = room.x + margin + Math.floor(random() * (maxStartX - room.x - margin));
+    const collapseY = room.y + margin + Math.floor(random() * (maxStartY - room.y - margin));
+
+    const terrainBackup: TileId[][] = terrain.map((row) => [...row]);
+
+    const centerX = collapseX + collapseWidth / 2;
+    const centerY = collapseY + collapseHeight / 2;
+    const maxRadius = Math.min(collapseWidth, collapseHeight) / 2;
+
+    const collapsedTiles: Position[] = [];
+
+    const innerRadiusRatio = 0.6;
+    const scanMargin = config.affectWalls ? 2 : 1;
+
+    for (let dy = -scanMargin; dy <= collapseHeight + scanMargin - 1; dy++) {
+      for (let dx = -scanMargin; dx <= collapseWidth + scanMargin - 1; dx++) {
+        const x = collapseX + dx;
+        const y = collapseY + dy;
+
+        const tile = terrain[y]?.[x];
+        const isFloor = tile === T.dungeon_floor;
+        const isWall = tile === T.dungeon_wall;
+
+        if (!isFloor && !(config.affectWalls && isWall)) continue;
+
+        const distX = x - centerX;
+        const distY = y - centerY;
+        const distance = Math.sqrt(distX * distX + distY * distY);
+
+        const noise = (random() - 0.5) * maxRadius * 0.8;
+        const effectiveRadius = maxRadius + noise;
+
+        if (distance <= effectiveRadius) {
+          const innerRadius = effectiveRadius * innerRadiusRatio;
+
+          if (isWall && distance > innerRadius) {
+            terrain[y][x] = T.rubble;
+          } else {
+            terrain[y][x] = T.collapse_void;
+          }
+          collapsedTiles.push({ x, y });
+        }
+      }
+    }
+
+    if (collapsedTiles.length < 4) {
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          terrain[y][x] = terrainBackup[y][x];
+        }
+      }
+      continue;
+    }
+
+    const startPos = stairsUp ?? entranceRoom.center;
+    const endPos = stairsDown ?? (exitRoom?.center ?? startPos);
+
+    if (!isPathConnected(terrain, startPos, endPos, width, height)) {
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          terrain[y][x] = terrainBackup[y][x];
+        }
+      }
+      continue;
+    }
+
+    for (const pos of collapsedTiles) {
+      for (let dy = -config.crackedFloorRadius; dy <= config.crackedFloorRadius; dy++) {
+        for (let dx = -config.crackedFloorRadius; dx <= config.crackedFloorRadius; dx++) {
+          const x = pos.x + dx;
+          const y = pos.y + dy;
+
+          if (terrain[y]?.[x] === T.dungeon_floor) {
+            terrain[y][x] = T.cracked_floor;
+          }
+        }
+      }
+    }
+
+    zonesPlaced++;
   }
 }
 
@@ -516,17 +809,35 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
 
   assignRoomTypes(rooms, entranceRoom, exitRoom, corridors, random);
 
+  if (regionConfig.collapseConfig) {
+    addCollapseZones(
+      terrain,
+      rooms,
+      entranceRoom,
+      exitRoom,
+      stairsUp,
+      stairsDown,
+      random,
+      regionConfig.collapseConfig,
+      regionLevel,
+      width,
+      height
+    );
+  }
+
   placeDoors(rooms, corridors, terrain, features, random, regionConfig.doorConfig);
 
   decorateSpecialRooms(features, rooms, random);
 
   addDecorations(features, rooms, random, regionConfig.decorationConfig);
 
-  addTraps(features, rooms, random, regionConfig.trapConfig);
+  addTraps(features, rooms, entranceRoom, random, regionConfig.trapConfig);
 
   addLighting(features, rooms, random, regionConfig.lightingConfig);
 
-  addHazards(features, terrain, rooms, random, regionConfig.hazardConfig);
+  addHazards(features, terrain, rooms, entranceRoom, random, regionConfig.hazardConfig);
+
+  const multiTileObjects = placeMultiTileObjects(features, rooms, random, regionConfig.multiTileConfig);
 
   const spawnPoint = stairsUp || entranceRoom.center;
 
@@ -552,6 +863,7 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
     stairsDown,
     rooms,
     corridors,
+    multiTileObjects,
     visited: false,
     seed,
   };

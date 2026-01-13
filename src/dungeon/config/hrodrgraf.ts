@@ -22,6 +22,11 @@ export const HRODRGRAF_CONFIG: RegionConfig = {
     corridorWidth: 2,
     allowLCorridors: true,
     roomMargin: 1,
+    shortcutMaxDistance: 15,
+    shortcutChance: 0.3,
+    maxShortcuts: 2,
+    extraBendChance: 0.25,
+    maxExtraBends: 1,
   },
   decorationConfig: {
     roomDecorationChance: 0.5,
@@ -32,18 +37,10 @@ export const HRODRGRAF_CONFIG: RegionConfig = {
       bone_pile: 0.20,
       sarcophagus: 0.15,
       altar_dark: 0.10,
-      chain: 0.05,
+      lichen: 0.05,
     },
   },
-  trapConfig: {
-    trapChance: 0.25,
-    trapsPerRoom: 1,
-    trapTiles: {
-      trap_spike: 0.5,
-      pressure_plate: 0.3,
-      web: 0.2,
-    },
-  },
+
   lightingConfig: {
     lightingChance: 0.15,
     lightsPerRoom: 1,
@@ -52,17 +49,28 @@ export const HRODRGRAF_CONFIG: RegionConfig = {
       wall_torch: 0.6,
     },
   },
-  hazardConfig: {
-    hazardChance: 0.15,
-    hazardTiles: {
-      miasma: 0.4,
-      cursed_ground: 0.4,
-      blood: 0.2,
-    },
-  },
+
   doorConfig: {
     doorChance: 0.5,
     lockedChance: 0.2,
     secretChance: 0.1,
+  },
+  multiTileConfig: {
+    objectChance: 0.5,
+    maxObjectsPerFloor: 4,
+    objects: [
+      { type: 'fallen_pillar', width: 2, height: 1, weight: 0.5 },
+      { type: 'broken_statue', width: 2, height: 2, weight: 0.5 },
+    ],
+  },
+  collapseConfig: {
+    collapseChance: 0.6,
+    minCollapseSize: 5,
+    maxCollapseSize: 8,
+    maxCollapseZones: 2,
+    crackedFloorRadius: 2,
+    floorScaling: true,
+    maxFloorMultiplier: 1.5,
+    affectWalls: true,
   },
 };

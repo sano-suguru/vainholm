@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Fallen pillar right part - broken base -->
+  <rect width="16" height="16" fill="#1a1815"/>
+  
+  <!-- Pillar body continues -->
+  <rect x="0" y="5" width="12" height="7" fill="#5a5650"/>
+  <rect x="0" y="6" width="12" height="5" fill="#4a4640"/>
+  
+  <!-- Broken end -->
+  <rect x="10" y="4" width="4" height="9" fill="#4a4640"/>
+  <rect x="11" y="5" width="3" height="7" fill="#3a3630"/>
+  <rect x="12" y="6" width="2" height="5" fill="#2a2620"/>
+  
+  <!-- Fluting continues -->
+  <rect x="1" y="6" width="1" height="5" fill="#3a3630"/>
+  <rect x="4" y="6" width="1" height="5" fill="#3a3630"/>
+  <rect x="7" y="6" width="1" height="5" fill="#3a3630"/>
+  
+  <!-- Cracks -->
+  <rect x="9" y="5" width="1" height="2" fill="#2a2620"/>
+  <rect x="10" y="6" width="1" height="3" fill="#2a2620"/>
+  
+  <!-- Debris -->
+  <rect x="12" y="12" width="2" height="1" fill="#4a4640"/>
+  <rect x="13" y="13" width="1" height="1" fill="#3a3630"/>
+  <rect x="14" y="11" width="1" height="1" fill="#4a4640"/>
+  <rect x="2" y="13" width="1" height="1" fill="#4a4640"/>
+  <rect x="6" y="14" width="1" height="1" fill="#3a3630"/>
+  
+  <!-- Highlights -->
+  <rect x="2" y="6" width="1" height="1" fill="#6a6660"/>
+  <rect x="5" y="5" width="1" height="1" fill="#6a6660"/>
+</svg>

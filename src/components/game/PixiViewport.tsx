@@ -1,11 +1,12 @@
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Application, extend, useTick } from '@pixi/react';
-import { Container, Graphics, Text, TextStyle, BlurFilter, Sprite } from 'pixi.js';
+import { Container, Graphics, Text, BlurFilter, Sprite } from 'pixi.js';
 import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '../../types';
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
+import type { MultiTileObject } from '../../dungeon/types';
 import { LightLayer } from './LightLayer';
-import { PLAYER_GLYPH } from '../../utils/tileGlyphs';
+
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
 import { 
   getBaseTileTexture, 
@@ -17,7 +18,13 @@ import {
   getOverlayTexture,
   isAnimatedTile,
   getAnimatedTileTextures,
+  getPlayerTexture,
+  selectTileVariantTexture,
+  getMultiTileTexture,
+  isAnimatedMultiTile,
+  getAnimatedMultiTileTextures,
   type TransitionDirection,
+  type MultiTileObjectType,
 } from '../../utils/tileTextures';
 import {
   selectOverlay,
@@ -27,15 +34,6 @@ import {
 import { getAnimationTime, setAnimationTime } from './animationTime';
 
 extend({ Container, Graphics, Text, Sprite });
-
-const FONT_FAMILY = 'Courier New, monospace';
-
-const PLAYER_TEXT_STYLE = new TextStyle({
-  fontFamily: FONT_FAMILY,
-  fontSize: TILE_SIZE + 4,
-  fill: PLAYER_GLYPH.color,
-  fontWeight: 'bold',
-});
 
 const FOG_BLUR_FILTER = (() => {
   const filter = new BlurFilter({ strength: 30, quality: 1 });
@@ -57,6 +55,7 @@ interface PixiViewportProps {
   isTileVisible: (x: number, y: number) => boolean;
   isTileExplored: (x: number, y: number) => boolean;
   lightSources: LightSource[];
+  multiTileObjects?: MultiTileObject[];
 }
 
 interface MapViewportProps {
@@ -130,7 +129,9 @@ const TileLayer = memo(function TileLayer({
       const screenY = (y - viewport.startY) * TILE_SIZE;
       const key = `${x}-${y}`;
       
-      const texture = getBaseTileTexture(tileType);
+      const texture = tileType === 'dungeon_floor'
+        ? selectTileVariantTexture(tileType, x, y)
+        : getBaseTileTexture(tileType);
       if (texture) {
         elements.push(
           <pixiSprite
@@ -397,13 +398,20 @@ const ConnectedTileLayer = memo(function ConnectedTileLayer({
         if (tileId === undefined) continue;
         
         const tileType = map.tileMapping[String(tileId)] as TileType;
-        if (tileType !== 'road') continue;
+        if (tileType !== 'road' && tileType !== 'dungeon_wall' && tileType !== 'collapse_void') continue;
+        
+        const isConnectedNeighbor = (neighborType: TileType | null): boolean => {
+          if (tileType === 'collapse_void') {
+            return neighborType === 'collapse_void';
+          }
+          return neighborType === tileType;
+        };
         
         const neighbors = {
-          n: getTileAt(x, y - 1) === 'road',
-          s: getTileAt(x, y + 1) === 'road',
-          e: getTileAt(x + 1, y) === 'road',
-          w: getTileAt(x - 1, y) === 'road',
+          n: isConnectedNeighbor(getTileAt(x, y - 1)),
+          s: isConnectedNeighbor(getTileAt(x, y + 1)),
+          e: isConnectedNeighbor(getTileAt(x + 1, y)),
+          w: isConnectedNeighbor(getTileAt(x - 1, y)),
         };
         
         const connectionType = getConnectionType(neighbors);
@@ -442,11 +450,99 @@ const ConnectedTileLayer = memo(function ConnectedTileLayer({
   return <pixiContainer>{connectedElements}</pixiContainer>;
 });
 
-/**
- * Deterministic spatial hash function for consistent overlay spawning.
- * Uses large primes to minimize collision patterns in 2D grid positions.
- * Returns value in [0, 1) range.
- */
+interface MultiTileLayerProps {
+  multiTileObjects: MultiTileObject[];
+  viewport: ViewportBounds;
+  texturesReady: boolean;
+}
+
+interface MultiTileSpriteData {
+  key: string;
+  objectType: MultiTileObjectType;
+  tileX: number;
+  tileY: number;
+  screenX: number;
+  screenY: number;
+}
+
+const MultiTileObjectLayer = memo(function MultiTileObjectLayer({
+  multiTileObjects,
+  viewport,
+  texturesReady,
+}: MultiTileLayerProps) {
+  const [frameIndex, setFrameIndex] = useState(0);
+  
+  useTick(() => {
+    const newFrameIndex = Math.floor(getAnimationTime() / ANIMATION_FRAME_INTERVAL) % ANIMATION_FRAME_COUNT;
+    if (newFrameIndex !== frameIndex) {
+      setFrameIndex(newFrameIndex);
+    }
+  });
+  
+  const spriteData = useMemo(() => {
+    if (!texturesReady || multiTileObjects.length === 0) return [];
+    
+    const data: MultiTileSpriteData[] = [];
+    
+    for (const obj of multiTileObjects) {
+      for (let dy = 0; dy < obj.height; dy++) {
+        for (let dx = 0; dx < obj.width; dx++) {
+          const worldX = obj.x + dx;
+          const worldY = obj.y + dy;
+          
+          if (worldX < viewport.startX || worldX >= viewport.endX) continue;
+          if (worldY < viewport.startY || worldY >= viewport.endY) continue;
+          
+          data.push({
+            key: `multitile-${obj.id}-${dx}-${dy}`,
+            objectType: obj.type as MultiTileObjectType,
+            tileX: dx,
+            tileY: dy,
+            screenX: (worldX - viewport.startX) * TILE_SIZE,
+            screenY: (worldY - viewport.startY) * TILE_SIZE,
+          });
+        }
+      }
+    }
+    
+    return data;
+  }, [multiTileObjects, viewport.startX, viewport.startY, viewport.endX, viewport.endY, texturesReady]);
+  
+  const elements = useMemo(() => {
+    const result: React.ReactNode[] = [];
+    
+    for (const { key, objectType, tileX, tileY, screenX, screenY } of spriteData) {
+      let texture = null;
+      
+      if (isAnimatedMultiTile(objectType)) {
+        const textures = getAnimatedMultiTileTextures(objectType, tileX, tileY);
+        texture = textures?.[frameIndex % textures.length] ?? null;
+      } else {
+        texture = getMultiTileTexture(objectType, tileX, tileY);
+      }
+      
+      if (texture) {
+        result.push(
+          <pixiSprite
+            key={key}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+          />
+        );
+      }
+    }
+    
+    return result;
+  }, [spriteData, frameIndex]);
+  
+  if (!texturesReady || spriteData.length === 0) return null;
+  
+  return <pixiContainer>{elements}</pixiContainer>;
+});
+
 function positionHash(x: number, y: number): number {
   const hash = (x * 374761393 + y * 668265263) ^ (x * 1274126177);
   return ((hash & 0x7fffffff) % 1000) / 1000;
@@ -533,23 +629,20 @@ const PlayerLayer = memo(function PlayerLayer({
 }: PlayerLayerProps) {
   const screenX = (playerPosition.x - viewport.startX) * TILE_SIZE;
   const screenY = (playerPosition.y - viewport.startY) * TILE_SIZE;
+  const playerTexture = getPlayerTexture();
 
-  const drawBackground = useCallback((g: Graphics) => {
-    g.clear();
-    g.rect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-    g.fill({ color: 0x1a1a18, alpha: 1 });
-  }, [screenX, screenY]);
+  if (!playerTexture) {
+    return null;
+  }
 
   return (
-    <pixiContainer>
-      <pixiGraphics draw={drawBackground} />
-      <pixiText
-        text={PLAYER_GLYPH.char}
-        x={screenX}
-        y={screenY - 2}
-        style={PLAYER_TEXT_STYLE}
-      />
-    </pixiContainer>
+    <pixiSprite
+      texture={playerTexture}
+      x={screenX}
+      y={screenY}
+      width={TILE_SIZE}
+      height={TILE_SIZE}
+    />
   );
 });
 
@@ -900,6 +993,7 @@ function GameScene({
   width,
   height,
   lightSources,
+  multiTileObjects = [],
 }: GameSceneProps) {
   const startTimeRef = useRef(0);
   const [texturesReady, setTexturesReady] = useState(false);
@@ -923,6 +1017,7 @@ function GameScene({
       <FeatureLayer map={map} viewport={viewport} />
       <TransitionLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ConnectedTileLayer map={map} viewport={viewport} texturesReady={texturesReady} />
+      <MultiTileObjectLayer multiTileObjects={multiTileObjects} viewport={viewport} texturesReady={texturesReady} />
       <OverlayLayer map={map} viewport={viewport} texturesReady={texturesReady} />
       <ShadowLayer map={map} viewport={viewport} timeOfDay={timeOfDay} />
       <FogOfWarLayer 
@@ -962,6 +1057,7 @@ export function PixiViewport({
   isTileVisible,
   isTileExplored,
   lightSources,
+  multiTileObjects,
 }: PixiViewportProps) {
   const width = VIEWPORT_WIDTH_TILES * TILE_SIZE;
   const height = VIEWPORT_HEIGHT_TILES * TILE_SIZE;
@@ -987,6 +1083,7 @@ export function PixiViewport({
         width={width}
         height={height}
         lightSources={lightSources}
+        multiTileObjects={multiTileObjects}
       />
     </Application>
   );

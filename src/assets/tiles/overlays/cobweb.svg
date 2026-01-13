@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Corner cobweb - top right -->
+  <rect x="15" y="0" width="1" height="1" fill="#aaaaaa" fill-opacity="0.8"/>
+  <rect x="14" y="1" width="1" height="1" fill="#aaaaaa" fill-opacity="0.7"/>
+  <rect x="13" y="2" width="1" height="1" fill="#888888" fill-opacity="0.6"/>
+  <rect x="12" y="3" width="1" height="1" fill="#888888" fill-opacity="0.5"/>
+  
+  <!-- Horizontal strand -->
+  <rect x="12" y="0" width="1" height="1" fill="#aaaaaa" fill-opacity="0.7"/>
+  <rect x="13" y="0" width="1" height="1" fill="#aaaaaa" fill-opacity="0.8"/>
+  <rect x="14" y="0" width="1" height="1" fill="#aaaaaa" fill-opacity="0.8"/>
+  <rect x="11" y="1" width="1" height="1" fill="#888888" fill-opacity="0.5"/>
+  <rect x="10" y="1" width="1" height="1" fill="#666666" fill-opacity="0.4"/>
+  
+  <!-- Vertical strand -->
+  <rect x="15" y="1" width="1" height="1" fill="#aaaaaa" fill-opacity="0.8"/>
+  <rect x="15" y="2" width="1" height="1" fill="#aaaaaa" fill-opacity="0.7"/>
+  <rect x="15" y="3" width="1" height="1" fill="#888888" fill-opacity="0.5"/>
+  <rect x="14" y="4" width="1" height="1" fill="#666666" fill-opacity="0.4"/>
+  
+  <!-- Cross threads -->
+  <rect x="13" y="1" width="1" height="1" fill="#888888" fill-opacity="0.5"/>
+  <rect x="14" y="2" width="1" height="1" fill="#888888" fill-opacity="0.5"/>
+  <rect x="12" y="2" width="1" height="1" fill="#666666" fill-opacity="0.4"/>
+  <rect x="14" y="3" width="1" height="1" fill="#666666" fill-opacity="0.4"/>
+  
+  <!-- Wispy strands -->
+  <rect x="9" y="2" width="1" height="1" fill="#666666" fill-opacity="0.3"/>
+  <rect x="11" y="4" width="1" height="1" fill="#555555" fill-opacity="0.3"/>
+</svg>

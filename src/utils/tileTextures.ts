@@ -16,6 +16,8 @@ import floorUrl from '../assets/tiles/terrain/floor.svg';
 
 // New static tiles - dungeon
 import dungeonFloorUrl from '../assets/tiles/terrain/dungeon_floor.svg';
+import dungeonFloorCrackedUrl from '../assets/tiles/terrain/dungeon_floor_cracked.svg';
+import dungeonFloorDustyUrl from '../assets/tiles/terrain/dungeon_floor_dusty.svg';
 import dungeonWallUrl from '../assets/tiles/terrain/dungeon_wall.svg';
 import ruinsUrl from '../assets/tiles/terrain/ruins.svg';
 import chasmUrl from '../assets/tiles/terrain/chasm.svg';
@@ -23,6 +25,8 @@ import stairsDownUrl from '../assets/tiles/terrain/stairs_down.svg';
 import stairsUpUrl from '../assets/tiles/terrain/stairs_up.svg';
 import dungeonEntranceUrl from '../assets/tiles/terrain/dungeon_entrance.svg';
 import dungeonExitUrl from '../assets/tiles/terrain/dungeon_exit.svg';
+import collapseVoidUrl from '../assets/tiles/terrain/collapse_void.svg';
+import crackedFloorUrl from '../assets/tiles/terrain/cracked_floor.svg';
 
 // New static tiles - doors and traps
 import doorUrl from '../assets/tiles/terrain/door.svg';
@@ -71,6 +75,9 @@ import forestUrl from '../assets/tiles/features/forest.svg';
 import mountainUrl from '../assets/tiles/features/mountain.svg';
 import wallUrl from '../assets/tiles/features/wall.svg';
 
+// Characters
+import playerUrl from '../assets/tiles/characters/player.svg';
+
 // Transitions
 import waterGrassNUrl from '../assets/tiles/transitions/water_grass_n.svg';
 import waterGrassSUrl from '../assets/tiles/transitions/water_grass_s.svg';
@@ -98,6 +105,40 @@ import roadEndSUrl from '../assets/tiles/connected/road_end_s.svg';
 import roadEndEUrl from '../assets/tiles/connected/road_end_e.svg';
 import roadEndWUrl from '../assets/tiles/connected/road_end_w.svg';
 
+// Connected dungeon walls
+import dungeonWallVUrl from '../assets/tiles/connected/dungeon_wall_v.svg';
+import dungeonWallHUrl from '../assets/tiles/connected/dungeon_wall_h.svg';
+import dungeonWallCrossUrl from '../assets/tiles/connected/dungeon_wall_cross.svg';
+import dungeonWallCornerNeUrl from '../assets/tiles/connected/dungeon_wall_corner_ne.svg';
+import dungeonWallCornerNwUrl from '../assets/tiles/connected/dungeon_wall_corner_nw.svg';
+import dungeonWallCornerSeUrl from '../assets/tiles/connected/dungeon_wall_corner_se.svg';
+import dungeonWallCornerSwUrl from '../assets/tiles/connected/dungeon_wall_corner_sw.svg';
+import dungeonWallTNUrl from '../assets/tiles/connected/dungeon_wall_t_n.svg';
+import dungeonWallTSUrl from '../assets/tiles/connected/dungeon_wall_t_s.svg';
+import dungeonWallTEUrl from '../assets/tiles/connected/dungeon_wall_t_e.svg';
+import dungeonWallTWUrl from '../assets/tiles/connected/dungeon_wall_t_w.svg';
+import dungeonWallEndNUrl from '../assets/tiles/connected/dungeon_wall_end_n.svg';
+import dungeonWallEndSUrl from '../assets/tiles/connected/dungeon_wall_end_s.svg';
+import dungeonWallEndEUrl from '../assets/tiles/connected/dungeon_wall_end_e.svg';
+import dungeonWallEndWUrl from '../assets/tiles/connected/dungeon_wall_end_w.svg';
+
+// Connected collapse void (auto-tile with built-in edges)
+import collapseVoidVUrl from '../assets/tiles/connected/collapse_void_v.svg';
+import collapseVoidHUrl from '../assets/tiles/connected/collapse_void_h.svg';
+import collapseVoidCrossUrl from '../assets/tiles/connected/collapse_void_cross.svg';
+import collapseVoidCornerNeUrl from '../assets/tiles/connected/collapse_void_corner_ne.svg';
+import collapseVoidCornerNwUrl from '../assets/tiles/connected/collapse_void_corner_nw.svg';
+import collapseVoidCornerSeUrl from '../assets/tiles/connected/collapse_void_corner_se.svg';
+import collapseVoidCornerSwUrl from '../assets/tiles/connected/collapse_void_corner_sw.svg';
+import collapseVoidTNUrl from '../assets/tiles/connected/collapse_void_t_n.svg';
+import collapseVoidTSUrl from '../assets/tiles/connected/collapse_void_t_s.svg';
+import collapseVoidTEUrl from '../assets/tiles/connected/collapse_void_t_e.svg';
+import collapseVoidTWUrl from '../assets/tiles/connected/collapse_void_t_w.svg';
+import collapseVoidEndNUrl from '../assets/tiles/connected/collapse_void_end_n.svg';
+import collapseVoidEndSUrl from '../assets/tiles/connected/collapse_void_end_s.svg';
+import collapseVoidEndEUrl from '../assets/tiles/connected/collapse_void_end_e.svg';
+import collapseVoidEndWUrl from '../assets/tiles/connected/collapse_void_end_w.svg';
+
 // Overlays
 import flowers1Url from '../assets/tiles/overlays/flowers_1.svg';
 import flowers2Url from '../assets/tiles/overlays/flowers_2.svg';
@@ -105,6 +146,8 @@ import pebbles1Url from '../assets/tiles/overlays/pebbles_1.svg';
 import pebbles2Url from '../assets/tiles/overlays/pebbles_2.svg';
 import leavesUrl from '../assets/tiles/overlays/leaves.svg';
 import tallGrassUrl from '../assets/tiles/overlays/tall_grass.svg';
+import dustPileUrl from '../assets/tiles/overlays/dust_pile.svg';
+import cobwebUrl from '../assets/tiles/overlays/cobweb.svg';
 
 // Animated tiles - water
 import waterFrame0Url from '../assets/tiles/animated/water/frame_0.svg';
@@ -166,6 +209,20 @@ import brazierFrame1Url from '../assets/tiles/animated/brazier/frame_1.svg';
 import brazierFrame2Url from '../assets/tiles/animated/brazier/frame_2.svg';
 import brazierFrame3Url from '../assets/tiles/animated/brazier/frame_3.svg';
 
+// Animated tiles - collapse_void
+import collapseVoidFrame0Url from '../assets/tiles/animated/collapse_void/frame_0.svg';
+import collapseVoidFrame1Url from '../assets/tiles/animated/collapse_void/frame_1.svg';
+import collapseVoidFrame2Url from '../assets/tiles/animated/collapse_void/frame_2.svg';
+import collapseVoidFrame3Url from '../assets/tiles/animated/collapse_void/frame_3.svg';
+
+// Multi-tile objects
+import fallenPillar0_0Url from '../assets/tiles/multitile/fallen_pillar/0_0.svg';
+import fallenPillar1_0Url from '../assets/tiles/multitile/fallen_pillar/1_0.svg';
+import brokenStatue0_0Url from '../assets/tiles/multitile/broken_statue/0_0.svg';
+import brokenStatue1_0Url from '../assets/tiles/multitile/broken_statue/1_0.svg';
+import brokenStatue0_1Url from '../assets/tiles/multitile/broken_statue/0_1.svg';
+import brokenStatue1_1Url from '../assets/tiles/multitile/broken_statue/1_1.svg';
+
 const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   // Base terrain
   grass: grassUrl,
@@ -189,6 +246,8 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   stairs_up: stairsUpUrl,
   dungeon_entrance: dungeonEntranceUrl,
   dungeon_exit: dungeonExitUrl,
+  collapse_void: collapseVoidUrl,
+  cracked_floor: crackedFloorUrl,
   // Doors and traps
   door: doorUrl,
   door_open: doorOpenUrl,
@@ -264,6 +323,40 @@ const CONNECTED_URLS: Record<string, Record<ConnectionType, string>> = {
     end_e: roadEndEUrl,
     end_w: roadEndWUrl,
   },
+  dungeon_wall: {
+    v: dungeonWallVUrl,
+    h: dungeonWallHUrl,
+    cross: dungeonWallCrossUrl,
+    corner_ne: dungeonWallCornerNeUrl,
+    corner_nw: dungeonWallCornerNwUrl,
+    corner_se: dungeonWallCornerSeUrl,
+    corner_sw: dungeonWallCornerSwUrl,
+    t_n: dungeonWallTNUrl,
+    t_s: dungeonWallTSUrl,
+    t_e: dungeonWallTEUrl,
+    t_w: dungeonWallTWUrl,
+    end_n: dungeonWallEndNUrl,
+    end_s: dungeonWallEndSUrl,
+    end_e: dungeonWallEndEUrl,
+    end_w: dungeonWallEndWUrl,
+  },
+  collapse_void: {
+    v: collapseVoidVUrl,
+    h: collapseVoidHUrl,
+    cross: collapseVoidCrossUrl,
+    corner_ne: collapseVoidCornerNeUrl,
+    corner_nw: collapseVoidCornerNwUrl,
+    corner_se: collapseVoidCornerSeUrl,
+    corner_sw: collapseVoidCornerSwUrl,
+    t_n: collapseVoidTNUrl,
+    t_s: collapseVoidTSUrl,
+    t_e: collapseVoidTEUrl,
+    t_w: collapseVoidTWUrl,
+    end_n: collapseVoidEndNUrl,
+    end_s: collapseVoidEndSUrl,
+    end_e: collapseVoidEndEUrl,
+    end_w: collapseVoidEndWUrl,
+  },
 };
 
 const OVERLAY_URLS: Record<OverlayId, string> = {
@@ -273,6 +366,12 @@ const OVERLAY_URLS: Record<OverlayId, string> = {
   pebbles_2: pebbles2Url,
   leaves: leavesUrl,
   tall_grass: tallGrassUrl,
+  dust_pile: dustPileUrl,
+  cobweb: cobwebUrl,
+};
+
+const TILE_VARIANT_URLS: Partial<Record<TileType, string[]>> = {
+  dungeon_floor: [dungeonFloorUrl, dungeonFloorCrackedUrl, dungeonFloorDustyUrl],
 };
 
 const ANIMATED_TILE_URLS: Partial<Record<TileType, string[]>> = {
@@ -286,9 +385,34 @@ const ANIMATED_TILE_URLS: Partial<Record<TileType, string[]>> = {
   corpse_gas: [corpseGasFrame0Url, corpseGasFrame1Url, corpseGasFrame2Url, corpseGasFrame3Url],
   wall_torch: [wallTorchFrame0Url, wallTorchFrame1Url, wallTorchFrame2Url, wallTorchFrame3Url],
   brazier: [brazierFrame0Url, brazierFrame1Url, brazierFrame2Url, brazierFrame3Url],
+  collapse_void: [collapseVoidFrame0Url, collapseVoidFrame1Url, collapseVoidFrame2Url, collapseVoidFrame3Url],
 };
 
 const ANIMATED_TILES = new Set<TileType>(Object.keys(ANIMATED_TILE_URLS) as TileType[]);
+
+export type MultiTileObjectType = 'fallen_pillar' | 'broken_statue' | 'collapsed_arch';
+
+const MULTI_TILE_URLS: Partial<Record<MultiTileObjectType, Record<string, string>>> = {
+  fallen_pillar: {
+    '0_0': fallenPillar0_0Url,
+    '1_0': fallenPillar1_0Url,
+  },
+  broken_statue: {
+    '0_0': brokenStatue0_0Url,
+    '1_0': brokenStatue1_0Url,
+    '0_1': brokenStatue0_1Url,
+    '1_1': brokenStatue1_1Url,
+  },
+  collapsed_arch: {},
+};
+
+type AnimatedMultiTileFrames = Record<string, string>[];
+
+const ANIMATED_MULTI_TILE_URLS: Partial<Record<MultiTileObjectType, AnimatedMultiTileFrames>> = {};
+
+const ANIMATED_MULTI_TILES = new Set<MultiTileObjectType>(
+  Object.keys(ANIMATED_MULTI_TILE_URLS) as MultiTileObjectType[]
+);
 
 export type OverlayType = OverlayId;
 
@@ -313,9 +437,27 @@ function getAllTextureUrls(): string[] {
   
   urls.push(...Object.values(OVERLAY_URLS));
   
+  for (const variants of Object.values(TILE_VARIANT_URLS)) {
+    if (variants) urls.push(...variants);
+  }
+  
   for (const frames of Object.values(ANIMATED_TILE_URLS)) {
     if (frames) urls.push(...frames);
   }
+  
+  for (const tiles of Object.values(MULTI_TILE_URLS)) {
+    if (tiles) urls.push(...Object.values(tiles));
+  }
+  
+  for (const frames of Object.values(ANIMATED_MULTI_TILE_URLS)) {
+    if (frames) {
+      for (const frameTiles of frames) {
+        urls.push(...Object.values(frameTiles));
+      }
+    }
+  }
+  
+  urls.push(playerUrl);
   
   return urls;
 }
@@ -478,3 +620,63 @@ export function getTransitionDirections(neighbors: {
 }
 
 export type { TransitionDirection };
+
+export function getPlayerTexture(): Texture | null {
+  return textureCache.get(playerUrl) || null;
+}
+
+export function selectTileVariantTexture(
+  tileType: TileType,
+  x: number,
+  y: number
+): Texture | null {
+  const variants = TILE_VARIANT_URLS[tileType];
+  if (!variants || variants.length <= 1) {
+    return getBaseTileTexture(tileType);
+  }
+  
+  const hash = ((x * 374761393 + y * 668265263) >>> 0) % variants.length;
+  const variantUrl = variants[hash];
+  return textureCache.get(variantUrl) || getBaseTileTexture(tileType);
+}
+
+export function getMultiTileTexture(
+  objectType: MultiTileObjectType,
+  tileX: number,
+  tileY: number
+): Texture | null {
+  const tiles = MULTI_TILE_URLS[objectType];
+  if (!tiles) return null;
+  
+  const key = `${tileX}_${tileY}`;
+  const url = tiles[key];
+  if (!url) return null;
+  
+  return textureCache.get(url) || null;
+}
+
+export function isAnimatedMultiTile(objectType: MultiTileObjectType): boolean {
+  return ANIMATED_MULTI_TILES.has(objectType);
+}
+
+export function getAnimatedMultiTileTextures(
+  objectType: MultiTileObjectType,
+  tileX: number,
+  tileY: number
+): Texture[] | null {
+  const frames = ANIMATED_MULTI_TILE_URLS[objectType];
+  if (!frames) return null;
+  
+  const key = `${tileX}_${tileY}`;
+  const textures: Texture[] = [];
+  
+  for (const frameTiles of frames) {
+    const url = frameTiles[key];
+    if (url) {
+      const texture = textureCache.get(url);
+      if (texture) textures.push(texture);
+    }
+  }
+  
+  return textures.length > 0 ? textures : null;
+}
