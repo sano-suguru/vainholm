@@ -1,5 +1,16 @@
 import type { MapData, Position, TileId } from '../../types';
-import type { Corridor, DungeonFloor, FloorGenerationOptions, Room } from '../types';
+import type {
+  Corridor,
+  DecorationConfig,
+  DoorConfig,
+  DungeonFloor,
+  FloorGenerationOptions,
+  HazardConfig,
+  LightingConfig,
+  Room,
+  TrapConfig,
+  TileWeights,
+} from '../types';
 import { TILE_ID_BY_TYPE, TILE_MAPPING } from '../../tiles';
 import { generateBSP } from './bspGenerator';
 import { seededRandom } from '../../utils/seedUtils';
@@ -91,40 +102,344 @@ function findFarthestRoom(rooms: Room[], fromPosition: Position): Room {
   return farthestRoom;
 }
 
+export function selectWeightedTile(
+  tiles: TileWeights,
+  random: () => number
+): TileId | null {
+  const entries = Object.entries(tiles);
+  if (entries.length === 0) return null;
+
+  const total = entries.reduce((sum, [_, w]) => sum + (w ?? 0), 0);
+  if (total === 0) return null;
+
+  let roll = random() * total;
+
+  for (const [tileType, weight] of entries) {
+    roll -= weight ?? 0;
+    if (roll <= 0) {
+      const tileId = T[tileType as keyof typeof T];
+      return tileId !== undefined ? tileId : null;
+    }
+  }
+
+  const fallbackTileId = T[entries[0][0] as keyof typeof T];
+  return fallbackTileId !== undefined ? fallbackTileId : null;
+}
+
+export function shuffleArray<T>(array: T[], random: () => number): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function buildAdjacencyCount(rooms: Room[], corridors: Corridor[]): Map<number, number> {
+  const adjacency = new Map<number, number>();
+  for (const room of rooms) {
+    adjacency.set(room.id, 0);
+  }
+
+  for (const corridor of corridors) {
+    for (const room of rooms) {
+      const isStart = room.center.x === corridor.start.x && room.center.y === corridor.start.y;
+      const isEnd = room.center.x === corridor.end.x && room.center.y === corridor.end.y;
+      if (isStart || isEnd) {
+        adjacency.set(room.id, (adjacency.get(room.id) ?? 0) + 1);
+      }
+    }
+  }
+
+  return adjacency;
+}
+
+function assignRoomTypes(
+  rooms: Room[],
+  entranceRoom: Room,
+  exitRoom: Room | null,
+  corridors: Corridor[],
+  random: () => number
+): void {
+  const normalRooms = rooms.filter(
+    (r) => r !== entranceRoom && r !== exitRoom
+  );
+
+  if (normalRooms.length === 0) return;
+
+  const bossRoom = normalRooms.reduce((largest, room) => {
+    const largestArea = largest.width * largest.height;
+    const currentArea = room.width * room.height;
+    return currentArea > largestArea ? room : largest;
+  });
+  bossRoom.roomType = 'boss';
+
+  const adjacencyCount = buildAdjacencyCount(rooms, corridors);
+  const deadEndRooms = normalRooms.filter(
+    (r) => r.roomType !== 'boss' && adjacencyCount.get(r.id) === 1
+  );
+
+  if (deadEndRooms.length > 0) {
+    const treasureRoom = deadEndRooms[Math.floor(random() * deadEndRooms.length)];
+    treasureRoom.roomType = 'treasure';
+  }
+}
+
+function findDoorPosition(
+  room: Room,
+  terrain: TileId[][]
+): Position | null {
+  const directions = [
+    { dx: 0, dy: -1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
+    { dx: 1, dy: 0 },
+  ];
+
+  for (const { dx, dy } of directions) {
+    let x = room.center.x;
+    let y = room.center.y;
+
+    while (x >= room.x && x < room.x + room.width && y >= room.y && y < room.y + room.height) {
+      x += dx;
+      y += dy;
+    }
+
+    if (terrain[y]?.[x] === T.dungeon_floor) {
+      return { x, y };
+    }
+  }
+
+  return null;
+}
+
+export function validateDoorConfig(config: DoorConfig): void {
+  const sum = config.secretChance + config.lockedChance;
+  if (sum > 1) {
+    throw new Error(
+      `Invalid DoorConfig: secretChance (${config.secretChance}) + lockedChance (${config.lockedChance}) = ${sum} exceeds 1`
+    );
+  }
+}
+
+function placeDoors(
+  rooms: Room[],
+  corridors: Corridor[],
+  terrain: TileId[][],
+  features: TileId[][],
+  random: () => number,
+  config?: DoorConfig
+): void {
+  if (!config) return;
+  validateDoorConfig(config);
+
+  const placedPositions = new Set<string>();
+
+  for (const corridor of corridors) {
+    const endpoints = [corridor.start, corridor.end];
+
+    for (const point of endpoints) {
+      if (random() > config.doorChance) continue;
+
+      const room = rooms.find(
+        (r) => r.center.x === point.x && r.center.y === point.y
+      );
+      if (!room) continue;
+
+      const doorPos = findDoorPosition(room, terrain);
+      if (!doorPos) continue;
+
+      const posKey = `${doorPos.x},${doorPos.y}`;
+      if (placedPositions.has(posKey)) continue;
+      if (features[doorPos.y]?.[doorPos.x] !== 0) continue;
+
+      const roll = random();
+      let doorTile: TileId;
+      if (roll < config.secretChance) {
+        doorTile = T.door_secret;
+      } else if (roll < config.secretChance + config.lockedChance) {
+        doorTile = T.door_locked;
+      } else {
+        doorTile = T.door;
+      }
+
+      features[doorPos.y][doorPos.x] = doorTile;
+      placedPositions.add(posKey);
+    }
+  }
+}
+
 function addDecorations(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  config?: DecorationConfig
+): void {
+  const chance = config?.roomDecorationChance ?? 0.3;
+  const tiles = config?.decorationTiles ?? { pillar: 0.4, rubble: 0.3, bone_pile: 0.3 };
+  const minSize = config?.minRoomSizeForStructures ?? 4;
+
+  for (const room of rooms) {
+    if (room.roomType === 'entrance' || room.roomType === 'exit') continue;
+    if (room.roomType === 'boss' || room.roomType === 'treasure') continue;
+    if (random() > chance) continue;
+
+    const roomTooSmall = room.width < minSize || room.height < minSize;
+
+    const filteredTiles = roomTooSmall
+      ? Object.fromEntries(
+          Object.entries(tiles).filter(
+            ([type]) => type !== 'pillar' && type !== 'altar_dark' && type !== 'sarcophagus'
+          )
+        )
+      : tiles;
+
+    const tile = selectWeightedTile(filteredTiles, random);
+    if (!tile) continue;
+
+    const x = room.x + 1 + Math.floor(random() * Math.max(1, room.width - 2));
+    const y = room.y + 1 + Math.floor(random() * Math.max(1, room.height - 2));
+
+    if (features[y]?.[x] === 0) {
+      features[y][x] = tile;
+    }
+  }
+}
+
+function addTraps(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  config?: TrapConfig
+): void {
+  if (!config) return;
+
+  for (const room of rooms) {
+    if (room.roomType === 'entrance') continue;
+    if (random() > config.trapChance) continue;
+
+    for (let i = 0; i < config.trapsPerRoom; i++) {
+      const tile = selectWeightedTile(config.trapTiles, random);
+      if (!tile) continue;
+
+      const x = room.x + Math.floor(random() * room.width);
+      const y = room.y + Math.floor(random() * room.height);
+
+      if (features[y]?.[x] === 0) {
+        features[y][x] = tile;
+      }
+    }
+  }
+}
+
+function addLighting(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  config?: LightingConfig
+): void {
+  if (!config) return;
+
+  for (const room of rooms) {
+    if (random() > config.lightingChance) continue;
+    if (room.width < 4 || room.height < 4) continue;
+
+    const corners = [
+      { x: room.x + 1, y: room.y + 1 },
+      { x: room.x + room.width - 2, y: room.y + 1 },
+      { x: room.x + 1, y: room.y + room.height - 2 },
+      { x: room.x + room.width - 2, y: room.y + room.height - 2 },
+    ];
+
+    const shuffled = shuffleArray(corners, random);
+    let placed = 0;
+
+    for (const pos of shuffled) {
+      if (placed >= config.lightsPerRoom) break;
+      if (features[pos.y]?.[pos.x] !== 0) continue;
+
+      const tile = selectWeightedTile(config.lightingTiles, random);
+      if (tile) {
+        features[pos.y][pos.x] = tile;
+        placed++;
+      }
+    }
+  }
+}
+
+function addHazards(
+  features: TileId[][],
+  terrain: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  config?: HazardConfig
+): void {
+  if (!config) return;
+
+  for (const room of rooms) {
+    if (room.roomType === 'entrance') continue;
+    if (random() > config.hazardChance) continue;
+
+    const tile = selectWeightedTile(config.hazardTiles, random);
+    if (!tile) continue;
+
+    const startX = room.x + Math.floor(random() * Math.max(1, room.width - 2));
+    const startY = room.y + Math.floor(random() * Math.max(1, room.height - 2));
+    const size = 1 + Math.floor(random() * 2);
+
+    for (let dy = 0; dy < size; dy++) {
+      for (let dx = 0; dx < size; dx++) {
+        const x = startX + dx;
+        const y = startY + dy;
+        if (terrain[y]?.[x] === T.dungeon_floor && features[y]?.[x] === 0) {
+          features[y][x] = tile;
+        }
+      }
+    }
+  }
+}
+
+function decorateSpecialRooms(
   features: TileId[][],
   rooms: Room[],
   random: () => number
 ): void {
   for (const room of rooms) {
-    if (room.roomType === 'entrance' || room.roomType === 'exit') {
-      continue;
+    if (room.roomType === 'boss') {
+      const centerX = room.x + Math.floor(room.width / 2);
+      const centerY = room.y + Math.floor(room.height / 2);
+
+      if (features[centerY]?.[centerX] === 0) {
+        features[centerY][centerX] = T.altar_dark;
+      }
+
+      if (room.width >= 5 && room.height >= 5) {
+        const diagonalCorners = [
+          { x: room.x + 1, y: room.y + 1 },
+          { x: room.x + room.width - 2, y: room.y + room.height - 2 },
+        ];
+        for (const c of diagonalCorners) {
+          if (features[c.y]?.[c.x] === 0) {
+            features[c.y][c.x] = T.brazier;
+          }
+        }
+      }
     }
 
-    const decorationChance = 0.3;
-    if (random() > decorationChance) continue;
+    if (room.roomType === 'treasure') {
+      const centerX = room.x + Math.floor(room.width / 2);
+      const centerY = room.y + Math.floor(room.height / 2);
 
-    const decorationType = random();
-
-    const canPlacePillar = room.width > 3 && room.height > 3;
-
-    if (decorationType < 0.4 && canPlacePillar) {
-      const pillarX = room.x + 1 + Math.floor(random() * (room.width - 2));
-      const pillarY = room.y + 1 + Math.floor(random() * (room.height - 2));
-      if (features[pillarY] && features[pillarY][pillarX] !== undefined) {
-        features[pillarY][pillarX] = T.pillar;
+      if (features[centerY]?.[centerX] === 0) {
+        features[centerY][centerX] = T.sarcophagus;
       }
-    } else if (decorationType < 0.7 || !canPlacePillar) {
-      const rubbleX = room.x + Math.floor(random() * room.width);
-      const rubbleY = room.y + Math.floor(random() * room.height);
-      if (features[rubbleY] && features[rubbleY][rubbleX] !== undefined) {
-        features[rubbleY][rubbleX] = T.rubble;
-      }
-    } else {
-      const boneX = room.x + Math.floor(random() * room.width);
-      const boneY = room.y + Math.floor(random() * room.height);
-      if (features[boneY] && features[boneY][boneX] !== undefined) {
-        features[boneY][boneX] = T.bone_pile;
+
+      for (let i = 0; i < 3; i++) {
+        const x = room.x + Math.floor(random() * room.width);
+        const y = room.y + Math.floor(random() * room.height);
+        if (features[y]?.[x] === 0) {
+          features[y][x] = T.bone_pile;
+        }
       }
     }
   }
@@ -191,14 +506,27 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
     features[stairsUp.y][stairsUp.x] = T.dungeon_exit;
   }
 
+  let exitRoom: Room | null = null;
   if (!isLastFloorInDungeon) {
-    const exitRoom = findFarthestRoom(rooms, entranceRoom.center);
+    exitRoom = findFarthestRoom(rooms, entranceRoom.center);
     exitRoom.roomType = 'exit';
     stairsDown = { ...exitRoom.center };
     features[stairsDown.y][stairsDown.x] = T.stairs_down;
   }
 
-  addDecorations(features, rooms, random);
+  assignRoomTypes(rooms, entranceRoom, exitRoom, corridors, random);
+
+  placeDoors(rooms, corridors, terrain, features, random, regionConfig.doorConfig);
+
+  decorateSpecialRooms(features, rooms, random);
+
+  addDecorations(features, rooms, random, regionConfig.decorationConfig);
+
+  addTraps(features, rooms, random, regionConfig.trapConfig);
+
+  addLighting(features, rooms, random, regionConfig.lightingConfig);
+
+  addHazards(features, terrain, rooms, random, regionConfig.hazardConfig);
 
   const spawnPoint = stairsUp || entranceRoom.center;
 

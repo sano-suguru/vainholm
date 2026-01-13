@@ -4,6 +4,11 @@
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
+## Communication
+
+- Always respond in Japanese unless explicitly instructed otherwise
+- 日本語で応答すること（特に指示がない限り）
+
 ## Quick Reference
 
 | Command | Purpose |

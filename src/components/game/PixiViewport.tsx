@@ -643,7 +643,7 @@ const FogOfWarLayer = memo(function FogOfWarLayer({
         if (visible) continue;
 
         const explored = isTileExplored(x, y);
-        const alpha = explored ? 0.25 : 0.75;
+        const alpha = explored ? 0.1 : 0.75;
         const screenX = (x - viewport.startX) * TILE_SIZE;
         const screenY = (y - viewport.startY) * TILE_SIZE;
 
@@ -939,6 +939,8 @@ function GameScene({
         lights={lightSources} 
         viewport={viewport} 
         playerPosition={playerPosition}
+        width={width}
+        height={height}
       />
       <DayNightLayer width={width} height={height} timeOfDay={timeOfDay} />
       <RainLayer width={width} height={height} weather={weather} />

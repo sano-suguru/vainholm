@@ -253,3 +253,38 @@ export function getVisibleLights(
     light.position.y < viewport.endY + margin
   );
 }
+
+export const BASE_DARKNESS = 0.15;
+
+export interface LightScreenData {
+  screenX: number;
+  screenY: number;
+  radius: number;
+  intensity: number;
+}
+
+export function calculateDarknessAt(
+  px: number,
+  py: number,
+  lights: LightScreenData[]
+): number {
+  let remainingDarkness = BASE_DARKNESS;
+
+  for (const light of lights) {
+    const dx = px - light.screenX;
+    const dy = py - light.screenY;
+    const distSq = dx * dx + dy * dy;
+    const radiusSq = light.radius * light.radius;
+
+    if (distSq < radiusSq) {
+      const normalizedDistance = Math.sqrt(distSq) / light.radius;
+      const quadraticFalloff = 1 - normalizedDistance * normalizedDistance;
+      const lightContribution = Math.min(1, quadraticFalloff * light.intensity);
+      remainingDarkness *= 1 - lightContribution;
+
+      if (remainingDarkness < 0.005) return 0;
+    }
+  }
+
+  return remainingDarkness;
+}
