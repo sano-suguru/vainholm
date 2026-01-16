@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { Sword, Shield } from 'lucide-react';
 import styles from '../../../styles/game.module.css';
 
 interface StatusBarProps {
@@ -44,11 +45,11 @@ export const StatusBar = memo(function StatusBar({
       </div>
       <div className={styles.statGroup}>
         <div className={`${styles.stat} ${styles.statAttack}`}>
-          <span>⚔</span>
+          <Sword size={14} />
           <span>{attack}</span>
         </div>
         <div className={`${styles.stat} ${styles.statDefense}`}>
-          <span>🛡</span>
+          <Shield size={14} />
           <span>{defense}</span>
         </div>
       </div>
