@@ -349,3 +349,244 @@
   font-size: 10px;
   opacity: 0.8;
 }
+
+.levelUpOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(10, 8, 6, 0.92) 0%, rgba(5, 4, 3, 0.98) 100%);
+  backdrop-filter: blur(4px);
+  animation: levelUpFadeIn 0.4s ease-out;
+}
+
+@keyframes levelUpFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.levelUpModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 48px 48px;
+  max-width: 900px;
+  width: 90%;
+}
+
+.levelUpHeader {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.levelUpHeaderLine {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hud-text-secondary), transparent);
+}
+
+.levelUpTitle {
+  font-family: 'Noto Serif JP', 'Times New Roman', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--stat-attack);
+  text-shadow: 0 0 30px rgba(201, 162, 39, 0.4);
+  margin: 0;
+  letter-spacing: 6px;
+  white-space: nowrap;
+}
+
+.levelUpSubtitle {
+  font-family: 'Noto Serif JP', 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--hud-text-secondary);
+  margin: 0 0 36px 0;
+  letter-spacing: 3px;
+}
+
+.levelUpCardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 800px) {
+  .levelUpCardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+.levelUpCard {
+  position: relative;
+  background: rgba(18, 15, 12, 0.95);
+  border: 1px solid var(--hud-border);
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+}
+
+.levelUpCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(40, 35, 28, 0.1) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+}
+
+.levelUpCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--hud-text-secondary), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.levelUpCard:hover {
+  border-color: var(--hud-text-secondary);
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 1px rgba(168, 152, 120, 0.3);
+}
+
+.levelUpCard:hover::after {
+  opacity: 1;
+}
+
+.levelUpCardInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 16px 16px;
+  text-align: center;
+}
+
+.levelUpCardCategory {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.levelUpCategory_stat {
+  color: var(--stat-attack);
+  text-shadow: 0 0 12px rgba(201, 162, 39, 0.5);
+}
+
+.levelUpCategory_passive {
+  color: #6a8a6a;
+  text-shadow: 0 0 12px rgba(106, 138, 106, 0.5);
+}
+
+.levelUpCategory_active {
+  color: #7a6a9a;
+  text-shadow: 0 0 12px rgba(122, 106, 154, 0.5);
+}
+
+.levelUpCategory_weapon {
+  color: var(--hp-healthy);
+  text-shadow: 0 0 12px rgba(139, 32, 32, 0.5);
+}
+
+.levelUpCategory_terrain {
+  color: var(--stat-defense);
+  text-shadow: 0 0 12px rgba(106, 138, 154, 0.5);
+}
+
+.levelUpCategory_remnant {
+  color: #9a7a5a;
+  text-shadow: 0 0 12px rgba(154, 122, 90, 0.5);
+}
+
+.levelUpCardName {
+  font-family: 'Noto Serif JP', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--hud-text-primary);
+  margin: 0 0 10px 0;
+  letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+.levelUpCardDivider {
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hud-border), transparent);
+  margin-bottom: 10px;
+}
+
+.levelUpCardDesc {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--hud-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+}
+
+.levelUpCardCategoryLabel {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  color: var(--hud-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.levelUpCardGlow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.levelUpCard:hover .levelUpCardGlow {
+  opacity: 1;
+}
+
+.levelUpCard_stat .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.08) 0%, transparent 70%);
+}
+
+.levelUpCard_passive .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(106, 138, 106, 0.08) 0%, transparent 70%);
+}
+
+.levelUpCard_active .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(122, 106, 154, 0.08) 0%, transparent 70%);
+}
+
+.levelUpCard_weapon .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(139, 32, 32, 0.08) 0%, transparent 70%);
+}
+
+.levelUpCard_terrain .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(106, 138, 154, 0.08) 0%, transparent 70%);
+}
+
+.levelUpCard_remnant .levelUpCardGlow {
+  background: radial-gradient(ellipse at center, rgba(154, 122, 90, 0.08) 0%, transparent 70%);
+}

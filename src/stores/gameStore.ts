@@ -3,7 +3,21 @@ import { create } from 'zustand';
 import type { Direction, MapData, MapLayer, Position, TileType } from '../types';
 import type { LightSource } from '../utils/lighting';
 import type { TriggerEffect } from '../utils/tileInteractions';
-import type { CombatStats, Enemy, EnemyId, TurnPhase, GameEndState, CombatLogEntry } from '../combat/types';
+import type {
+  CombatStats,
+  Enemy,
+  EnemyId,
+  TurnPhase,
+  GameEndState,
+  CombatLogEntry,
+  CharacterClassId,
+  BackgroundId,
+  Weapon,
+  StatusEffectId,
+  StatusEffect,
+} from '../combat/types';
+import { getClass } from '../combat/classes';
+import { getBackground } from '../combat/backgrounds';
 
 import {
   combat_player_kill,
@@ -15,25 +29,78 @@ import { TILE_DEFINITIONS } from '../utils/constants';
 import { processTrigger } from '../utils/tileInteractions';
 import { calculateDamage, applyDamageToEnemy } from '../combat/damageCalculation';
 import { getLocalizedEnemyName } from '../utils/i18n';
+import type { StatModifier } from '../progression/types';
 
-const INITIAL_PLAYER_STATS: CombatStats = {
+function applyStatModifierToStats(
+  stats: CombatStats,
+  modifier: StatModifier
+): CombatStats {
+  switch (modifier.stat) {
+    case 'maxHp': {
+      const newMaxHp = Math.max(1, stats.maxHp + modifier.value);
+      const nextHp = Math.min(newMaxHp, stats.hp + modifier.value);
+      return { ...stats, maxHp: newMaxHp, hp: nextHp };
+    }
+    case 'hp': {
+      const nextHp = Math.max(0, Math.min(stats.maxHp, stats.hp + modifier.value));
+      return { ...stats, hp: nextHp };
+    }
+    case 'attack': {
+      if (modifier.isPercentage) {
+        const delta = Math.floor((stats.attack * modifier.value) / 100);
+        return { ...stats, attack: stats.attack + delta };
+      }
+      return { ...stats, attack: stats.attack + modifier.value };
+    }
+    case 'defense': {
+      if (modifier.isPercentage) {
+        const delta = Math.floor((stats.defense * modifier.value) / 100);
+        return { ...stats, defense: stats.defense + delta };
+      }
+      return { ...stats, defense: stats.defense + modifier.value };
+    }
+    case 'visionRange': {
+      return stats;
+    }
+  }
+}
+
+const BASE_PLAYER_STATS: CombatStats = {
   hp: 30,
   maxHp: 30,
   attack: 8,
   defense: 2,
 };
 
+const calculateInitialStats = (
+  classId: CharacterClassId,
+  backgroundId: BackgroundId
+): CombatStats => {
+  const charClass = getClass(classId);
+  const background = getBackground(backgroundId);
+  
+  let hp = BASE_PLAYER_STATS.hp + charClass.statModifiers.hp;
+  const maxHp = hp;
+  const attack = BASE_PLAYER_STATS.attack + charClass.statModifiers.attack;
+  const defense = BASE_PLAYER_STATS.defense + charClass.statModifiers.defense;
+  
+  if (background.effect.type === 'bonus_hp') {
+    hp += background.effect.amount;
+  }
+  
+  return { hp, maxHp: maxHp + (background.effect.type === 'bonus_hp' ? background.effect.amount : 0), attack, defense };
+};
+
 let combatLogIdCounter = 0;
 
-// TODO: クラス/武器/状態異常システム実装時に以下を追加
-// - classId: CharacterClassId
-// - weapon: Weapon | null
-// - statusEffects: Map<StatusEffectId, StatusEffect>
-// 型定義は src/combat/types.ts に用意済み
 interface PlayerState {
   position: Position;
   facing: Direction;
   stats: CombatStats;
+  classId: CharacterClassId;
+  backgroundId: BackgroundId;
+  weapon: Weapon | null;
+  statusEffects: Map<StatusEffectId, StatusEffect>;
 }
 
 export type WeatherType = 'clear' | 'rain' | 'fog';
@@ -175,14 +242,24 @@ interface GameStore {
   setGameEndState: (state: GameEndState) => void;
   addCombatLogEntry: (entry: Omit<CombatLogEntry, 'id'>) => void;
   resetCombatState: () => void;
+  applyStatModifiers: (modifiers: readonly StatModifier[]) => void;
 }
 
+const DEFAULT_CLASS_ID: CharacterClassId = 'warrior';
+const DEFAULT_BACKGROUND_ID: BackgroundId = 'ex_soldier';
+
+const createInitialPlayerState = (): PlayerState => ({
+  position: { x: 50, y: 50 },
+  facing: 'down',
+  stats: calculateInitialStats(DEFAULT_CLASS_ID, DEFAULT_BACKGROUND_ID),
+  classId: DEFAULT_CLASS_ID,
+  backgroundId: DEFAULT_BACKGROUND_ID,
+  weapon: null,
+  statusEffects: new Map(),
+});
+
 export const useGameStore = create<GameStore>((set, get) => ({
-  player: {
-    position: { x: 50, y: 50 },
-    facing: 'down',
-    stats: { ...INITIAL_PLAYER_STATS },
-  },
+  player: createInitialPlayerState(),
   map: null,
   terrainLayer: null,
   featureLayer: null,
@@ -217,9 +294,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       featureLayer,
       mapSeed: seed,
       player: {
+        ...get().player,
         position: { ...spawnAt },
         facing: 'down',
-        stats: get().player.stats,
       },
       visibleTiles: spawnVisible,
       exploredTiles: new Set(spawnVisible),
@@ -309,9 +386,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       set({
         player: {
+          ...player,
           position: { x: newX, y: newY },
           facing,
-          stats: player.stats,
         },
         visibleTiles: newVisibleTiles,
         exploredTiles: newExploredTiles,
@@ -471,7 +548,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       terrainLayer,
       featureLayer,
       mapSeed,
-      player: { position: { ...returnPosition }, facing: 'down', stats: player.stats },
+      player: { ...player, position: { ...returnPosition }, facing: 'down' },
       visibleTiles: returnVisible,
       exploredTiles: restoredExplored,
       visibilityHash: returnPosition.x * 10000 + returnPosition.y,
@@ -568,15 +645,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetCombatState: () => {
     combatLogIdCounter = 0;
+    const currentPlayer = get().player;
     set({
       player: {
-        ...get().player,
-        stats: { ...INITIAL_PLAYER_STATS },
+        ...currentPlayer,
+        stats: calculateInitialStats(currentPlayer.classId, currentPlayer.backgroundId),
+        statusEffects: new Map(),
       },
       enemies: new Map(),
       turnPhase: 'player',
       gameEndState: 'playing',
       combatLog: [],
+    });
+  },
+
+  applyStatModifiers: (modifiers) => {
+    set((state) => {
+      let nextStats = state.player.stats;
+      for (const modifier of modifiers) {
+        nextStats = applyStatModifierToStats(nextStats, modifier);
+      }
+
+      const nextHp = Math.max(0, Math.min(nextStats.maxHp, nextStats.hp));
+
+      return {
+        player: {
+          ...state.player,
+          stats: {
+            ...nextStats,
+            hp: nextHp,
+          },
+        },
+      };
     });
   },
 }));

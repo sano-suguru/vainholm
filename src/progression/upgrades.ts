@@ -1,0 +1,116 @@
+import type { UpgradeDefinition } from './types';
+
+export const UPGRADE_POOL: UpgradeDefinition[] = [
+  {
+    id: 'tough',
+    category: 'stat',
+    nameKey: 'upgrade_tough',
+    descriptionKey: 'upgrade_tough_desc',
+    statModifiers: [{ stat: 'maxHp', value: 15 }],
+    weight: 1.5,
+  },
+  {
+    id: 'strong',
+    category: 'stat',
+    nameKey: 'upgrade_strong',
+    descriptionKey: 'upgrade_strong_desc',
+    statModifiers: [{ stat: 'attack', value: 3 }],
+    weight: 1.2,
+  },
+  {
+    id: 'armored',
+    category: 'stat',
+    nameKey: 'upgrade_armored',
+    descriptionKey: 'upgrade_armored_desc',
+    statModifiers: [{ stat: 'defense', value: 2 }],
+    weight: 1.0,
+  },
+  {
+    id: 'night_vision',
+    category: 'passive',
+    nameKey: 'upgrade_night_vision',
+    descriptionKey: 'upgrade_night_vision_desc',
+    passiveEffect: 'night_vision',
+    statModifiers: [{ stat: 'visionRange', value: 2 }],
+    weight: 0.8,
+  },
+  {
+    id: 'trap_sense',
+    category: 'passive',
+    nameKey: 'upgrade_trap_sense',
+    descriptionKey: 'upgrade_trap_sense_desc',
+    passiveEffect: 'trap_sense',
+    weight: 0.7,
+  },
+  {
+    id: 'iron_stomach',
+    category: 'passive',
+    nameKey: 'upgrade_iron_stomach',
+    descriptionKey: 'upgrade_iron_stomach_desc',
+    passiveEffect: 'iron_stomach',
+    weight: 0.6,
+  },
+  {
+    id: 'thick_skin',
+    category: 'passive',
+    nameKey: 'upgrade_thick_skin',
+    descriptionKey: 'upgrade_thick_skin_desc',
+    passiveEffect: 'thick_skin',
+    weight: 0.8,
+  },
+  {
+    id: 'lucky',
+    category: 'passive',
+    nameKey: 'upgrade_lucky',
+    descriptionKey: 'upgrade_lucky_desc',
+    passiveEffect: 'lucky',
+    weight: 0.7,
+  },
+  {
+    id: 'emergency_dodge',
+    category: 'active',
+    nameKey: 'upgrade_emergency_dodge',
+    descriptionKey: 'upgrade_emergency_dodge_desc',
+    activeAbility: 'emergency_dodge',
+    weight: 0.5,
+  },
+  {
+    id: 'sword_mastery',
+    category: 'weapon',
+    nameKey: 'upgrade_sword_mastery',
+    descriptionKey: 'upgrade_sword_mastery_desc',
+    weight: 0.6,
+  },
+  {
+    id: 'axe_mastery',
+    category: 'weapon',
+    nameKey: 'upgrade_axe_mastery',
+    descriptionKey: 'upgrade_axe_mastery_desc',
+    weight: 0.6,
+  },
+  {
+    id: 'spear_mastery',
+    category: 'weapon',
+    nameKey: 'upgrade_spear_mastery',
+    descriptionKey: 'upgrade_spear_mastery_desc',
+    weight: 0.6,
+  },
+  {
+    id: 'dagger_mastery',
+    category: 'weapon',
+    nameKey: 'upgrade_dagger_mastery',
+    descriptionKey: 'upgrade_dagger_mastery_desc',
+    weight: 0.6,
+  },
+  {
+    id: 'trap_resistance',
+    category: 'terrain',
+    nameKey: 'upgrade_trap_resistance',
+    descriptionKey: 'upgrade_trap_resistance_desc',
+    weight: 0.5,
+  },
+];
+
+export function getUpgradeById(id: string): UpgradeDefinition | undefined {
+  return UPGRADE_POOL.find((u) => u.id === id);
+}

@@ -1,10 +1,107 @@
 import type { Position } from '../types';
 
+// =============================================================================
+// Character Classes
+// =============================================================================
+
 export type CharacterClassId = 'warrior' | 'hunter' | 'scholar';
+
+export interface CharacterClass {
+  id: CharacterClassId;
+  name: string;
+  displayName: string;
+  description: string;
+  /** Base stat modifiers */
+  statModifiers: {
+    hp: number;
+    attack: number;
+    defense: number;
+  };
+  /** Unique passive ability */
+  passiveAbility: ClassPassiveAbility;
+}
+
+export type ClassPassiveAbility =
+  | { type: 'counter_attack'; chance: number; damageMultiplier: number }
+  | { type: 'trap_sense'; detectionRadius: number }
+  | { type: 'item_identification'; identified: boolean };
+
+// =============================================================================
+// Backgrounds / Origins
+// =============================================================================
+
+export type BackgroundId =
+  | 'fallen_noble'
+  | 'orphan'
+  | 'ex_soldier'
+  | 'herbalist_apprentice'
+  | 'thief_child'
+  | 'temple_raised';
+
+export interface Background {
+  id: BackgroundId;
+  name: string;
+  displayName: string;
+  description: string;
+  effect: BackgroundEffect;
+}
+
+export type BackgroundEffect =
+  | { type: 'extra_starting_item'; count: number }
+  | { type: 'trap_damage_reduction'; multiplier: number }
+  | { type: 'bonus_hp'; amount: number }
+  | { type: 'healing_bonus'; multiplier: number }
+  | { type: 'stealth_damage_bonus'; amount: number }
+  | { type: 'remnant_cost_reduction'; multiplier: number };
+
+// =============================================================================
+// Weapons
+// =============================================================================
 
 export type WeaponTypeId = 'sword' | 'axe' | 'spear' | 'dagger' | 'mace';
 
 export type WeaponTier = 'common' | 'rare' | 'legendary';
+
+export interface WeaponPattern {
+  id: WeaponTypeId;
+  name: string;
+  displayName: string;
+  attackType: WeaponAttackType;
+}
+
+export type WeaponAttackType =
+  | { type: 'standard' }
+  | { type: 'cleave'; directions: 8 }
+  | { type: 'pierce'; range: number }
+  | { type: 'stealth_bonus'; multiplier: number }
+  | { type: 'knockback'; distance: number };
+
+export type WeaponPremiumId =
+  | 'hp_bonus'
+  | 'attack_percent'
+  | 'critical_chance'
+  | 'life_steal'
+  | 'poison_on_hit'
+  | 'bleed_on_hit'
+  | 'burn_on_hit'
+  | 'stun_on_hit'
+  | 'fire_damage'
+  | 'undead_slayer';
+
+export interface WeaponPremium {
+  id: WeaponPremiumId;
+  name: string;
+  displayName: string;
+  effect: WeaponPremiumEffect;
+}
+
+export type WeaponPremiumEffect =
+  | { type: 'stat_bonus'; stat: 'hp' | 'attack' | 'defense'; value: number; isPercent: boolean }
+  | { type: 'critical_bonus'; chance: number }
+  | { type: 'life_steal'; percent: number }
+  | { type: 'status_on_hit'; status: StatusEffectId; duration: number; chance: number }
+  | { type: 'elemental_damage'; element: 'fire' | 'ice' | 'lightning'; damage: number }
+  | { type: 'slayer'; enemyType: string; damageMultiplier: number };
 
 export interface Weapon {
   id: string;
@@ -12,9 +109,30 @@ export interface Weapon {
   tier: WeaponTier;
   name: string;
   attackBonus: number;
+  premiums: WeaponPremiumId[];
 }
 
+// =============================================================================
+// Status Effects
+// =============================================================================
+
 export type StatusEffectId = 'poison' | 'bleed' | 'burn' | 'stun' | 'slow' | 'blind';
+
+export interface StatusEffectDefinition {
+  id: StatusEffectId;
+  name: string;
+  displayName: string;
+  description: string;
+  stackable: boolean;
+  maxStacks: number;
+  effect: StatusEffectType;
+}
+
+export type StatusEffectType =
+  | { type: 'damage_over_time'; damagePerTurn: number }
+  | { type: 'skip_turn' }
+  | { type: 'slow'; movementPenalty: number }
+  | { type: 'vision_reduction'; radiusReduction: number };
 
 export interface StatusEffect {
   id: StatusEffectId;

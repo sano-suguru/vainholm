@@ -29,3 +29,6 @@ src/paraglide
 *.njsproj
 *.sln
 *.sw?
+
+# Local agent scratch
+.sisyphus/ralph-loop.local.md

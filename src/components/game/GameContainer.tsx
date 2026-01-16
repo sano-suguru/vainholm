@@ -2,6 +2,7 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../stores/gameStore';
 import { useDungeonStore } from '../../dungeon';
+import { useProgressionStore } from '../../progression';
 import { useViewport } from '../../hooks/useViewport';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { useEffectProcessor } from '../../hooks/useEffectProcessor';
@@ -12,6 +13,7 @@ import { getMapSeed, updateUrlWithSeed } from '../../utils/seedUtils';
 import { PixiViewport } from './PixiViewport';
 import { DebugInfo } from '../ui/DebugInfo';
 import { GameOverScreen } from '../ui/GameOverScreen';
+import { LevelUpScreen } from '../ui/LevelUpScreen';
 import { Hud } from '../ui/hud';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import { executeTurn } from '../../combat/turnManager';
@@ -50,6 +52,22 @@ export function GameContainer() {
 
   const isInDungeon = useDungeonStore((state) => state.isInDungeon);
   const dungeon = useDungeonStore((state) => state.dungeon);
+
+  const {
+    pendingLevelUp,
+    currentChoices,
+    checkLevelUp,
+    triggerLevelUp,
+    selectUpgrade,
+  } = useProgressionStore(
+    useShallow((state) => ({
+      pendingLevelUp: state.pendingLevelUp,
+      currentChoices: state.currentChoices,
+      checkLevelUp: state.checkLevelUp,
+      triggerLevelUp: state.triggerLevelUp,
+      selectUpgrade: state.selectUpgrade,
+    }))
+  );
   
   const currentFloor = useMemo(() => {
     if (!dungeon) return null;
@@ -91,12 +109,26 @@ export function GameContainer() {
   const handleMove = useCallback(
     (dx: number, dy: number) => {
       if (gameEndState !== 'playing') return;
+      if (pendingLevelUp) return;
       movePlayer(dx, dy);
       if (isInDungeon) {
         executeTurn();
       }
     },
-    [movePlayer, isInDungeon, gameEndState]
+    [movePlayer, isInDungeon, gameEndState, pendingLevelUp]
+  );
+
+  useEffect(() => {
+    if (isInDungeon && dungeon && checkLevelUp(dungeon.currentFloor)) {
+      triggerLevelUp(dungeon.currentFloor);
+    }
+  }, [isInDungeon, dungeon?.currentFloor, checkLevelUp, triggerLevelUp, dungeon]);
+
+  const handleUpgradeSelect = useCallback(
+    (upgradeId: string) => {
+      selectUpgrade(upgradeId);
+    },
+    [selectUpgrade]
   );
 
   useKeyboard({
@@ -197,6 +229,13 @@ export function GameContainer() {
           metrics={metrics}
           mapSeed={mapSeed}
           floorInfo={floorInfo}
+        />
+      )}
+      {pendingLevelUp && currentChoices && dungeon && (
+        <LevelUpScreen
+          choices={currentChoices}
+          onSelect={handleUpgradeSelect}
+          floor={dungeon.currentFloor}
         />
       )}
     </div>
