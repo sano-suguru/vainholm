@@ -11,11 +11,14 @@ import { clearColorNoiseCache } from '../../utils/colorNoiseCache';
 import { getMapSeed, updateUrlWithSeed } from '../../utils/seedUtils';
 import { PixiViewport } from './PixiViewport';
 import { DebugInfo } from '../ui/DebugInfo';
+import { GameOverScreen } from '../ui/GameOverScreen';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
+import { executeTurn } from '../../combat/turnManager';
+import type { Enemy } from '../../combat/types';
 import styles from '../../styles/game.module.css';
 
 export function GameContainer() {
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -24,6 +27,8 @@ export function GameContainer() {
       visibilityHash: state.visibilityHash,
       lightSources: state.lightSources,
       mapSeed: state.mapSeed,
+      enemies: state.enemies,
+      gameEndState: state.gameEndState,
     }))
   );
 
@@ -84,9 +89,13 @@ export function GameContainer() {
 
   const handleMove = useCallback(
     (dx: number, dy: number) => {
+      if (gameEndState !== 'playing') return;
       movePlayer(dx, dy);
+      if (isInDungeon) {
+        executeTurn();
+      }
     },
-    [movePlayer]
+    [movePlayer, isInDungeon, gameEndState]
   );
 
   useKeyboard({
@@ -131,12 +140,30 @@ export function GameContainer() {
     [isInDungeon, currentFloor]
   );
 
+  const enemiesArray = useMemo(
+    () => Array.from(enemies.values()).filter((e): e is Enemy => e.isAlive),
+    [enemies]
+  );
+  
+  const playerStats = useMemo(
+    () => ({ hp: player.stats.hp, maxHp: player.stats.maxHp }),
+    [player.stats.hp, player.stats.maxHp]
+  );
+
   if (!map) {
     return (
       <div className={styles.gameContainer}>
         <p>Loading map...</p>
       </div>
     );
+  }
+
+  if (gameEndState === 'defeat') {
+    return <GameOverScreen type="defeat" />;
+  }
+
+  if (gameEndState === 'victory') {
+    return <GameOverScreen type="victory" />;
   }
 
   return (
@@ -156,6 +183,8 @@ export function GameContainer() {
           isTileExplored={isTileExplored}
           lightSources={lightSources}
           multiTileObjects={currentFloor?.multiTileObjects}
+          enemies={enemiesArray}
+          playerStats={playerStats}
         />
       </div>
       {debugMode && (

@@ -4,7 +4,7 @@ export const HRODRGRAF_CONFIG: RegionConfig = {
   theme: 'hrodrgraf',
   name: 'Hróðrgraf',
   displayName: '栄光の墓',
-  floors: 3,
+  floors: 2,
   startFloor: 1,
   generatorStyle: 'bsp',
   size: {

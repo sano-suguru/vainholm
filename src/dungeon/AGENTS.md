@@ -14,14 +14,14 @@ Dungeon generation system. Procedural floors with BSP algorithm, separate Zustan
 | `generator/floorGenerator.ts` | Floor layout + tile placement |
 | `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity (355 lines) |
 | `config/index.ts` | Region config lookup |
-| `config/hrodrgraf.ts` | First region: "Glory's Tomb" (3 floors) |
+| `config/hrodrgraf.ts` | First region: "Glory's Tomb" (2/4 floors) |
 | `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) |
 
 ## Dungeon Structure
 
 ```
 Dungeon
-├── regions: RegionConfig[]      # 4 regions, 16 total floors
+├── regions: RegionConfig[]      # 4 regions, 8 floors (normal) / 16 floors (advanced)
 ├── floors: Map<number, Floor>   # Lazy-generated per floor
 ├── currentFloor: number         # Active floor index
 ├── baseSeed: number             # Deterministic generation
@@ -32,12 +32,12 @@ Dungeon
 
 ## Regions (from GAME_DESIGN.md)
 
-| Region | Name | Floors | Theme |
-|--------|------|--------|-------|
-| Hróðrgraf | 栄光の墓 | 1-3 | Temple ruins |
-| Rótmyrkr | 根の闇 | 4-8 | Corrupted roots |
-| Gleymdaríki | 忘却の王国 | 9-13 | Gothic fortress |
-| Upphafsdjúp | 起源の深淵 | 14-16 | Primordial void |
+| Region | Name | Floors (Normal/Advanced) | Theme |
+|--------|------|--------------------------|-------|
+| Hróðrgraf | 栄光の墓 | 1-2 / 1-4 | Temple ruins |
+| Rótmyrkr | 根の闇 | 3-4 / 5-8 | Corrupted roots |
+| Gleymdaríki | 忘却の王国 | 5-6 / 9-12 | Gothic fortress |
+| Upphafsdjúp | 起源の深淵 | 7-8 / 13-16 | Primordial void |
 
 ## BSP Algorithm
 

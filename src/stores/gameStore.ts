@@ -5,10 +5,25 @@ import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/l
 import { TILE_DEFINITIONS } from '../utils/constants';
 import { processTrigger } from '../utils/tileInteractions';
 import type { TriggerEffect } from '../utils/tileInteractions';
+import type { CombatStats, Enemy, EnemyId, TurnPhase, GameEndState, CombatLogEntry } from '../combat/types';
+import { calculateDamage, applyDamageToEnemy } from '../combat/damageCalculation';
 
+const INITIAL_PLAYER_STATS: CombatStats = {
+  hp: 30,
+  maxHp: 30,
+  attack: 8,
+  defense: 2,
+};
+
+// TODO: クラス/武器/状態異常システム実装時に以下を追加
+// - classId: CharacterClassId
+// - weapon: Weapon | null
+// - statusEffects: Map<StatusEffectId, StatusEffect>
+// 型定義は src/combat/types.ts に用意済み
 interface PlayerState {
   position: Position;
   facing: Direction;
+  stats: CombatStats;
 }
 
 export type WeatherType = 'clear' | 'rain' | 'fog';
@@ -115,6 +130,11 @@ interface GameStore {
   worldExploredTilesCache: Set<number> | null;
   dungeonEntrancePosition: Position | null;
 
+  enemies: Map<EnemyId, Enemy>;
+  turnPhase: TurnPhase;
+  gameEndState: GameEndState;
+  combatLog: CombatLogEntry[];
+
   setMap: (map: MapData, seed: number, entryPoint?: Position) => void;
   setMapType: (mapType: MapType) => void;
   movePlayer: (dx: number, dy: number) => void;
@@ -133,12 +153,25 @@ interface GameStore {
   clearInteractionEffects: () => void;
   cacheWorldMap: () => void;
   restoreWorldMap: () => Position | null;
+
+  addEnemy: (enemy: Enemy) => void;
+  removeEnemy: (id: EnemyId) => void;
+  updateEnemy: (id: EnemyId, updates: Partial<Enemy>) => void;
+  getEnemyAt: (x: number, y: number) => Enemy | null;
+  clearEnemies: () => void;
+  damagePlayer: (amount: number) => void;
+  healPlayer: (amount: number) => void;
+  setTurnPhase: (phase: TurnPhase) => void;
+  setGameEndState: (state: GameEndState) => void;
+  addCombatLogEntry: (entry: CombatLogEntry) => void;
+  resetCombatState: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   player: {
     position: { x: 50, y: 50 },
     facing: 'down',
+    stats: { ...INITIAL_PLAYER_STATS },
   },
   map: null,
   terrainLayer: null,
@@ -158,6 +191,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   worldExploredTilesCache: null,
   dungeonEntrancePosition: null,
 
+  enemies: new Map<EnemyId, Enemy>(),
+  turnPhase: 'player',
+  gameEndState: 'playing',
+  combatLog: [],
+
   setMap: (map, seed, entryPoint) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
     const featureLayer = map.layers.find((l) => l.name === 'features') ?? null;
@@ -171,6 +209,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player: {
         position: { ...spawnAt },
         facing: 'down',
+        stats: get().player.stats,
       },
       visibleTiles: spawnVisible,
       exploredTiles: new Set(spawnVisible),
@@ -183,11 +222,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { player, canMoveTo, exploredTiles, visibleTiles } = get();
+    const state = get();
+    const { player, canMoveTo, exploredTiles, visibleTiles, getEnemyAt, gameEndState } = state;
+    
+    if (gameEndState !== 'playing') return;
+    
     const oldX = player.position.x;
     const oldY = player.position.y;
     const newX = oldX + dx;
     const newY = oldY + dy;
+
+    const enemy = getEnemyAt(newX, newY);
+    if (enemy) {
+      const damageResult = calculateDamage(player.stats, enemy.stats);
+      const { newHp, isDead } = applyDamageToEnemy(enemy.stats.hp, damageResult.damage);
+      
+      state.updateEnemy(enemy.id, {
+        stats: { ...enemy.stats, hp: newHp },
+        isAlive: !isDead,
+      });
+      
+      const message = isDead
+        ? `You killed ${enemy.type}!`
+        : `You hit ${enemy.type} for ${damageResult.damage}${damageResult.isCritical ? ' (critical!)' : ''}`;
+      
+      state.addCombatLogEntry({
+        tick: state.tick,
+        type: isDead ? 'enemy_death' : 'player_attack',
+        message,
+        damage: damageResult.damage,
+      });
+      
+      if (isDead) {
+        state.removeEnemy(enemy.id);
+      }
+      
+      return;
+    }
 
     if (canMoveTo(newX, newY)) {
       let facing: Direction = player.facing;
@@ -227,6 +298,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         player: {
           position: { x: newX, y: newY },
           facing,
+          stats: player.stats,
         },
         visibleTiles: newVisibleTiles,
         exploredTiles: newExploredTiles,
@@ -369,7 +441,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   restoreWorldMap: () => {
-    const { worldMapCache, worldExploredTilesCache, dungeonEntrancePosition, mapSeed } = get();
+    const { worldMapCache, worldExploredTilesCache, dungeonEntrancePosition, mapSeed, player } = get();
     if (!worldMapCache) return null;
 
     const terrainLayer = worldMapCache.layers.find((l) => l.name === 'terrain') ?? null;
@@ -386,7 +458,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       terrainLayer,
       featureLayer,
       mapSeed,
-      player: { position: { ...returnPosition }, facing: 'down' },
+      player: { position: { ...returnPosition }, facing: 'down', stats: player.stats },
       visibleTiles: returnVisible,
       exploredTiles: restoredExplored,
       visibilityHash: returnPosition.x * 10000 + returnPosition.y,
@@ -395,5 +467,98 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     return returnPosition;
+  },
+
+  addEnemy: (enemy) => {
+    set((state) => {
+      const newEnemies = new Map(state.enemies);
+      newEnemies.set(enemy.id, enemy);
+      return { enemies: newEnemies };
+    });
+  },
+
+  removeEnemy: (id) => {
+    set((state) => {
+      const newEnemies = new Map(state.enemies);
+      newEnemies.delete(id);
+      return { enemies: newEnemies };
+    });
+  },
+
+  updateEnemy: (id, updates) => {
+    set((state) => {
+      const enemy = state.enemies.get(id);
+      if (!enemy) return state;
+      const newEnemies = new Map(state.enemies);
+      newEnemies.set(id, { ...enemy, ...updates });
+      return { enemies: newEnemies };
+    });
+  },
+
+  getEnemyAt: (x, y) => {
+    const { enemies } = get();
+    for (const enemy of enemies.values()) {
+      if (enemy.isAlive && enemy.position.x === x && enemy.position.y === y) {
+        return enemy;
+      }
+    }
+    return null;
+  },
+
+  clearEnemies: () => {
+    set({ enemies: new Map() });
+  },
+
+  damagePlayer: (amount) => {
+    set((state) => {
+      const newHp = Math.max(0, state.player.stats.hp - amount);
+      const newGameEndState = newHp <= 0 ? 'defeat' : state.gameEndState;
+      return {
+        player: {
+          ...state.player,
+          stats: { ...state.player.stats, hp: newHp },
+        },
+        gameEndState: newGameEndState,
+      };
+    });
+  },
+
+  healPlayer: (amount) => {
+    set((state) => ({
+      player: {
+        ...state.player,
+        stats: {
+          ...state.player.stats,
+          hp: Math.min(state.player.stats.maxHp, state.player.stats.hp + amount),
+        },
+      },
+    }));
+  },
+
+  setTurnPhase: (phase) => {
+    set({ turnPhase: phase });
+  },
+
+  setGameEndState: (state) => {
+    set({ gameEndState: state });
+  },
+
+  addCombatLogEntry: (entry) => {
+    set((state) => ({
+      combatLog: [...state.combatLog.slice(-49), entry],
+    }));
+  },
+
+  resetCombatState: () => {
+    set({
+      player: {
+        ...get().player,
+        stats: { ...INITIAL_PLAYER_STATS },
+      },
+      enemies: new Map(),
+      turnPhase: 'player',
+      gameEndState: 'playing',
+      combatLog: [],
+    });
   },
 }));

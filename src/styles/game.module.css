@@ -55,3 +55,68 @@
   margin-top: 8px;
   color: #555;
 }
+
+.gameOverContainer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a1510 0%, #0a0806 70%, #020202 100%);
+}
+
+.gameOverContent {
+  text-align: center;
+  padding: 48px 64px;
+  background: rgba(15, 12, 10, 0.95);
+  border: 1px solid #2a2420;
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(60, 50, 40, 0.1);
+}
+
+.gameOverTitleDefeat {
+  font-family: 'Times New Roman', serif;
+  font-size: 48px;
+  font-weight: normal;
+  color: #8a3030;
+  text-shadow: 0 0 20px rgba(138, 48, 48, 0.5);
+  margin: 0 0 16px 0;
+  letter-spacing: 4px;
+}
+
+.gameOverTitleVictory {
+  font-family: 'Times New Roman', serif;
+  font-size: 48px;
+  font-weight: normal;
+  color: #c9a227;
+  text-shadow: 0 0 20px rgba(201, 162, 39, 0.5);
+  margin: 0 0 16px 0;
+  letter-spacing: 4px;
+}
+
+.gameOverMessage {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #6a5a4a;
+  margin: 0 0 32px 0;
+  letter-spacing: 1px;
+}
+
+.gameOverButton {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 12px 32px;
+  background: rgba(40, 35, 30, 0.9);
+  color: #a89878;
+  border: 1px solid #3a3430;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.gameOverButton:hover {
+  background: rgba(50, 45, 40, 0.95);
+  color: #c8b898;
+  border-color: #4a4440;
+}

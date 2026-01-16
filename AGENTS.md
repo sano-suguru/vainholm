@@ -49,7 +49,7 @@ src/
 └── assets/tiles/      # SVG textures (terrain, connected, transitions, overlays, animated)
 
 docs/
-└── GAME_DESIGN.md     # World setting (Vainholm), 4 regions, 16 floors
+└── GAME_DESIGN.md     # World setting (Vainholm), 4 regions, 8 floors (normal) / 16 floors (advanced)
 ```
 
 ## Code Map

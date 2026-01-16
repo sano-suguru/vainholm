@@ -5,7 +5,9 @@ import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import type { MultiTileObject } from '../../dungeon/types';
+import type { Enemy } from '../../combat/types';
 import { LightLayer } from './LightLayer';
+import { getEnemyTexture } from '../../utils/enemyTextures';
 
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
 import { 
@@ -56,6 +58,8 @@ interface PixiViewportProps {
   isTileExplored: (x: number, y: number) => boolean;
   lightSources: LightSource[];
   multiTileObjects?: MultiTileObject[];
+  enemies?: Enemy[];
+  playerStats?: { hp: number; maxHp: number };
 }
 
 interface MapViewportProps {
@@ -646,6 +650,123 @@ const PlayerLayer = memo(function PlayerLayer({
   );
 });
 
+interface EnemyLayerProps {
+  enemies: Enemy[];
+  viewport: ViewportBounds;
+  isTileVisible: (x: number, y: number) => boolean;
+}
+
+const EnemyLayer = memo(function EnemyLayer({
+  enemies,
+  viewport,
+  isTileVisible,
+}: EnemyLayerProps) {
+  const [textures, setTextures] = useState<Map<string, import('pixi.js').Texture>>(new Map());
+  
+  useEffect(() => {
+    const loadTextures = async () => {
+      const { Assets } = await import('pixi.js');
+      const newTextures = new Map<string, import('pixi.js').Texture>();
+      
+      for (const enemy of enemies) {
+        if (!newTextures.has(enemy.type)) {
+          const texturePath = getEnemyTexture(enemy.type);
+          const texture = await Assets.load(texturePath);
+          newTextures.set(enemy.type, texture);
+        }
+      }
+      
+      setTextures(newTextures);
+    };
+    
+    loadTextures();
+  }, [enemies]);
+  
+  return (
+    <pixiContainer>
+      {enemies.map((enemy) => {
+        if (!enemy.isAlive) return null;
+        if (!isTileVisible(enemy.position.x, enemy.position.y)) return null;
+        
+        const texture = textures.get(enemy.type);
+        if (!texture) return null;
+        
+        const screenX = (enemy.position.x - viewport.startX) * TILE_SIZE;
+        const screenY = (enemy.position.y - viewport.startY) * TILE_SIZE;
+        
+        return (
+          <pixiSprite
+            key={enemy.id}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+          />
+        );
+      })}
+    </pixiContainer>
+  );
+});
+
+interface HealthBarLayerProps {
+  enemies: Enemy[];
+  playerStats: { hp: number; maxHp: number };
+  playerPosition: Position;
+  viewport: ViewportBounds;
+  isTileVisible: (x: number, y: number) => boolean;
+}
+
+const HealthBarLayer = memo(function HealthBarLayer({
+  enemies,
+  playerStats,
+  playerPosition,
+  viewport,
+  isTileVisible,
+}: HealthBarLayerProps) {
+  const drawHealthBars = useCallback((g: Graphics) => {
+    g.clear();
+    
+    const barWidth = TILE_SIZE - 4;
+    const barHeight = 3;
+    const barOffsetY = -2;
+    
+    for (const enemy of enemies) {
+      if (!enemy.isAlive) continue;
+      if (!isTileVisible(enemy.position.x, enemy.position.y)) continue;
+      if (enemy.stats.hp >= enemy.stats.maxHp) continue;
+      
+      const screenX = (enemy.position.x - viewport.startX) * TILE_SIZE + 2;
+      const screenY = (enemy.position.y - viewport.startY) * TILE_SIZE + barOffsetY;
+      
+      g.rect(screenX, screenY, barWidth, barHeight);
+      g.fill({ color: 0x333333, alpha: 0.8 });
+      
+      const hpRatio = enemy.stats.hp / enemy.stats.maxHp;
+      const fillWidth = barWidth * hpRatio;
+      const fillColor = hpRatio > 0.5 ? 0x44aa44 : hpRatio > 0.25 ? 0xaaaa44 : 0xaa4444;
+      
+      g.rect(screenX, screenY, fillWidth, barHeight);
+      g.fill({ color: fillColor, alpha: 1 });
+    }
+    
+    const playerScreenX = (playerPosition.x - viewport.startX) * TILE_SIZE + 2;
+    const playerScreenY = (playerPosition.y - viewport.startY) * TILE_SIZE + barOffsetY;
+    
+    g.rect(playerScreenX, playerScreenY, barWidth, barHeight);
+    g.fill({ color: 0x333333, alpha: 0.8 });
+    
+    const playerHpRatio = playerStats.hp / playerStats.maxHp;
+    const playerFillWidth = barWidth * playerHpRatio;
+    const playerFillColor = playerHpRatio > 0.5 ? 0x4488ff : playerHpRatio > 0.25 ? 0xffaa44 : 0xff4444;
+    
+    g.rect(playerScreenX, playerScreenY, playerFillWidth, barHeight);
+    g.fill({ color: playerFillColor, alpha: 1 });
+  }, [enemies, playerStats, playerPosition, viewport, isTileVisible]);
+  
+  return <pixiGraphics draw={drawHealthBars} />;
+});
+
 const SHADOW_CASTING_TILES = new Set<TileType>(['mountain', 'wall', 'dungeon_wall', 'forest']);
 
 interface ShadowDirection {
@@ -994,6 +1115,8 @@ function GameScene({
   height,
   lightSources,
   multiTileObjects = [],
+  enemies = [],
+  playerStats = { hp: 30, maxHp: 30 },
 }: GameSceneProps) {
   const startTimeRef = useRef(0);
   const [texturesReady, setTexturesReady] = useState(false);
@@ -1030,6 +1153,18 @@ function GameScene({
         playerPosition={playerPosition} 
         viewport={viewport}
       />
+      <EnemyLayer
+        enemies={enemies}
+        viewport={viewport}
+        isTileVisible={isTileVisible}
+      />
+      <HealthBarLayer
+        enemies={enemies}
+        playerStats={playerStats}
+        playerPosition={playerPosition}
+        viewport={viewport}
+        isTileVisible={isTileVisible}
+      />
       <LightLayer 
         lights={lightSources} 
         viewport={viewport} 
@@ -1058,6 +1193,8 @@ export function PixiViewport({
   isTileExplored,
   lightSources,
   multiTileObjects,
+  enemies,
+  playerStats,
 }: PixiViewportProps) {
   const width = VIEWPORT_WIDTH_TILES * TILE_SIZE;
   const height = VIEWPORT_HEIGHT_TILES * TILE_SIZE;
@@ -1084,6 +1221,8 @@ export function PixiViewport({
         height={height}
         lightSources={lightSources}
         multiTileObjects={multiTileObjects}
+        enemies={enemies}
+        playerStats={playerStats}
       />
     </Application>
   );
