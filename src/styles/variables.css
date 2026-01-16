@@ -93,6 +93,37 @@
   --ui-border: #2a2420;
   --ui-bg: rgba(20, 18, 15, 0.95);
 
+  /* === HUD Colors === */
+  --hud-bg: rgba(15, 12, 10, 0.92);
+  --hud-border: #2a2420;
+  --hud-text-primary: #a89878;
+  --hud-text-secondary: #6a5a4a;
+  --hud-text-muted: #4a4a3a;
+
+  /* HP Bar */
+  --hp-healthy: #8b2020;
+  --hp-warning: #c56020;
+  --hp-critical: #cc3030;
+  --hp-background: #1a1512;
+
+  /* Stats */
+  --stat-attack: #c9a227;
+  --stat-defense: #6a8a9a;
+
+  /* Combat Log */
+  --log-damage-dealt: #7a9a6a;
+  --log-damage-taken: #9a5a5a;
+  --log-critical: #c9a227;
+  --log-death: #aa3333;
+
+  /* Status Effects */
+  --effect-poison: #4a7a4a;
+  --effect-bleed: #8a3333;
+  --effect-burn: #c96030;
+  --effect-stun: #c9c927;
+  --effect-slow: #5a7a9a;
+  --effect-blind: #6a6a6a;
+
   /* === Frame/Viewport === */
   --viewport-border: #2a201a;
   --viewport-outline: #1a1210;

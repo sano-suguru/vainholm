@@ -15,6 +15,8 @@ const INITIAL_PLAYER_STATS: CombatStats = {
   defense: 2,
 };
 
+let combatLogIdCounter = 0;
+
 // TODO: クラス/武器/状態異常システム実装時に以下を追加
 // - classId: CharacterClassId
 // - weapon: Weapon | null
@@ -163,7 +165,7 @@ interface GameStore {
   healPlayer: (amount: number) => void;
   setTurnPhase: (phase: TurnPhase) => void;
   setGameEndState: (state: GameEndState) => void;
-  addCombatLogEntry: (entry: CombatLogEntry) => void;
+  addCombatLogEntry: (entry: Omit<CombatLogEntry, 'id'>) => void;
   resetCombatState: () => void;
 }
 
@@ -544,12 +546,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   addCombatLogEntry: (entry) => {
+    const entryWithId: CombatLogEntry = {
+      ...entry,
+      id: `log-${++combatLogIdCounter}`,
+    };
     set((state) => ({
-      combatLog: [...state.combatLog.slice(-49), entry],
+      combatLog: [...state.combatLog.slice(-49), entryWithId],
     }));
   },
 
   resetCombatState: () => {
+    combatLogIdCounter = 0;
     set({
       player: {
         ...get().player,

@@ -120,3 +120,208 @@
   color: #c8b898;
   border-color: #4a4440;
 }
+
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  font-family: 'Courier New', monospace;
+}
+
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: var(--hud-bg);
+  border-bottom: 1px solid var(--hud-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: auto;
+}
+
+.topBarLocation {
+  color: var(--hud-text-primary);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.topBarFloor {
+  color: var(--hud-text-secondary);
+  margin-left: 8px;
+}
+
+.topBarTurn {
+  color: var(--hud-text-secondary);
+  font-size: 12px;
+}
+
+.statusBar {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: var(--hud-bg);
+  border-bottom: 1px solid var(--hud-border);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 16px;
+  pointer-events: auto;
+}
+
+.hpContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hpBar {
+  width: 120px;
+  height: 12px;
+  background: var(--hp-background);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hpFill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.hpFillHealthy {
+  background: var(--hp-healthy);
+}
+
+.hpFillWarning {
+  background: var(--hp-warning);
+}
+
+.hpFillCritical {
+  background: var(--hp-critical);
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.hpText {
+  color: var(--hud-text-primary);
+  font-size: 12px;
+  min-width: 50px;
+}
+
+.statGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.statAttack {
+  color: var(--stat-attack);
+}
+
+.statDefense {
+  color: var(--stat-defense);
+}
+
+.combatLog {
+  position: absolute;
+  top: 80px;
+  left: 12px;
+  width: 200px;
+  max-height: 180px;
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+  padding: 8px 10px;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+
+.combatLogHeader {
+  color: var(--hud-text-secondary);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hud-border);
+}
+
+.combatLogEntry {
+  font-size: 11px;
+  margin: 3px 0;
+  padding-left: 10px;
+  position: relative;
+  color: var(--hud-text-secondary);
+}
+
+.combatLogEntry::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: var(--hud-text-muted);
+}
+
+.logDamageDealt {
+  color: var(--log-damage-dealt);
+}
+
+.logDamageTaken {
+  color: var(--log-damage-taken);
+}
+
+.logCritical {
+  color: var(--log-critical);
+  font-weight: bold;
+}
+
+.logDeath {
+  color: var(--log-death);
+  font-weight: bold;
+}
+
+.combatLogEmpty {
+  color: var(--hud-text-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.statusEffects {
+  display: flex;
+  gap: 6px;
+  margin-left: 16px;
+}
+
+.statusEffect {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.effectDuration {
+  font-size: 10px;
+  opacity: 0.8;
+}

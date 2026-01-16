@@ -54,6 +54,7 @@ export type TurnPhase = 'player' | 'enemy' | 'effects';
 export type GameEndState = 'playing' | 'victory' | 'defeat';
 
 export interface CombatLogEntry {
+  id: string;
   tick: number;
   type: 'player_attack' | 'enemy_attack' | 'player_death' | 'enemy_death';
   message: string;

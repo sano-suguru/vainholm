@@ -12,6 +12,7 @@ import { getMapSeed, updateUrlWithSeed } from '../../utils/seedUtils';
 import { PixiViewport } from './PixiViewport';
 import { DebugInfo } from '../ui/DebugInfo';
 import { GameOverScreen } from '../ui/GameOverScreen';
+import { Hud } from '../ui/hud';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import { executeTurn } from '../../combat/turnManager';
 import type { Enemy } from '../../combat/types';
@@ -187,6 +188,7 @@ export function GameContainer() {
           playerStats={playerStats}
         />
       </div>
+      <Hud />
       {debugMode && (
         <DebugInfo
           playerPosition={player.position}
