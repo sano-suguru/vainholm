@@ -1,4 +1,6 @@
 import { memo } from 'react';
+import { ui_turn } from '../../../paraglide/messages.js';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 import styles from '../../../styles/game.module.css';
 
 interface TopBarProps {
@@ -26,7 +28,10 @@ export const TopBar = memo(function TopBar({
           </span>
         )}
       </div>
-      <div className={styles.topBarTurn}>Turn {turn}</div>
+      <div className={styles.topBarRight}>
+        <div className={styles.topBarTurn}>{ui_turn({ turn })}</div>
+        <LanguageSwitcher />
+      </div>
     </div>
   );
 });

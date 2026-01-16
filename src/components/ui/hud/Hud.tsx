@@ -2,6 +2,11 @@ import { memo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../../stores/gameStore';
 import { useDungeonStore } from '../../../dungeon';
+import {
+  getLocalizedRegionName,
+  getLocalizedUnknownRegionName,
+  getLocalizedWorldName,
+} from '../../../utils/i18n';
 import { TopBar } from './TopBar';
 import { StatusBar } from './StatusBar';
 import { CombatLog } from './CombatLog';
@@ -27,7 +32,11 @@ export const Hud = memo(function Hud() {
   const currentFloor = dungeon?.currentFloor ?? 0;
   const maxFloors = dungeon?.maxFloors ?? 8;
 
-  const regionName = currentRegion?.displayName ?? (isInDungeon ? 'Vainholm' : 'World');
+  const regionName = isInDungeon
+    ? currentRegion?.theme
+      ? getLocalizedRegionName(currentRegion.theme)
+      : getLocalizedUnknownRegionName()
+    : getLocalizedWorldName();
 
   return (
     <div className={styles.hud}>

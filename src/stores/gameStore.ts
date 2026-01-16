@@ -1,12 +1,20 @@
 import { create } from 'zustand';
+
 import type { Direction, MapData, MapLayer, Position, TileType } from '../types';
 import type { LightSource } from '../utils/lighting';
+import type { TriggerEffect } from '../utils/tileInteractions';
+import type { CombatStats, Enemy, EnemyId, TurnPhase, GameEndState, CombatLogEntry } from '../combat/types';
+
+import {
+  combat_player_kill,
+  combat_player_hit,
+  combat_player_hit_critical,
+} from '../paraglide/messages.js';
 import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/lighting';
 import { TILE_DEFINITIONS } from '../utils/constants';
 import { processTrigger } from '../utils/tileInteractions';
-import type { TriggerEffect } from '../utils/tileInteractions';
-import type { CombatStats, Enemy, EnemyId, TurnPhase, GameEndState, CombatLogEntry } from '../combat/types';
 import { calculateDamage, applyDamageToEnemy } from '../combat/damageCalculation';
+import { getLocalizedEnemyName } from '../utils/i18n';
 
 const INITIAL_PLAYER_STATS: CombatStats = {
   hp: 30,
@@ -244,9 +252,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         isAlive: !isDead,
       });
       
+      const enemyName = getLocalizedEnemyName(enemy.type);
       const message = isDead
-        ? `You killed ${enemy.type}!`
-        : `You hit ${enemy.type} for ${damageResult.damage}${damageResult.isCritical ? ' (critical!)' : ''}`;
+        ? combat_player_kill({ enemy: enemyName })
+        : damageResult.isCritical
+          ? combat_player_hit_critical({ enemy: enemyName, damage: damageResult.damage })
+          : combat_player_hit({ enemy: enemyName, damage: damageResult.damage });
       
       state.addCombatLogEntry({
         tick: state.tick,

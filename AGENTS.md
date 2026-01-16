@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-16 | **Commit**: 9f31c98 | **Branch**: main
+**Generated**: 2026-01-16 | **Commit**: 544455b | **Branch**: main
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -39,7 +39,7 @@ See `src/components/game/AGENTS.md` for Pixi.js patterns.
 src/
 ├── components/
 │   ├── game/          # Pixi.js rendering (see game/AGENTS.md)
-│   └── ui/            # Debug overlay (DebugInfo, GameOverScreen)
+│   └── ui/            # HUD (hud/), debug overlay, game over screen
 ├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics, useEffectProcessor
 ├── stores/            # Zustand gameStore (single store)
 ├── dungeon/           # Dungeon generation system (see dungeon/AGENTS.md)
@@ -58,8 +58,8 @@ docs/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `useGameStore` | Hook | `stores/gameStore.ts` | Global state access (564 lines) |
-| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers, 991 lines) |
+| `useGameStore` | Hook | `stores/gameStore.ts` | Global state access (571 lines) |
+| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers, 1229 lines) |
 | `GameContainer` | Component | `components/game/GameContainer.tsx` | React orchestrator |
 | `generateMapAsync` | Function | `utils/generateMapAsync.ts` | Web Worker map generation |
 | `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 59 tile definitions |
@@ -225,9 +225,9 @@ pnpm test:watch  # Watch mode
 
 | File | Lines | Notes |
 |------|-------|-------|
-| `PixiViewport.tsx` | 991 | 16 layers — candidate for splitting |
-| `tileTextures.ts` | 480 | 168 imports — fallback chain |
-| `gameStore.ts` | 564 | Visibility delta, map caching, combat |
+| `PixiViewport.tsx` | 1229 | 16 layers — candidate for splitting |
+| `tileTextures.ts` | 682 | 168 imports — fallback chain |
+| `gameStore.ts` | 571 | Visibility delta, map caching, combat |
 | `bspGenerator.ts` | 355 | BSP algorithm, Union-Find |
 | `tileInteractions.ts` | 323 | 35+ interactions, chain reactions |
 
@@ -236,6 +236,7 @@ pnpm test:watch  # Watch mode
 | Path | Purpose |
 |------|---------|
 | `src/components/game/AGENTS.md` | Pixi.js 16-layer rendering |
+| `src/components/ui/hud/AGENTS.md` | React DOM HUD overlay |
 | `src/dungeon/AGENTS.md` | BSP dungeon generation |
 | `src/utils/AGENTS.md` | Utilities, textures, lighting |
 | `src/combat/AGENTS.md` | Turn-based combat system |

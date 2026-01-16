@@ -16,6 +16,9 @@ dist
 dist-ssr
 *.local
 
+# Paraglide.js generated files
+src/paraglide
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

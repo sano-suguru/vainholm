@@ -9,7 +9,7 @@ Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 | File | Role |
 |------|------|
 | `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions |
-| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph (991 lines) |
+| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph (1229 lines) |
 | `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) |
 | `animationTime.ts` | Global animation time state |
 

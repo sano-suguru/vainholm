@@ -163,6 +163,30 @@
   font-size: 12px;
 }
 
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.languageSwitcher {
+  background: rgba(40, 35, 30, 0.8);
+  color: var(--hud-text-primary);
+  border: 1px solid var(--hud-border);
+  padding: 4px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.languageSwitcher:hover {
+  background: rgba(60, 50, 40, 0.9);
+  color: #c8b898;
+  border-color: #4a4440;
+}
+
 .statusBar {
   position: absolute;
   top: 36px;

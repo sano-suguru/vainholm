@@ -1,4 +1,11 @@
 import { memo, useCallback } from 'react';
+import {
+  game_over_defeat_title,
+  game_over_defeat_message,
+  game_over_victory_title,
+  game_over_victory_message,
+  ui_return_to_world,
+} from '../../paraglide/messages.js';
 import { useGameStore } from '../../stores/gameStore';
 import { useDungeonStore } from '../../dungeon';
 import styles from '../../styles/game.module.css';
@@ -19,10 +26,8 @@ export const GameOverScreen = memo(function GameOverScreen({ type }: GameOverScr
   }, [resetCombatState, exitDungeon, restoreWorldMap]);
 
   const isDefeat = type === 'defeat';
-  const title = isDefeat ? 'You Died' : 'Victory';
-  const message = isDefeat
-    ? 'The darkness has claimed another soul...'
-    : 'You have conquered the depths of Hróðrgraf!';
+  const title = isDefeat ? game_over_defeat_title() : game_over_victory_title();
+  const message = isDefeat ? game_over_defeat_message() : game_over_victory_message();
 
   return (
     <div className={styles.gameOverContainer}>
@@ -32,7 +37,7 @@ export const GameOverScreen = memo(function GameOverScreen({ type }: GameOverScr
         </h1>
         <p className={styles.gameOverMessage}>{message}</p>
         <button className={styles.gameOverButton} onClick={handleRestart}>
-          Return to World
+          {ui_return_to_world()}
         </button>
       </div>
     </div>
