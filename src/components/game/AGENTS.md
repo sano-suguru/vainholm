@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/game
 
-**Generated**: 2026-01-13 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 

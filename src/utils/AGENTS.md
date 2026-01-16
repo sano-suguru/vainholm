@@ -1,6 +1,6 @@
 # AGENTS.md - src/utils
 
-**Generated**: 2026-01-13 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Utility layer: map generation, rendering data, game systems, configuration.
 
@@ -20,6 +20,8 @@ Utility layer: map generation, rendering data, game systems, configuration.
 | `biomes.ts` | Elevation/moisture lookup tables | mapGeneratorCore |
 | `noise.ts` | Simplex noise, FBM | mapGeneratorCore |
 | `seedUtils.ts` | URL seed parsing, seeded random | GameContainer |
+
+See also: `mapGeneration/AGENTS.md` for phase-based pipeline.
 
 ## Web Worker Pattern (CRITICAL)
 
@@ -64,18 +66,13 @@ Sequential phases (order matters — later overwrites earlier):
 
 ```
 1. generateBiomeData()      → Noise-based terrain/features
-2. addRiver()               → Water stripe
-3. addLakes()               → Circular water bodies
-4. addRoads()               → Cross through center
-5. addSwamps()              → Adjacent to water
-6. addRuins()               → Scattered floor patches
-7. addGraveyards()          → Rectangular zones
-8. addBlightedAreas()       → Circular blight
-9. addDeadForestPatches()   → Withered trees
-10. addToxicMarshes()       → Poison areas
-11. addCharredAreas()       → Burned ground
-12. addEnvironmentDetails() → Final touches
+2. runPipeline(ALL_PHASES)  → 12 phases with dependencies
+   - river, lakes, roads, swamps, ruins, graveyards
+   - blightedAreas, deadForest, toxicMarshes
+   - charredAreas, environmentDetails, dungeonEntrance
 ```
+
+See `mapGeneration/AGENTS.md` for phase details.
 
 ## Biome Lookup Tables
 

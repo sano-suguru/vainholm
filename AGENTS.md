@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-13 | **Commit**: 0a6382d | **Branch**: main
+**Generated**: 2026-01-16 | **Commit**: 9f31c98 | **Branch**: main
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -16,7 +16,7 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 | `pnpm dev` | Vite dev server with HMR |
 | `pnpm build` | Type-check (`tsc -b`) + Vite build |
 | `pnpm lint` | ESLint on all files |
-| `pnpm test` | Vitest run (61 tests) |
+| `pnpm test` | Vitest run (81 tests) |
 | `pnpm similarity` | Detect duplicate code (threshold 0.7) |
 | `pnpm deadcode` | Detect unused files/exports (knip) |
 
@@ -39,13 +39,15 @@ See `src/components/game/AGENTS.md` for Pixi.js patterns.
 src/
 ├── components/
 │   ├── game/          # Pixi.js rendering (see game/AGENTS.md)
-│   └── ui/            # Debug overlay (DebugInfo)
+│   └── ui/            # Debug overlay (DebugInfo, GameOverScreen)
 ├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics, useEffectProcessor
 ├── stores/            # Zustand gameStore (single store)
 ├── dungeon/           # Dungeon generation system (see dungeon/AGENTS.md)
+├── combat/            # Turn-based combat (see combat/AGENTS.md)
 ├── tiles/             # Tile registry: 59 types, ID mapping
 ├── types/             # Type definitions barrel
 ├── utils/             # Map generation, constants, textures (see utils/AGENTS.md)
+│   └── mapGeneration/ # Phase-based pipeline (see mapGeneration/AGENTS.md)
 └── assets/tiles/      # SVG textures (terrain, connected, transitions, overlays, animated)
 
 docs/
@@ -56,13 +58,14 @@ docs/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `useGameStore` | Hook | `stores/gameStore.ts` | Global state access |
-| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers) |
+| `useGameStore` | Hook | `stores/gameStore.ts` | Global state access (564 lines) |
+| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers, 991 lines) |
 | `GameContainer` | Component | `components/game/GameContainer.tsx` | React orchestrator |
 | `generateMapAsync` | Function | `utils/generateMapAsync.ts` | Web Worker map generation |
 | `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 59 tile definitions |
 | `TILE_DEFINITIONS` | Constant | `utils/constants.ts` | Tile properties (walkable, cost) |
 | `useDungeonStore` | Hook | `dungeon/dungeonStore.ts` | Dungeon state (separate store) |
+| `executeTurn` | Function | `combat/turnManager.ts` | Turn execution entry point |
 
 ## WHERE TO LOOK
 
@@ -75,6 +78,8 @@ docs/
 | Add game state | `stores/gameStore.ts` | Interface + implementation |
 | Add tile interaction | `utils/tileInteractions.ts` | Triggers, effects, chain reactions |
 | Add dungeon region | `dungeon/config/` | Region config + generator |
+| Add map generation phase | `utils/mapGeneration/phases/` | See mapGeneration/AGENTS.md |
+| Add enemy type | `combat/enemyTypes.ts` | Stats, behavior, spawning |
 | Debug rendering | Press F3 | Shows FPS, frame time, memory |
 
 ## Import Order (ENFORCED)
@@ -124,6 +129,15 @@ generateMapAsync.ts  →  mapGenerator.worker.ts  →  mapGeneratorCore.ts
 ```
 
 **Never**: Import `mapGeneratorCore` directly in main thread.
+
+## Dual Store Pattern
+
+| Store | Purpose | Location |
+|-------|---------|----------|
+| `gameStore` | World map, player, visibility, weather, time, combat | `stores/gameStore.ts` |
+| `dungeonStore` | Dungeon floors, navigation, regions | `dungeon/dungeonStore.ts` |
+
+Transition: `cacheWorldMap()` / `restoreWorldMap()` for world↔dungeon swaps.
 
 ## Visibility Delta Optimization
 
@@ -175,12 +189,15 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 
 ## Testing
 
-**Framework**: Vitest 4.0.16 (61 tests passing)
+**Framework**: Vitest 4.0.16 (81 tests passing)
 
-| Test File | Coverage |
-|-----------|----------|
-| `mapGeneratorCore.test.ts` | 56 tests — procedural generation, determinism |
-| `floorGenerator.test.ts` | 5 tests — dungeon connectivity, reachability |
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `mapGeneratorCore.test.ts` | 56 | Procedural generation, determinism |
+| `floorGenerator.test.ts` | 19 | Dungeon connectivity, reachability |
+| `LightLayer.test.ts` | 6 | Light calculations |
+
+**Pattern**: Co-located tests (`.test.ts` next to source), seeded randomness for determinism.
 
 ```bash
 pnpm test        # Run once
@@ -210,6 +227,16 @@ pnpm test:watch  # Watch mode
 |------|-------|-------|
 | `PixiViewport.tsx` | 991 | 16 layers — candidate for splitting |
 | `tileTextures.ts` | 480 | 168 imports — fallback chain |
-| `gameStore.ts` | 395 | Visibility delta, map caching |
+| `gameStore.ts` | 564 | Visibility delta, map caching, combat |
 | `bspGenerator.ts` | 355 | BSP algorithm, Union-Find |
 | `tileInteractions.ts` | 323 | 35+ interactions, chain reactions |
+
+## Subdirectory Documentation
+
+| Path | Purpose |
+|------|---------|
+| `src/components/game/AGENTS.md` | Pixi.js 16-layer rendering |
+| `src/dungeon/AGENTS.md` | BSP dungeon generation |
+| `src/utils/AGENTS.md` | Utilities, textures, lighting |
+| `src/combat/AGENTS.md` | Turn-based combat system |
+| `src/utils/mapGeneration/AGENTS.md` | Phase-based generation pipeline |

@@ -1,6 +1,6 @@
 # AGENTS.md - src/dungeon
 
-**Generated**: 2026-01-13 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Dungeon generation system. Procedural floors with BSP algorithm, separate Zustand store.
 
@@ -109,7 +109,7 @@ Ensures vertical alignment between floors.
 
 ## Testing
 
-5 tests in `generator/floorGenerator.test.ts`:
+19 tests in `generator/floorGenerator.test.ts`:
 - Floor generation with spawn/stairs
 - Spawn point reachability
 - Walkable tile connectivity
