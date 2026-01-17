@@ -13,6 +13,8 @@ import { seededRandom } from '../../utils/seedUtils';
 function createFloorOptions(seed: number, level = 1) {
   return {
     level,
+    regionLevel: level,
+    floorsPerRegion: HRODRGRAF_CONFIG.floors,
     regionConfig: HRODRGRAF_CONFIG,
     seed,
     previousStairsDown: null,

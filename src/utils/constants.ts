@@ -12,4 +12,5 @@ export const KEY_BINDINGS = {
   left: ['KeyA', 'ArrowLeft'],
   right: ['KeyD', 'ArrowRight'],
   debug: ['F3'],
+  quickbar: ['Digit1', 'Digit2', 'Digit3', 'Digit4'],
 } as const;

@@ -6,12 +6,12 @@ Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 
 ## Architecture
 
-| File | Role |
-|------|------|
-| `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions |
-| `PixiViewport.tsx` | Pixi Application + 21-layer scene graph (1371 lines) |
-| `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) |
-| `animationTime.ts` | Global animation time state (module-level singleton) |
+| File | Role | Lines |
+|------|------|-------|
+| `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions | 250+ |
+| `PixiViewport.tsx` | Pixi Application + 21-layer scene graph | 1371 |
+| `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) | — |
+| `animationTime.ts` | Global animation time state (module-level singleton) | — |
 
 ## Pixi.js Setup (CRITICAL)
 
@@ -153,6 +153,16 @@ export async function loadTileTextures(): Promise<void> {
 - 168 SVG imports, 43 tiles reuse 14 base SVGs (fallback chains)
 - Single promise for deduplication (idempotent calls)
 - Lazy initialization on first GameScene render
+
+## WHERE TO LOOK
+
+| Task | Location |
+|------|----------|
+| Add new layer | `PixiViewport.tsx` → add after appropriate layer in render order |
+| Modify layer behavior | Find layer in `PixiViewport.tsx` by name |
+| Add light source | `utils/lighting.ts` → `LIGHT_SOURCE_PRESETS` |
+| Change animation timing | `animationTime.ts` or frame calculation |
+| Debug visibility | Check `visibilityHash` key on FogOfWarLayer |
 
 ## Anti-Patterns
 

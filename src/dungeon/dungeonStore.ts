@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import type { Dungeon, DungeonFloor, RegionConfig } from './types';
+import type { Dungeon, DungeonFloor, GameMode, RegionConfig } from './types';
 import { generateFloor } from './generator';
-import { getRegionConfigForFloor, getTotalFloors, REGION_CONFIGS } from './config';
+import { getFloorsPerRegion, getRegionConfigForFloor, getTotalFloors, REGION_CONFIGS } from './config';
 import { spawnBossForFloor } from './bossSpawner';
 
 const FLOOR_SEED_MULTIPLIER = 1000;
@@ -9,7 +9,9 @@ const FLOOR_SEED_MULTIPLIER = 1000;
 interface DungeonStore {
   dungeon: Dungeon | null;
   isInDungeon: boolean;
+  gameMode: GameMode;
 
+  setGameMode: (mode: GameMode) => void;
   enterDungeon: (seed: number) => DungeonFloor;
   exitDungeon: () => void;
   goToFloor: (level: number) => DungeonFloor | null;
@@ -23,9 +25,10 @@ interface DungeonStore {
 
 function generateFloorForLevel(
   dungeon: Dungeon,
-  level: number
+  level: number,
+  gameMode: GameMode
 ): DungeonFloor | null {
-  const regionConfig = getRegionConfigForFloor(level);
+  const regionConfig = getRegionConfigForFloor(level, gameMode);
   if (!regionConfig) return null;
 
   const existingFloor = dungeon.floors.get(level);
@@ -41,8 +44,13 @@ function generateFloorForLevel(
 
   const isLastFloorInDungeon = level === dungeon.maxFloors;
 
+  const floorsPerRegion = getFloorsPerRegion(gameMode);
+  const regionLevel = ((level - 1) % floorsPerRegion) + 1;
+
   const floor = generateFloor({
     level,
+    regionLevel,
+    floorsPerRegion,
     regionConfig,
     seed: floorSeed,
     previousStairsDown,
@@ -64,9 +72,15 @@ function generateFloorForLevel(
 export const useDungeonStore = create<DungeonStore>((set, get) => ({
   dungeon: null,
   isInDungeon: false,
+  gameMode: 'normal',
+
+  setGameMode: (mode: GameMode) => {
+    set({ gameMode: mode });
+  },
 
   enterDungeon: (seed: number) => {
-    const maxFloors = getTotalFloors();
+    const { gameMode } = get();
+    const maxFloors = getTotalFloors(gameMode);
 
     const dungeon: Dungeon = {
       id: `dungeon-${seed}`,
@@ -79,7 +93,7 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
       maxFloors,
     };
 
-    const firstFloor = generateFloorForLevel(dungeon, 1);
+    const firstFloor = generateFloorForLevel(dungeon, 1, gameMode);
     if (!firstFloor) {
       throw new Error('Failed to generate first floor');
     }
@@ -100,14 +114,14 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
   },
 
   goToFloor: (level: number) => {
-    const { dungeon } = get();
+    const { dungeon, gameMode } = get();
     if (!dungeon) return null;
 
     if (level < 1 || level > dungeon.maxFloors) {
       return null;
     }
 
-    const floor = generateFloorForLevel(dungeon, level);
+    const floor = generateFloorForLevel(dungeon, level, gameMode);
     if (!floor) return null;
 
     set({
@@ -157,8 +171,8 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
   },
 
   getCurrentRegion: () => {
-    const { dungeon } = get();
+    const { dungeon, gameMode } = get();
     if (!dungeon) return null;
-    return getRegionConfigForFloor(dungeon.currentFloor) ?? null;
+    return getRegionConfigForFloor(dungeon.currentFloor, gameMode) ?? null;
   },
 }));

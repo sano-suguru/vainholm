@@ -1,4 +1,4 @@
-import type { RegionConfig } from '../types';
+import type { GameMode, RegionConfig } from '../types';
 import { GLEYMDARIKI_CONFIG } from './gleymdariki';
 import { HRODRGRAF_CONFIG } from './hrodrgraf';
 import { ROTMYRKR_CONFIG } from './rotmyrkr';
@@ -16,20 +16,33 @@ export const REGION_CONFIGS: RegionConfig[] = [
   UPPHAFSDJUP_CONFIG,
 ];
 
+const FLOORS_PER_REGION_NORMAL = 2;
+const FLOORS_PER_REGION_ADVANCED = 4;
+
+export function getFloorsPerRegion(mode: GameMode): number {
+  return mode === 'advanced' ? FLOORS_PER_REGION_ADVANCED : FLOORS_PER_REGION_NORMAL;
+}
+
 export function getRegionConfigByTheme(theme: string): RegionConfig | undefined {
   return REGION_CONFIGS.find((r) => r.theme === theme);
 }
 
-export function getRegionConfigForFloor(globalFloor: number): RegionConfig | undefined {
+export function getRegionConfigForFloor(globalFloor: number, mode: GameMode = 'normal'): RegionConfig | undefined {
+  const floorsPerRegion = getFloorsPerRegion(mode);
+  let floorCount = 0;
+  
   for (const region of REGION_CONFIGS) {
-    const regionEnd = region.startFloor + region.floors - 1;
-    if (globalFloor >= region.startFloor && globalFloor <= regionEnd) {
+    const regionStart = floorCount + 1;
+    const regionEnd = floorCount + floorsPerRegion;
+    
+    if (globalFloor >= regionStart && globalFloor <= regionEnd) {
       return region;
     }
+    floorCount += floorsPerRegion;
   }
   return undefined;
 }
 
-export function getTotalFloors(): number {
-  return REGION_CONFIGS.reduce((sum, r) => sum + r.floors, 0);
+export function getTotalFloors(mode: GameMode = 'normal'): number {
+  return REGION_CONFIGS.length * getFloorsPerRegion(mode);
 }

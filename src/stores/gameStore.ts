@@ -34,10 +34,14 @@ import { applyDamageToEnemy } from '../combat/damageCalculation';
 import { createBossStats } from '../combat/enemyTypes';
 import { calculateWeaponDamage } from '../combat/weaponAttack';
 import { WEAPON_PREMIUMS } from '../combat/weapons';
+import { createRandomWeapon, shouldDropWeapon } from '../combat/weaponGenerator';
 import { STATUS_EFFECTS } from '../combat/statusEffects';
 import { getLocalizedEnemyName, getLocalizedBossName } from '../utils/i18n';
+import { useDungeonStore } from '../dungeon/dungeonStore';
+import { getTotalFloors } from '../dungeon/config';
 import type { StatModifier } from '../progression/types';
 import { useDamageNumberStore } from './damageNumberStore';
+import { useMetaProgressionStore } from './metaProgressionStore';
 
 function applyStatModifierToStats(
   stats: CombatStats,
@@ -222,6 +226,9 @@ interface GameStore {
   worldMapCache: MapData | null;
   worldExploredTilesCache: Set<number> | null;
   dungeonEntrancePosition: Position | null;
+  permanentVisionPenalty: number;
+  floorVisionPenalty: number;
+  floorStatModifiers: StatModifier[];
 
   enemies: Map<EnemyId, Enemy>;
   currentBoss: Boss | null;
@@ -242,6 +249,8 @@ interface GameStore {
   getTileAt: (x: number, y: number) => TileType | null;
   isTileVisible: (x: number, y: number) => boolean;
   isTileExplored: (x: number, y: number) => boolean;
+  revealAllTiles: () => void;
+  revealTrapTiles: () => void;
   addLightSource: (light: LightSource) => void;
   removeLightSource: (id: string) => void;
   generateTileLights: () => void;
@@ -269,7 +278,24 @@ interface GameStore {
   damageBoss: (amount: number) => void;
   getBossAt: (x: number, y: number) => Boss | null;
   recalculateVisibility: () => void;
+  setCharacter: (classId: CharacterClassId, backgroundId: BackgroundId) => void;
+  resetGame: () => void;
+  pendingWeaponDrop: Weapon | null;
+  equipWeapon: (weapon: Weapon) => void;
+  discardWeaponDrop: () => void;
+  setPendingWeaponDrop: (weapon: Weapon | null) => void;
+
+  pendingRemnantTrade: boolean;
+  openRemnantTrade: () => void;
+  closeRemnantTrade: () => void;
+
+  addFloorStatModifiers: (modifiers: StatModifier[]) => void;
+  clearFloorStatModifiers: () => void;
+  addVisionPenalty: (amount: number, permanent: boolean) => void;
+  clearFloorPenalties: () => void;
+  setInvulnerable: (turns: number) => void;
 }
+
 
 const DEFAULT_CLASS_ID: CharacterClassId = 'warrior';
 const DEFAULT_BACKGROUND_ID: BackgroundId = 'ex_soldier';
@@ -310,12 +336,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnPhase: 'player',
   gameEndState: 'playing',
   combatLog: [],
+  pendingWeaponDrop: null,
+  pendingRemnantTrade: false,
+  permanentVisionPenalty: 0,
+  floorVisionPenalty: 0,
+  floorStatModifiers: [],
 
   setMap: (map, seed, entryPoint) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
     const featureLayer = map.layers.find((l) => l.name === 'features') ?? null;
     const spawnAt = entryPoint ?? map.spawnPoint;
-    const spawnVisible = getVisibleTiles(spawnAt.x, spawnAt.y);
+    const spawnVisible = getVisibleTiles(
+      spawnAt.x,
+      spawnAt.y,
+      Math.max(2, BASE_VISION_RADIUS - get().permanentVisionPenalty - get().floorVisionPenalty)
+    );
     set({
       map,
       terrainLayer,
@@ -418,6 +453,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       if (isDead) {
         state.removeEnemy(enemy.id);
+        
+        const dungeonState = useDungeonStore.getState();
+        const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
+        
+        useMetaProgressionStore.getState().recordEnemyEncounter(enemy.type, currentFloor, true);
+        
+        if (shouldDropWeapon()) {
+          const droppedWeapon = createRandomWeapon(currentFloor);
+          set({ pendingWeaponDrop: droppedWeapon });
+        }
       }
       
       return;
@@ -475,6 +520,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
           message,
           damage: damageResult.damage,
         });
+        
+        if (isDead) {
+          const dungeonState = useDungeonStore.getState();
+          const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
+          useMetaProgressionStore.getState().recordBossEncounter(boss.type, currentFloor, true);
+        }
       }
       
       return;
@@ -488,13 +539,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       else if (dx > 0) facing = 'right';
 
       const blindEffect = player.statusEffects.get('blind');
-      let visionRadius = BASE_VISION_RADIUS;
+      let visionRadius = BASE_VISION_RADIUS - state.permanentVisionPenalty - state.floorVisionPenalty;
       if (blindEffect && blindEffect.duration > 0) {
         const blindDef = STATUS_EFFECTS.blind;
         if (blindDef.effect.type === 'vision_reduction') {
-          visionRadius = Math.max(2, BASE_VISION_RADIUS - blindDef.effect.radiusReduction);
+          visionRadius -= blindDef.effect.radiusReduction;
         }
       }
+      visionRadius = Math.max(2, visionRadius);
 
       const delta = getVisibilityDelta(oldX, oldY, newX, newY, visionRadius);
       
@@ -604,6 +656,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return exploredTiles.has(posKey(x, y));
   },
 
+  revealAllTiles: () => {
+    const { map } = get();
+    if (!map) return;
+
+    const revealed = new Set<number>();
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        revealed.add(posKey(x, y));
+      }
+    }
+
+    set({ exploredTiles: revealed });
+  },
+
+  revealTrapTiles: () => {
+    const { map, featureLayer, exploredTiles } = get();
+    if (!map || !featureLayer) return;
+
+    const revealed = new Set(exploredTiles);
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const featureId = featureLayer.data[y]?.[x];
+        if (!featureId) continue;
+        const tileType = map.tileMapping[String(featureId)] as TileType | undefined;
+        if (tileType === 'trap_spike' || tileType === 'trap_pit') {
+          revealed.add(posKey(x, y));
+        }
+      }
+    }
+
+    set({ exploredTiles: revealed });
+  },
+
   addLightSource: (light) => {
     set((state) => ({
       lightSources: [...state.lightSources, light],
@@ -676,7 +761,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const terrainLayer = worldMapCache.layers.find((l) => l.name === 'terrain') ?? null;
     const featureLayer = worldMapCache.layers.find((l) => l.name === 'features') ?? null;
     const returnPosition = dungeonEntrancePosition ?? worldMapCache.spawnPoint;
-    const returnVisible = getVisibleTiles(returnPosition.x, returnPosition.y);
+    const returnVisible = getVisibleTiles(
+      returnPosition.x,
+      returnPosition.y,
+      Math.max(2, BASE_VISION_RADIUS - get().permanentVisionPenalty - get().floorVisionPenalty)
+    );
 
     const restoredExplored = worldExploredTilesCache
       ? new Set([...worldExploredTilesCache, ...returnVisible])
@@ -740,6 +829,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   damagePlayer: (amount) => {
     const playerPos = get().player.position;
+    const invulnerable = get().player.statusEffects.get('invulnerable');
+    if (invulnerable && invulnerable.duration > 0) return;
+
     useDamageNumberStore.getState().addDamageNumber(playerPos, amount, false, false);
     set((state) => {
       const newHp = Math.max(0, state.player.stats.hp - amount);
@@ -912,6 +1004,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!s.currentBoss) return s;
       const newHp = Math.max(0, s.currentBoss.stats.hp - amount);
       const isDead = newHp <= 0;
+      
+      const dungeonState = useDungeonStore.getState();
+      const currentFloor = dungeonState.dungeon?.currentFloor ?? 0;
+      const totalFloors = getTotalFloors(dungeonState.gameMode);
+      const isFinalBoss = isDead && currentFloor >= totalFloors;
+      
+      let endState: GameEndState = s.gameEndState;
+      if (isFinalBoss) {
+        const hasTradedWithAll = useMetaProgressionStore.getState().hasTradeWithAllRemnants();
+        endState = hasTradedWithAll ? 'victory_true' : 'victory';
+      }
+      
       return {
         currentBoss: {
           ...s.currentBoss,
@@ -919,8 +1023,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
           isAlive: !isDead,
         },
         bossDefeatedOnFloor: isDead ? true : s.bossDefeatedOnFloor,
+        gameEndState: endState,
       };
     });
+
+    const newState = get();
+    if (newState.gameEndState === 'victory' || newState.gameEndState === 'victory_true') {
+      useMetaProgressionStore.getState().unlockAdvancedMode();
+    }
   },
 
   getBossAt: (x, y) => {
@@ -932,17 +1042,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   recalculateVisibility: () => {
-    const { player, exploredTiles } = get();
+    const { player, exploredTiles, permanentVisionPenalty, floorVisionPenalty } = get();
     const { x, y } = player.position;
 
     const blindEffect = player.statusEffects.get('blind');
-    let visionRadius = BASE_VISION_RADIUS;
+    let visionRadius = BASE_VISION_RADIUS - permanentVisionPenalty - floorVisionPenalty;
     if (blindEffect && blindEffect.duration > 0) {
       const blindDef = STATUS_EFFECTS.blind;
       if (blindDef.effect.type === 'vision_reduction') {
-        visionRadius = Math.max(2, BASE_VISION_RADIUS - blindDef.effect.radiusReduction);
+        visionRadius -= blindDef.effect.radiusReduction;
       }
     }
+    visionRadius = Math.max(2, visionRadius);
 
     const newVisibleTiles = getVisibleTiles(x, y, visionRadius);
     const newExploredTiles = new Set(exploredTiles);
@@ -954,6 +1065,174 @@ export const useGameStore = create<GameStore>((set, get) => ({
       visibleTiles: newVisibleTiles,
       exploredTiles: newExploredTiles,
       visibilityHash: x * 10000 + y,
+    });
+  },
+
+
+  setCharacter: (classId, backgroundId) => {
+    set({
+      player: {
+        position: { x: 50, y: 50 },
+        facing: 'down',
+        stats: calculateInitialStats(classId, backgroundId),
+        classId,
+        backgroundId,
+        weapon: null,
+        statusEffects: new Map(),
+      },
+    });
+  },
+
+  resetGame: () => {
+    combatLogIdCounter = 0;
+    useDungeonStore.getState().exitDungeon();
+    useDungeonStore.getState().setGameMode('normal');
+    useMetaProgressionStore.getState().clearCurrentRunRemnantTrades();
+    set({
+      player: createInitialPlayerState(),
+      map: null,
+      terrainLayer: null,
+      featureLayer: null,
+      mapSeed: 0,
+      debugMode: false,
+      tick: 0,
+      weather: 'clear',
+      timeOfDay: 'day',
+      currentMapType: 'world',
+      exploredTiles: new Set<number>(),
+      visibleTiles: new Set<number>(),
+      visibilityHash: 0,
+      lightSources: [],
+      lastInteractionEffects: [],
+      worldMapCache: null,
+      worldExploredTilesCache: null,
+      dungeonEntrancePosition: null,
+      permanentVisionPenalty: 0,
+      floorVisionPenalty: 0,
+      floorStatModifiers: [],
+      enemies: new Map<EnemyId, Enemy>(),
+      currentBoss: null,
+      bossDefeatedOnFloor: false,
+      turnPhase: 'player',
+      gameEndState: 'playing',
+      combatLog: [],
+      pendingWeaponDrop: null,
+      pendingRemnantTrade: false,
+    });
+  },
+
+  setPendingWeaponDrop: (weapon: Weapon | null) => {
+    set({ pendingWeaponDrop: weapon });
+  },
+
+  equipWeapon: (weapon: Weapon) => {
+    set((state) => ({
+      player: {
+        ...state.player,
+        weapon,
+      },
+      pendingWeaponDrop: null,
+    }));
+  },
+
+  discardWeaponDrop: () => {
+    set({ pendingWeaponDrop: null });
+  },
+
+  openRemnantTrade: () => {
+    set({ pendingRemnantTrade: true });
+  },
+
+  closeRemnantTrade: () => {
+    set({ pendingRemnantTrade: false });
+  },
+
+  addFloorStatModifiers: (modifiers) => {
+    set((state) => {
+      const nextFloorModifiers = [...state.floorStatModifiers, ...modifiers];
+      let nextStats = state.player.stats;
+      for (const modifier of modifiers) {
+        nextStats = applyStatModifierToStats(nextStats, modifier);
+      }
+      const nextHp = Math.max(0, Math.min(nextStats.maxHp, nextStats.hp));
+      return {
+        floorStatModifiers: nextFloorModifiers,
+        player: {
+          ...state.player,
+          stats: {
+            ...nextStats,
+            hp: nextHp,
+          },
+        },
+      };
+    });
+  },
+
+  clearFloorStatModifiers: () => {
+    set((state) => {
+      if (state.floorStatModifiers.length === 0) return state;
+      let nextStats = state.player.stats;
+      for (const modifier of state.floorStatModifiers) {
+        nextStats = applyStatModifierToStats(nextStats, {
+          ...modifier,
+          value: -modifier.value,
+        });
+      }
+      const nextHp = Math.max(0, Math.min(nextStats.maxHp, nextStats.hp));
+      return {
+        floorStatModifiers: [],
+        player: {
+          ...state.player,
+          stats: {
+            ...nextStats,
+            hp: nextHp,
+          },
+        },
+      };
+    });
+  },
+
+  addVisionPenalty: (amount, permanent) => {
+    set((state) => ({
+      permanentVisionPenalty: permanent
+        ? Math.max(0, state.permanentVisionPenalty + amount)
+        : state.permanentVisionPenalty,
+      floorVisionPenalty: !permanent
+        ? Math.max(0, state.floorVisionPenalty + amount)
+        : state.floorVisionPenalty,
+    }));
+    get().recalculateVisibility();
+  },
+
+  clearFloorPenalties: () => {
+    set({ floorVisionPenalty: 0 });
+    get().recalculateVisibility();
+  },
+
+  setInvulnerable: (turns) => {
+    set((state) => {
+      const nextEffects = new Map(state.player.statusEffects);
+      const existing = nextEffects.get('invulnerable');
+      if (existing) {
+        nextEffects.set('invulnerable', {
+          ...existing,
+          duration: Math.max(existing.duration, turns),
+          stacks: 1,
+        });
+      } else {
+        nextEffects.set('invulnerable', {
+          id: 'invulnerable',
+          duration: turns,
+          stacks: 1,
+          source: 'self',
+        });
+      }
+      return {
+        player: {
+          ...state.player,
+          statusEffects: nextEffects,
+        },
+      };
     });
   },
 }));

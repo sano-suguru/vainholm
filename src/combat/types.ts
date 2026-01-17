@@ -116,7 +116,7 @@ export interface Weapon {
 // Status Effects
 // =============================================================================
 
-export type StatusEffectId = 'poison' | 'bleed' | 'burn' | 'stun' | 'slow' | 'blind';
+export type StatusEffectId = 'poison' | 'bleed' | 'burn' | 'stun' | 'slow' | 'blind' | 'invulnerable';
 
 export interface StatusEffectDefinition {
   id: StatusEffectId;
@@ -132,7 +132,8 @@ export type StatusEffectType =
   | { type: 'damage_over_time'; damagePerTurn: number }
   | { type: 'skip_turn' }
   | { type: 'slow'; movementPenalty: number }
-  | { type: 'vision_reduction'; radiusReduction: number };
+  | { type: 'vision_reduction'; radiusReduction: number }
+  | { type: 'invulnerability' };
 
 export interface StatusEffect {
   id: StatusEffectId;
@@ -197,7 +198,7 @@ export interface DamageResult {
 
 export type TurnPhase = 'player' | 'enemy' | 'effects';
 
-export type GameEndState = 'playing' | 'victory' | 'defeat';
+export type GameEndState = 'playing' | 'victory' | 'victory_true' | 'defeat';
 
 export interface CombatLogEntry {
   id: string;

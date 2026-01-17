@@ -102,11 +102,16 @@ Factory functions returning `NamedConstraint` objects:
 
 ```typescript
 // phases/myPhase.ts
-import type { GenerationPhase, PhaseResult } from '../types';
-import { TILE_ID_BY_TYPE as T } from '../../tiles';
-import * as Constraints from '../constraints';
+import type { GenerationPhase, PhaseResult, PlacementContext, PlacementMutator } from '../types';
+import { TILE_ID_BY_TYPE as T } from '../../../tiles';
+import { Constraints } from '../constraints';
 
-function myPhaseExecute(ctx, mutator): PhaseResult {
+const NO_FEATURE = 0;
+
+function myPhaseExecute(
+  ctx: PlacementContext,
+  mutator: PlacementMutator
+): PhaseResult {
   // 1. Find valid position
   const result = ctx.findValidPosition([
     Constraints.walkable(),
@@ -143,6 +148,15 @@ export const ALL_PHASES: GenerationPhase[] = [
 ];
 ```
 
+## Phase Naming Convention
+
+| Entity | Convention | Example |
+|--------|------------|---------|
+| Function | camelCase + "Phase" | `riverPhase`, `lakesPhase` |
+| Export | SCREAMING_SNAKE + "_PHASE" | `RIVER_PHASE`, `LAKES_PHASE` |
+| Tile shorthand | `const T = TILE_ID_BY_TYPE` | Always define |
+| No feature | `const NO_FEATURE = 0` | Always define |
+
 ## WHERE TO LOOK
 
 | Task | Location |
@@ -158,7 +172,7 @@ export const ALL_PHASES: GenerationPhase[] = [
 ## Tile ID Pattern
 
 ```typescript
-import { TILE_ID_BY_TYPE as T } from '../../tiles';
+import { TILE_ID_BY_TYPE as T } from '../../../tiles';
 
 // Use shorthand in all phases
 layers.terrain[y][x] = T.water;
@@ -187,3 +201,4 @@ ctx.findValidPosition([
 | Circular dependencies | Topological sort fails (returns null) |
 | Skip success check | Pipeline continues on failure |
 | Use random() directly | Use ctx.random for determinism |
+| Missing `dependsOn` array | Phase may run in wrong order |

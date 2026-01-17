@@ -4,6 +4,7 @@ import { KEY_BINDINGS } from '../utils/constants';
 interface UseKeyboardOptions {
   onMove: (dx: number, dy: number) => void;
   onDebugToggle?: () => void;
+  onQuickbarUse?: (slotIndex: number) => void;
   moveDelay?: number;
 }
 
@@ -23,6 +24,7 @@ function getDirectionFromKeys(pressedKeys: Set<string>): Direction {
 export function useKeyboard({
   onMove,
   onDebugToggle,
+  onQuickbarUse,
   moveDelay = 150,
 }: UseKeyboardOptions) {
   const pressedKeys = useRef<Set<string>>(new Set());
@@ -48,8 +50,14 @@ export function useKeyboard({
       return;
     }
 
+    const quickbarIndex = KEY_BINDINGS.quickbar.indexOf(e.code as typeof KEY_BINDINGS.quickbar[number]);
+    if (quickbarIndex !== -1) {
+      onQuickbarUse?.(quickbarIndex);
+      return;
+    }
+
     tryMove(Date.now());
-  }, [onDebugToggle, tryMove]);
+  }, [onDebugToggle, onQuickbarUse, tryMove]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     pressedKeys.current.delete(e.code);

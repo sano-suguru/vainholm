@@ -268,6 +268,7 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   // Structures
   pillar: pillarUrl,
   altar_dark: altarDarkUrl,
+  altar_remnant: altarDarkUrl,
   sarcophagus: sarcophagusUrl,
   crystal: crystalUrl,
   // Grass variants

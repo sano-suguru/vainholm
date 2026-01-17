@@ -71,6 +71,7 @@ const TILE_REGISTRY = [
   { id: 60, type: 'collapse_void', walkable: false, movementCost: Infinity, name: 'Collapse Void', char: ' ' },
   { id: 61, type: 'collapse_edge', walkable: false, movementCost: Infinity, name: 'Collapse Edge', char: '░' },
   { id: 62, type: 'cracked_floor', walkable: true, movementCost: 1.2, name: 'Cracked Floor', char: '.' },
+  { id: 63, type: 'altar_remnant', walkable: true, movementCost: 1, name: 'Remnant Altar', char: 'Ω' },
 ] as const satisfies readonly TileEntry[];
 
 export type TileType = (typeof TILE_REGISTRY)[number]['type'];

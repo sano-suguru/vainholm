@@ -1,8 +1,10 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-17 | **Commit**: cd9545c | **Branch**: main | **Tests**: 88 passing
+**Generated**: 2026-01-17 | **Commit**: af4063d | **Branch**: main | **Tests**: 88 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
+
+**6 Zustand stores** (NOT monolithic): gameStore, dungeonStore, progressionStore, inventoryStore, damageNumberStore, metaProgressionStore (persisted).
 
 ## Communication
 
@@ -28,7 +30,7 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 
 | System | Handles | Location |
 |--------|---------|----------|
-| React DOM | Layout, events, debug overlays | `GameContainer.tsx` |
+| React DOM | Layout, events, debug overlays, HUD | `GameContainer.tsx` |
 | Pixi.js Canvas | ALL visual game content | `PixiViewport.tsx` (21 layers) |
 
 See `src/components/game/AGENTS.md` for Pixi.js patterns.
@@ -41,10 +43,10 @@ src/
 │   ├── game/          # Pixi.js rendering (see game/AGENTS.md)
 │   └── ui/            # HUD (hud/), debug overlay, game over screen
 ├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics, useEffectProcessor
-├── stores/            # Zustand stores (5 separate stores)
+├── stores/            # Zustand stores (see stores/AGENTS.md)
 ├── dungeon/           # Dungeon generation system (see dungeon/AGENTS.md)
 ├── combat/            # Turn-based combat (see combat/AGENTS.md)
-├── progression/       # Level-up, upgrades, abilities
+├── progression/       # Level-up, upgrades, abilities (see progression/AGENTS.md)
 ├── items/             # Inventory, consumables
 ├── tiles/             # Tile registry: 63 types, ID mapping
 ├── types/             # Type definitions barrel
@@ -139,7 +141,7 @@ generateMapAsync.ts  →  mapGenerator.worker.ts  →  mapGeneratorCore.ts
 
 ## Multi-Store Pattern
 
-**5 independent Zustand stores** (not monolithic):
+**6 independent Zustand stores** (NOT monolithic):
 
 | Store | Purpose | Location |
 |-------|---------|----------|
@@ -148,10 +150,13 @@ generateMapAsync.ts  →  mapGenerator.worker.ts  →  mapGeneratorCore.ts
 | `progressionStore` | Level-up, upgrades, abilities | `progression/progressionStore.ts` |
 | `inventoryStore` | Items, consumables, slots | `items/inventoryStore.ts` |
 | `damageNumberStore` | Floating damage animation | `stores/damageNumberStore.ts` |
+| `metaProgressionStore` | Enemy/boss encounters, relics, unlocks (persisted) | `stores/metaProgressionStore.ts` |
 
-**Cross-store calls**: Use `.getState()` for inter-store communication.
+**Cross-store calls**: Use `.getState()` for inter-store communication (NOT hooks in non-React code).
 
 **Transition**: `cacheWorldMap()` / `restoreWorldMap()` for world↔dungeon swaps.
+
+See `stores/AGENTS.md` for detailed store patterns.
 
 ## Visibility Delta Optimization
 
@@ -171,6 +176,8 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 | Types | PascalCase | `Position`, `MapData` |
 | Constants | SCREAMING_SNAKE | `TILE_SIZE`, `MAP_WIDTH` |
 | Files | camelCase (utils), PascalCase (components) | `useKeyboard.ts`, `GameContainer.tsx` |
+| Phase functions | camelCase + "Phase" | `riverPhase`, `lakesPhase` |
+| Phase exports | SCREAMING_SNAKE + "_PHASE" | `RIVER_PHASE`, `LAKES_PHASE` |
 
 ## Anti-Patterns (FORBIDDEN)
 
@@ -263,3 +270,5 @@ pnpm test:watch  # Watch mode
 | `src/utils/AGENTS.md` | Utilities, textures, lighting |
 | `src/combat/AGENTS.md` | Turn-based combat system |
 | `src/utils/mapGeneration/AGENTS.md` | Phase-based generation pipeline |
+| `src/stores/AGENTS.md` | Zustand store patterns, cross-store communication |
+| `src/progression/AGENTS.md` | Level-up system, upgrades, abilities |

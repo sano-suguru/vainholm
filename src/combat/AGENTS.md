@@ -159,6 +159,17 @@ const { player, canMoveTo, getEnemyAt, updateEnemy, damagePlayer } = store;
 - Boss-specific AI in `bossAI.ts`
 - Scaled 1.5x in rendering
 
+## Cross-Store Dependencies
+
+```typescript
+// enemySpawner.ts
+const store = useGameStore.getState();
+const dungeonStore = useDungeonStore.getState();
+
+// bossSpawner.ts
+useGameStore.getState().setBoss(boss);
+```
+
 ## Anti-Patterns
 
 | Forbidden | Why |

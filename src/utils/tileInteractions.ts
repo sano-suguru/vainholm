@@ -9,7 +9,7 @@ export type InteractionTrigger =
   | 'ice'
   | 'explosion';
 
-export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain' | 'descend' | 'ascend' | 'enter_dungeon' | 'exit_dungeon';
+export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain' | 'descend' | 'ascend' | 'enter_dungeon' | 'exit_dungeon' | 'open_remnant_trade';
 
 export interface TriggerEffect {
   type: EffectType;
@@ -63,6 +63,14 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     effects: [
       { type: 'exit_dungeon' },
       { type: 'message', message: 'You emerge into daylight.' },
+    ],
+  },
+  {
+    tile: 'altar_remnant',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'open_remnant_trade' },
     ],
   },
   {

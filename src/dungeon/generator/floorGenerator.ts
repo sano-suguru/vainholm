@@ -490,6 +490,62 @@ function decorateSpecialRooms(
   }
 }
 
+/**
+ * Places a remnant altar on the last floor of each region.
+ * The altar is placed in a room that is not entrance, exit, or boss.
+ */
+function placeRemnantAltar(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number
+): Position | null {
+  const eligibleRooms = rooms.filter(
+    (r) =>
+      r.roomType !== 'entrance' &&
+      r.roomType !== 'exit' &&
+      r.roomType !== 'boss' &&
+      r.width >= 4 &&
+      r.height >= 4
+  );
+
+  if (eligibleRooms.length === 0) {
+    const fallbackRooms = rooms.filter(
+      (r) => r.roomType !== 'entrance' && r.roomType !== 'exit'
+    );
+    if (fallbackRooms.length === 0) return null;
+    eligibleRooms.push(fallbackRooms[Math.floor(random() * fallbackRooms.length)]);
+  }
+
+  const room = eligibleRooms[Math.floor(random() * eligibleRooms.length)];
+  const centerX = room.x + Math.floor(room.width / 2);
+  const centerY = room.y + Math.floor(room.height / 2);
+
+  const offsets = [
+    { dx: 0, dy: 0 },
+    { dx: 1, dy: 0 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 0, dy: -1 },
+  ];
+
+  for (const { dx, dy } of offsets) {
+    const x = centerX + dx;
+    const y = centerY + dy;
+    if (
+      x >= room.x &&
+      x < room.x + room.width &&
+      y >= room.y &&
+      y < room.y + room.height &&
+      features[y]?.[x] === 0
+    ) {
+      features[y][x] = T.altar_remnant;
+      return { x, y };
+    }
+  }
+
+  return null;
+}
+
 function selectWeightedObject(
   objects: MultiTileObjectDef[],
   random: () => number
@@ -739,8 +795,7 @@ function addCollapseZones(
 }
 
 function getFloorSize(options: FloorGenerationOptions): { width: number; height: number } {
-  const { regionConfig, level } = options;
-  const regionLevel = level - regionConfig.startFloor + 1;
+  const { regionConfig, regionLevel } = options;
 
   if (regionConfig.size.perFloor && regionConfig.size.perFloor[regionLevel]) {
     return regionConfig.size.perFloor[regionLevel];
@@ -750,11 +805,18 @@ function getFloorSize(options: FloorGenerationOptions): { width: number; height:
 }
 
 export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
-  const { level, regionConfig, seed, previousStairsDown, isLastFloorInDungeon } = options;
+  const {
+    level,
+    regionConfig,
+    seed,
+    previousStairsDown,
+    isLastFloorInDungeon,
+    regionLevel,
+    floorsPerRegion,
+  } = options;
   const random = seededRandom(seed);
 
   const { width, height } = getFloorSize(options);
-  const regionLevel = level - regionConfig.startFloor + 1;
 
   const bspResult = generateBSP(width, height, seed, regionConfig.bspConfig);
   const { rooms, corridors } = bspResult;
@@ -836,6 +898,11 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
   addLighting(features, rooms, random, regionConfig.lightingConfig);
 
   addHazards(features, terrain, rooms, entranceRoom, random, regionConfig.hazardConfig);
+
+  const isLastFloorInRegion = regionLevel === floorsPerRegion;
+  if (isLastFloorInRegion) {
+    placeRemnantAltar(features, rooms, random);
+  }
 
   const multiTileObjects = placeMultiTileObjects(features, rooms, random, regionConfig.multiTileConfig);
 

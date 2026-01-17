@@ -1,10 +1,11 @@
 import { memo, useMemo } from 'react';
-import { Droplets, Flame, Zap, Eye, Footprints, Heart } from 'lucide-react';
+import { Droplets, Flame, Zap, Eye, Footprints, Heart, Shield } from 'lucide-react';
 
 import {
   status_blind,
   status_bleed,
   status_burn,
+  status_invulnerable,
   status_poison,
   status_slow,
   status_stun,
@@ -24,6 +25,7 @@ const STATUS_EFFECT_CONFIG = {
   stun: { icon: Zap, label: status_stun },
   slow: { icon: Footprints, label: status_slow },
   blind: { icon: Eye, label: status_blind },
+  invulnerable: { icon: Shield, label: status_invulnerable },
 } satisfies Record<StatusEffectId, { icon: typeof Droplets; label: () => string }>;
 
 export const StatusEffectsDisplay = memo(function StatusEffectsDisplay({

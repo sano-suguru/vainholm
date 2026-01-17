@@ -6,20 +6,20 @@ Dungeon generation system. Procedural floors with BSP algorithm, separate Zustan
 
 ## Architecture
 
-| File | Role |
-|------|------|
-| `dungeonStore.ts` | Zustand store: dungeon state, floor navigation |
-| `types.ts` | Type definitions (Dungeon, Floor, Room, Corridor, BSPNode, RegionConfig) |
-| `bossSpawner.ts` | Boss placement logic per region |
-| `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) |
-| `generator/index.ts` | Floor generation orchestrator |
-| `generator/floorGenerator.ts` | Floor layout + tile placement |
-| `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity (355 lines) |
-| `config/index.ts` | Region config lookup |
-| `config/hrodrgraf.ts` | Region 1: Hróðrgraf (栄光の墓) |
-| `config/rotmyrkr.ts` | Region 2: Rótmyrkr (根の闘) |
-| `config/gleymdariki.ts` | Region 3: Gleymdaríki (忘却の王国) |
-| `config/upphafsdjup.ts` | Region 4: Upphafsdjúp (起源の深淵) |
+| File | Role | Lines |
+|------|------|-------|
+| `dungeonStore.ts` | Zustand store: dungeon state, floor navigation | 165 |
+| `types.ts` | Type definitions (Dungeon, Floor, Room, Corridor, BSPNode, RegionConfig) | — |
+| `bossSpawner.ts` | Boss placement logic per region | — |
+| `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) | — |
+| `generator/index.ts` | Floor generation orchestrator | — |
+| `generator/floorGenerator.ts` | Floor layout + tile placement | 870 |
+| `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity | 355 |
+| `config/index.ts` | Region config lookup | — |
+| `config/hrodrgraf.ts` | Region 1: Hróðrgraf (栄光の墓) | 77 |
+| `config/rotmyrkr.ts` | Region 2: Rótmyrkr (根の闇) | 77 |
+| `config/gleymdariki.ts` | Region 3: Gleymdaríki (忘却の王国) | — |
+| `config/upphafsdjup.ts` | Region 4: Upphafsdjúp (起源の深淵) | — |
 
 ## Dungeon Structure
 
@@ -151,7 +151,7 @@ Ensures vertical alignment between floors.
 | Modify room generation | `generator/bspGenerator.ts` |
 | Modify floor tiles | `generator/floorGenerator.ts` |
 | Add floor feature | `generator/floorGenerator.ts` |
-| Add decoration type | Region config → `decorationConfig.decorations` |
+| Add decoration type | Region config → `decorationConfig.decorationTiles` |
 | Add trap type | Region config → `trapConfig.trapTypes` |
 | Debug connectivity | Use `testUtils.ts` → `floodFill`, `mapToAscii` |
 
@@ -211,3 +211,12 @@ Transition flow:
 World → enterDungeon() → gameStore.cacheWorldMap()
 Dungeon → exitDungeon() → gameStore.restoreWorldMap()
 ```
+
+## Anti-Patterns
+
+| Forbidden | Why |
+|-----------|-----|
+| Direct Map mutation | Use dungeonStore actions |
+| Skip stairs linking | Breaks floor-to-floor navigation |
+| Ignore connectivity validation | Player could be trapped |
+| Hardcode region floors | Use REGION_CONFIGS lookup |

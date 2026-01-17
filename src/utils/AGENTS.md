@@ -6,23 +6,23 @@ Utility layer: map generation, rendering data, game systems, configuration.
 
 ## File Roles
 
-| File | Purpose | Consumers |
-|------|---------|-----------|
-| `constants.ts` | TILE_SIZE (16px), MAP_*, VIEWPORT_*, KEY_BINDINGS | 10+ files |
-| `mapGeneratorCore.ts` | Procedural generation (pure function, 56 tests) | Worker only |
-| `generateMapAsync.ts` | Web Worker wrapper (public API) | GameContainer |
-| `mapGenerator.worker.ts` | Worker entry point | Vite |
-| `tileTextures.ts` | SVG loading, fallback chains, animation (682 lines) | PixiViewport |
-| `tileGlyphs.ts` | Player glyph definition | PixiViewport |
-| `overlayConfig.ts` | Weighted overlay selection | PixiViewport |
-| `lighting.ts` | Light sources, flicker cache (FIFO, max 500) | gameStore, PixiViewport |
-| `tileInteractions.ts` | Triggers, effects, chain reactions (323 lines) | gameStore |
-| `biomes.ts` | Elevation/moisture lookup tables | mapGeneratorCore |
-| `noise.ts` | Simplex noise, FBM | mapGeneratorCore |
-| `seedUtils.ts` | URL seed parsing, seeded random (Alea PRNG) | GameContainer |
-| `i18n.ts` | Localization (enemy, boss, region names) | Multiple |
-| `enemyTextures.ts` | Enemy/boss texture mapping | PixiViewport |
-| `colorNoiseCache.ts` | Color noise cache management | mapGeneratorCore |
+| File | Purpose | Lines | Consumers |
+|------|---------|-------|-----------|
+| `constants.ts` | TILE_SIZE (16px), MAP_*, VIEWPORT_*, KEY_BINDINGS | — | 10+ files |
+| `mapGeneratorCore.ts` | Procedural generation (pure function, 56 tests) | — | Worker only |
+| `generateMapAsync.ts` | Web Worker wrapper (public API) | — | GameContainer |
+| `mapGenerator.worker.ts` | Worker entry point | — | Vite |
+| `tileTextures.ts` | SVG loading, fallback chains, animation | 682 | PixiViewport |
+| `tileGlyphs.ts` | Player glyph definition | — | PixiViewport |
+| `overlayConfig.ts` | Weighted overlay selection | — | PixiViewport |
+| `lighting.ts` | Light sources, flicker cache (FIFO, max 500) | — | gameStore, PixiViewport |
+| `tileInteractions.ts` | Triggers, effects, chain reactions | 323 | gameStore |
+| `biomes.ts` | Elevation/moisture lookup tables | — | mapGeneratorCore |
+| `noise.ts` | Simplex noise, FBM | — | mapGeneratorCore |
+| `seedUtils.ts` | URL seed parsing, seeded random (Alea PRNG) | — | GameContainer |
+| `i18n.ts` | Localization (enemy, boss, region names) | — | Multiple |
+| `enemyTextures.ts` | Enemy/boss texture mapping | — | PixiViewport |
+| `colorNoiseCache.ts` | Color noise cache management | — | mapGeneratorCore |
 
 See also: `mapGeneration/AGENTS.md` for phase-based pipeline.
 
@@ -132,6 +132,17 @@ key = quantizedTime (16ms buckets) + position
 
 **To add light source**: Add preset to `LIGHT_SOURCE_PRESETS` in `lighting.ts`.
 
+## Seeded Randomness
+
+```typescript
+import { seededRandom } from './seedUtils';
+
+const random = seededRandom(12345);  // Alea PRNG
+const value = random();              // 0-1
+```
+
+**All procedural generation uses seeded randomness for determinism.**
+
 ## WHERE TO LOOK
 
 | Task | Location |
@@ -155,3 +166,4 @@ key = quantizedTime (16ms buckets) + position
 | Skip fallback for new tile | 43 tiles work via fallbacks |
 | Modify BiomeLayerData outside pipeline | Order-dependent side effects |
 | Inline BlurFilter/TextStyle | Use module-level constants |
+| Use Math.random() for generation | Use seededRandom for determinism |

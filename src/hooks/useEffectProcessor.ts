@@ -3,10 +3,13 @@ import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../stores/gameStore';
 import { useDungeonStore } from '../dungeon';
 import type { DungeonFloor } from '../dungeon/types';
+import { getRegionConfigForFloor } from '../dungeon/config';
 import { spawnEnemiesForFloor, resetEnemyIdCounter } from '../combat/enemySpawner';
 import type { Position } from '../types';
 import { TILE_DEFINITIONS } from '../utils/constants';
 import type { TileType } from '../types';
+import { getRemnantForRegion } from '../progression/remnants';
+import { useMetaProgressionStore } from '../stores/metaProgressionStore';
 
 const getWalkableTilesFromFloor = (floor: DungeonFloor): Position[] => {
   const walkableTiles: Position[] = [];
@@ -53,6 +56,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     cacheWorldMap,
     restoreWorldMap,
     setGameEndState,
+    openRemnantTrade,
   } = useGameStore(
     useShallow((state) => ({
       lastInteractionEffects: state.lastInteractionEffects,
@@ -65,13 +69,15 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       cacheWorldMap: state.cacheWorldMap,
       restoreWorldMap: state.restoreWorldMap,
       setGameEndState: state.setGameEndState,
+      openRemnantTrade: state.openRemnantTrade,
     }))
   );
 
-  const { isInDungeon, dungeon, enterDungeon, exitDungeon, descendStairs, ascendStairs, getCurrentFloor } = useDungeonStore(
+  const { isInDungeon, dungeon, gameMode, enterDungeon, exitDungeon, descendStairs, ascendStairs, getCurrentFloor } = useDungeonStore(
     useShallow((state) => ({
       isInDungeon: state.isInDungeon,
       dungeon: state.dungeon,
+      gameMode: state.gameMode,
       enterDungeon: state.enterDungeon,
       exitDungeon: state.exitDungeon,
       descendStairs: state.descendStairs,
@@ -116,6 +122,8 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
         } else {
           const newFloor = descendStairs();
           if (newFloor) {
+            useGameStore.getState().clearFloorStatModifiers();
+            useGameStore.getState().clearFloorPenalties();
             const entryPoint = newFloor.stairsUp ?? newFloor.map.spawnPoint;
             setMap(newFloor.map, mapSeed, entryPoint);
             generateTileLights();
@@ -126,13 +134,30 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       } else if (effect.type === 'ascend' && isInDungeon) {
         const newFloor = ascendStairs();
         if (newFloor) {
+          useGameStore.getState().clearFloorStatModifiers();
+          useGameStore.getState().clearFloorPenalties();
           const entryPoint = newFloor.stairsDown ?? newFloor.map.spawnPoint;
           setMap(newFloor.map, mapSeed, entryPoint);
           generateTileLights();
           spawnEnemiesOnFloor(newFloor, entryPoint);
           onFloorChange?.();
         }
+      } else if (effect.type === 'open_remnant_trade') {
+        if (!dungeon) continue;
+        const regionConfig = getRegionConfigForFloor(dungeon.currentFloor, gameMode);
+        if (!regionConfig) continue;
+        const remnantRegion = ['hrodrgraf', 'rotmyrkr', 'gleymdariki', 'upphafsdjup'].includes(regionConfig.theme)
+          ? (regionConfig.theme as 'hrodrgraf' | 'rotmyrkr' | 'gleymdariki' | 'upphafsdjup')
+          : null;
+        if (!remnantRegion) {
+          continue;
+        }
+        const remnant = getRemnantForRegion(remnantRegion);
+        if (!remnant) continue;
+        if (useMetaProgressionStore.getState().hasTradeWithRemnant(remnant.id)) continue;
+        openRemnantTrade();
       }
+
       // TODO: Handle 'message' effects when message UI system is implemented
     }
 
@@ -155,8 +180,10 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     cacheWorldMap,
     restoreWorldMap,
     setGameEndState,
+    openRemnantTrade,
     onFloorChange,
     onEnterDungeon,
     onExitDungeon,
+    gameMode,
   ]);
 }

@@ -8,13 +8,13 @@ React DOM HUD overlay. Fixed position, non-blocking, pointer-events selective.
 
 | File | Role | Lines |
 |------|------|-------|
-| `Hud.tsx` | Root orchestrator, composes sub-components | 51 |
+| `Hud.tsx` | Root orchestrator, composes sub-components | 65 |
 | `TopBar.tsx` | Region name, floor number, turn counter | 33 |
-| `StatusBar.tsx` | HP bar + attack/defense stats | 58 |
+| `StatusBar.tsx` | HP bar + attack/defense stats | 59 |
 | `CombatLog.tsx` | Combat event history (last 5 entries) | 52 |
 | `BossHealthBar.tsx` | Boss HP tracking | — |
 | `StatusEffectsDisplay.tsx` | Active status effect icons | — |
-| `index.ts` | Barrel export | 5 |
+| `index.ts` | Barrel export | 7 |
 
 ## Component Hierarchy
 
@@ -75,7 +75,7 @@ All styles in `src/styles/game.module.css`. CSS variables in `variables.css`:
 | Task | Location |
 |------|----------|
 | Add HUD element | `Hud.tsx` → add component |
-| Change HP thresholds | `StatusBar.tsx` → `useMemo` |
+| Change HP thresholds | `StatusBar.tsx` → `getHpState()` |
 | Add log entry type | `CombatLog.tsx` + `game.module.css` |
 | Modify positioning | `game.module.css` → `.hud*` classes |
 | Add CSS variable | `variables.css` |

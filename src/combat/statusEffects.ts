@@ -55,6 +55,15 @@ export const STATUS_EFFECTS: Record<StatusEffectId, StatusEffectDefinition> = {
     maxStacks: 1,
     effect: { type: 'vision_reduction', radiusReduction: 4 },
   },
+  invulnerable: {
+    id: 'invulnerable',
+    name: 'Invulnerable',
+    displayName: '無敵',
+    description: '一時的にダメージを受けない。',
+    stackable: false,
+    maxStacks: 1,
+    effect: { type: 'invulnerability' },
+  },
 };
 
 export const getStatusEffect = (id: StatusEffectId): StatusEffectDefinition => STATUS_EFFECTS[id];

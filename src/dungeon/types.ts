@@ -4,6 +4,8 @@ import type { TileType } from '../tiles';
 /** Type-safe tile weight map. Typos cause compile errors. */
 export type TileWeights = Partial<Record<TileType, number>>;
 
+export type GameMode = 'normal' | 'advanced';
+
 export type DungeonTheme =
   | 'hrodrgraf'
   | 'rotmyrkr'
@@ -192,6 +194,8 @@ export interface Dungeon {
 
 export interface FloorGenerationOptions {
   level: number;
+  regionLevel: number;
+  floorsPerRegion: number;
   regionConfig: RegionConfig;
   seed: number;
   previousStairsDown: Position | null;

@@ -1,8 +1,10 @@
 import { useEffect, useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../stores/gameStore';
+import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
 import { useDungeonStore } from '../../dungeon';
 import { useProgressionStore } from '../../progression';
+import { useInventoryStore } from '../../items/inventoryStore';
 import { useViewport } from '../../hooks/useViewport';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { useEffectProcessor } from '../../hooks/useEffectProcessor';
@@ -19,14 +21,19 @@ const PixiViewport = lazy(async () => {
 import { DebugInfo } from '../ui/DebugInfo';
 import { GameOverScreen } from '../ui/GameOverScreen';
 import { LevelUpScreen } from '../ui/LevelUpScreen';
+import { WeaponDropModal } from '../ui/WeaponDropModal';
+import { RemnantTradeModal } from '../ui/RemnantTradeModal';
 import { Hud } from '../ui/hud';
+import { getRegionConfigForFloor } from '../../dungeon/config';
+import { getRemnantForRegion } from '../../progression/remnants';
+import type { RemnantTrade, RemnantCost, RemnantBenefit } from '../../progression/remnants';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import { executeTurn } from '../../combat/turnManager';
 import type { Enemy } from '../../combat/types';
 import styles from '../../styles/game.module.css';
 
 export function GameContainer() {
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingRemnantTrade } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -39,6 +46,8 @@ export function GameContainer() {
       gameEndState: state.gameEndState,
       currentBoss: state.currentBoss,
       bossDefeatedOnFloor: state.bossDefeatedOnFloor,
+      pendingWeaponDrop: state.pendingWeaponDrop,
+      pendingRemnantTrade: state.pendingRemnantTrade,
     }))
   );
 
@@ -56,9 +65,21 @@ export function GameContainer() {
   const isTileVisible = useGameStore((state) => state.isTileVisible);
   const isTileExplored = useGameStore((state) => state.isTileExplored);
   const generateTileLights = useGameStore((state) => state.generateTileLights);
+  const equipWeapon = useGameStore((state) => state.equipWeapon);
+  const discardWeaponDrop = useGameStore((state) => state.discardWeaponDrop);
+  const closeRemnantTrade = useGameStore((state) => state.closeRemnantTrade);
+  const healPlayer = useGameStore((state) => state.healPlayer);
+  const applyStatModifiers = useGameStore((state) => state.applyStatModifiers);
+  const addFloorStatModifiers = useGameStore((state) => state.addFloorStatModifiers);
+  const addVisionPenalty = useGameStore((state) => state.addVisionPenalty);
+  const revealAllTiles = useGameStore((state) => state.revealAllTiles);
+  const revealTrapTiles = useGameStore((state) => state.revealTrapTiles);
+  const setInvulnerable = useGameStore((state) => state.setInvulnerable);
+  const addStatusEffect = useGameStore((state) => state.addStatusEffect);
 
   const isInDungeon = useDungeonStore((state) => state.isInDungeon);
   const dungeon = useDungeonStore((state) => state.dungeon);
+  const gameMode = useDungeonStore((state) => state.gameMode);
 
   const {
     pendingLevelUp,
@@ -80,6 +101,15 @@ export function GameContainer() {
     if (!dungeon) return null;
     return dungeon.floors.get(dungeon.currentFloor) ?? null;
   }, [dungeon]);
+
+  const currentRemnant = useMemo(() => {
+    if (!dungeon) return null;
+    const regionConfig = getRegionConfigForFloor(dungeon.currentFloor, gameMode);
+    if (!regionConfig) return null;
+    const theme = regionConfig.theme as 'hrodrgraf' | 'rotmyrkr' | 'gleymdariki' | 'upphafsdjup';
+    if (!['hrodrgraf', 'rotmyrkr', 'gleymdariki', 'upphafsdjup'].includes(theme)) return null;
+    return getRemnantForRegion(theme);
+  }, [dungeon, gameMode]);
 
   const { metrics, updateMetrics } = usePerformanceMetrics(debugMode);
   
@@ -144,9 +174,104 @@ export function GameContainer() {
     [selectUpgrade]
   );
 
+  const applyRemnantBenefit = useCallback(
+    (benefit: RemnantBenefit) => {
+      switch (benefit.type) {
+        case 'full_heal':
+          healPlayer(player.stats.maxHp);
+          break;
+        case 'stat_buff':
+          if (benefit.duration === -1) {
+            addFloorStatModifiers([{ stat: benefit.stat, value: benefit.amount }]);
+          } else {
+            applyStatModifiers([{ stat: benefit.stat, value: benefit.amount }]);
+          }
+          break;
+        case 'reveal_next_region':
+          revealAllTiles();
+          break;
+        case 'reveal_traps':
+          revealTrapTiles();
+          break;
+        case 'temporary_invulnerability':
+          setInvulnerable(benefit.turns);
+          break;
+        case 'grant_relic':
+          useMetaProgressionStore.getState().discoverRelic(benefit.relicId);
+          break;
+        default:
+          break;
+      }
+    },
+    [healPlayer, applyStatModifiers, player.stats.maxHp, revealAllTiles, revealTrapTiles, setInvulnerable, addFloorStatModifiers]
+  );
+
+  const applyRemnantCost = useCallback(
+    (cost: RemnantCost) => {
+      switch (cost.type) {
+        case 'hp_damage':
+          // Bypasses invulnerability: trade costs are sacrifices, not combat damage
+          applyStatModifiers([{ stat: 'hp', value: -cost.amount }]);
+          break;
+        case 'max_hp_reduction':
+          applyStatModifiers([{ stat: 'maxHp', value: -cost.amount }]);
+          break;
+        case 'vision_reduction':
+          addVisionPenalty(cost.amount, cost.permanent);
+          break;
+        case 'movement_penalty':
+          addStatusEffect({
+            id: 'slow',
+            duration: cost.turns,
+            stacks: 1,
+            source: 'self',
+          });
+          break;
+        case 'random_stat_loss': {
+          const stats: Array<'attack' | 'defense' | 'maxHp'> = ['attack', 'defense', 'maxHp'];
+          const selected = stats[Math.floor(Math.random() * stats.length)];
+          applyStatModifiers([{ stat: selected, value: -cost.amount }]);
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [applyStatModifiers, addVisionPenalty, addStatusEffect]
+  );
+
+  const handleAcceptTrade = useCallback(
+    (trade: RemnantTrade) => {
+      applyRemnantBenefit(trade.benefit);
+      applyRemnantCost(trade.cost);
+      if (currentRemnant && dungeon) {
+        if (!useMetaProgressionStore.getState().hasTradeWithRemnant(currentRemnant.id)) {
+          useMetaProgressionStore.getState().recordRemnantTrade(
+            currentRemnant.id,
+            trade.id,
+            dungeon.currentFloor
+          );
+        }
+      }
+      closeRemnantTrade();
+    },
+    [applyRemnantBenefit, applyRemnantCost, closeRemnantTrade, currentRemnant, dungeon]
+  );
+
+  const handleDeclineTrade = useCallback(() => {
+    closeRemnantTrade();
+  }, [closeRemnantTrade]);
+
+  const handleQuickbarUse = useCallback((slotIndex: number) => {
+    if (gameEndState !== 'playing') return;
+    if (pendingLevelUp) return;
+    useInventoryStore.getState().useItem(slotIndex);
+  }, [gameEndState, pendingLevelUp]);
+
   useKeyboard({
     onMove: handleMove,
     onDebugToggle: toggleDebugMode,
+    onQuickbarUse: handleQuickbarUse,
   });
 
   const viewport = useViewport(
@@ -218,6 +343,10 @@ export function GameContainer() {
     return <GameOverScreen type="victory" />;
   }
 
+  if (gameEndState === 'victory_true') {
+    return <GameOverScreen type="victory_true" />;
+  }
+
   return (
     <div className={styles.gameContainer}>
       <div 
@@ -256,6 +385,21 @@ export function GameContainer() {
           choices={currentChoices}
           onSelect={handleUpgradeSelect}
           floor={dungeon.currentFloor}
+        />
+      )}
+      {pendingWeaponDrop && (
+        <WeaponDropModal
+          weapon={pendingWeaponDrop}
+          currentWeapon={player.weapon}
+          onEquip={() => equipWeapon(pendingWeaponDrop)}
+          onDiscard={discardWeaponDrop}
+        />
+      )}
+      {pendingRemnantTrade && currentRemnant && (
+        <RemnantTradeModal
+          remnant={currentRemnant}
+          onAcceptTrade={handleAcceptTrade}
+          onDecline={handleDeclineTrade}
         />
       )}
     </div>

@@ -39,7 +39,7 @@ async function main(): Promise<void> {
   try {
     raw = await readFile(MANIFEST_PATH, 'utf8');
   } catch (err) {
-    console.error(`manifest.json not found: ${MANIFEST_PATH}`);
+    console.error(`manifest.json not found: ${MANIFEST_PATH}`, err);
     console.error('Run pnpm build first (vite build with manifest: true).');
     process.exit(1);
   }
