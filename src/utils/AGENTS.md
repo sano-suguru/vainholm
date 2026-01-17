@@ -1,6 +1,6 @@
 # AGENTS.md - src/utils
 
-**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Utility layer: map generation, rendering data, game systems, configuration.
 
@@ -8,18 +8,21 @@ Utility layer: map generation, rendering data, game systems, configuration.
 
 | File | Purpose | Consumers |
 |------|---------|-----------|
-| `constants.ts` | TILE_SIZE, MAP_*, VIEWPORT_*, KEY_BINDINGS | 6+ files |
-| `mapGeneratorCore.ts` | Procedural generation (pure function) | Worker only |
+| `constants.ts` | TILE_SIZE (16px), MAP_*, VIEWPORT_*, KEY_BINDINGS | 10+ files |
+| `mapGeneratorCore.ts` | Procedural generation (pure function, 56 tests) | Worker only |
 | `generateMapAsync.ts` | Web Worker wrapper (public API) | GameContainer |
 | `mapGenerator.worker.ts` | Worker entry point | Vite |
-| `tileTextures.ts` | SVG loading, fallback chains (480 lines) | PixiViewport |
+| `tileTextures.ts` | SVG loading, fallback chains, animation (682 lines) | PixiViewport |
 | `tileGlyphs.ts` | Player glyph definition | PixiViewport |
 | `overlayConfig.ts` | Weighted overlay selection | PixiViewport |
-| `lighting.ts` | Light sources, flicker cache | gameStore, PixiViewport |
+| `lighting.ts` | Light sources, flicker cache (FIFO, max 500) | gameStore, PixiViewport |
 | `tileInteractions.ts` | Triggers, effects, chain reactions (323 lines) | gameStore |
 | `biomes.ts` | Elevation/moisture lookup tables | mapGeneratorCore |
 | `noise.ts` | Simplex noise, FBM | mapGeneratorCore |
-| `seedUtils.ts` | URL seed parsing, seeded random | GameContainer |
+| `seedUtils.ts` | URL seed parsing, seeded random (Alea PRNG) | GameContainer |
+| `i18n.ts` | Localization (enemy, boss, region names) | Multiple |
+| `enemyTextures.ts` | Enemy/boss texture mapping | PixiViewport |
+| `colorNoiseCache.ts` | Color noise cache management | mapGeneratorCore |
 
 See also: `mapGeneration/AGENTS.md` for phase-based pipeline.
 
@@ -28,17 +31,24 @@ See also: `mapGeneration/AGENTS.md` for phase-based pipeline.
 ```
 generateMapAsync.ts    →    mapGenerator.worker.ts    →    mapGeneratorCore.ts
      Public API              Worker entry point            Pure function
-     Lazy init                                             No side effects
-     Promise interface                                     Testable alone
+     Lazy init               Vite ?worker import           56 tests
+     Promise interface       Request ID tracking           No side effects
 ```
 
 **Usage**: `const map = await generateMapAsync(width, height, seed);`
 
 **Never**: Import `mapGeneratorCore` directly in main thread (blocks UI).
 
-## Texture Fallback System
+## Texture System (682 lines)
 
-43 tile types reuse 14 base SVGs:
+**168 SVG imports** organized into:
+- `BASE_TILE_URLS` — 43 tiles with fallback chains
+- `TRANSITION_URLS` — Water-to-grass edge blending (8 directions)
+- `CONNECTED_URLS` — Road/wall 16-state connection
+- `OVERLAY_URLS` — 8 overlay types (flowers, grass, pebbles)
+- `ANIMATED_TILE_URLS` — 11 animated tiles × 4 frames
+
+**Fallback System** (43 tiles reuse 14 base SVGs):
 
 | Base | Fallback Tiles |
 |------|----------------|
@@ -48,7 +58,7 @@ generateMapAsync.ts    →    mapGenerator.worker.ts    →    mapGeneratorCore.
 | swamp | miasma, toxic_marsh, blight |
 | grass | cursed_ground, withered_grass |
 
-**To add tile without SVG**: Add to `TILE_FALLBACKS` in `tileTextures.ts`.
+**To add tile without SVG**: Add to `BASE_TILE_URLS` with existing URL (fallback).
 
 ## Overlay Two-Stage Probability
 
@@ -57,8 +67,13 @@ generateMapAsync.ts    →    mapGenerator.worker.ts    →    mapGeneratorCore.
 OVERLAY_SPAWN_CHANCE = { grass: 0.08, forest: 0.12 }
 
 // Stage 2: Weighted selection (if Stage 1 passes)
-OVERLAY_RULES = { grass: { flowers_1: 3, tall_grass: 4 } }
+OVERLAY_RULES = { grass: [
+  { type: 'flowers_1', weight: 3 },
+  { type: 'tall_grass', weight: 4 }
+]}
 ```
+
+**8 Overlay Types**: flowers_1, flowers_2, pebbles_1, pebbles_2, leaves, tall_grass, dust_pile, cobweb
 
 ## Map Generation Pipeline
 
@@ -67,9 +82,15 @@ Sequential phases (order matters — later overwrites earlier):
 ```
 1. generateBiomeData()      → Noise-based terrain/features
 2. runPipeline(ALL_PHASES)  → 12 phases with dependencies
-   - river, lakes, roads, swamps, ruins, graveyards
-   - blightedAreas, deadForest, toxicMarshes
-   - charredAreas, environmentDetails, dungeonEntrance
+   ├─ river, lakes, roads (no deps)
+   ├─ swamps (deps: river, lakes)
+   ├─ ruins (deps: roads)
+   ├─ graveyards (deps: ruins)
+   ├─ blightedAreas, charredAreas (no deps)
+   ├─ deadForest (deps: blightedAreas)
+   ├─ toxicMarshes (deps: swamps)
+   ├─ environmentDetails (deps: charredAreas)
+   └─ dungeonEntrance (deps: roads)
 ```
 
 See `mapGeneration/AGENTS.md` for phase details.
@@ -117,6 +138,7 @@ key = quantizedTime (16ms buckets) + position
 |------|----------|
 | Add game constant | `constants.ts` |
 | Add tile texture | `tileTextures.ts` → `BASE_TILE_URLS` or fallback |
+| Add animated tile | Create 4 frames + add to `ANIMATED_TILE_URLS` |
 | Add overlay type | `overlayConfig.ts` (spawn chance + rules) |
 | Add light preset | `lighting.ts` → `LIGHT_SOURCE_PRESETS` |
 | Add tile interaction | `tileInteractions.ts` (trigger + effects) |
@@ -132,3 +154,4 @@ key = quantizedTime (16ms buckets) + position
 | Create texture inline in render | Recreates every frame |
 | Skip fallback for new tile | 43 tiles work via fallbacks |
 | Modify BiomeLayerData outside pipeline | Order-dependent side effects |
+| Inline BlurFilter/TextStyle | Use module-level constants |

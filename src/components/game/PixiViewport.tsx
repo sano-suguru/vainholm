@@ -1,13 +1,15 @@
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Application, extend, useTick } from '@pixi/react';
-import { Container, Graphics, Text, BlurFilter, Sprite } from 'pixi.js';
+import type { Container, Graphics, Text, Sprite } from 'pixi.js';
+import { BlurFilter } from 'pixi.js';
 import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '../../types';
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import type { MultiTileObject } from '../../dungeon/types';
-import type { Enemy } from '../../combat/types';
+import type { Enemy, Boss } from '../../combat/types';
+import { DAMAGE_NUMBER_DURATION_MS, useDamageNumberStore } from '../../stores/damageNumberStore';
 import { LightLayer } from './LightLayer';
-import { getEnemyTexture } from '../../utils/enemyTextures';
+import { getEnemyTexture, getBossTexture } from '../../utils/enemyTextures';
 
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
 import { 
@@ -35,7 +37,12 @@ import {
 } from '../../utils/overlayConfig';
 import { getAnimationTime, setAnimationTime } from './animationTime';
 
-extend({ Container, Graphics, Text, Sprite });
+extend({
+  Container: undefined as unknown as typeof Container,
+  Graphics: undefined as unknown as typeof Graphics,
+  Text: undefined as unknown as typeof Text,
+  Sprite: undefined as unknown as typeof Sprite,
+});
 
 const FOG_BLUR_FILTER = (() => {
   const filter = new BlurFilter({ strength: 30, quality: 1 });
@@ -60,6 +67,7 @@ interface PixiViewportProps {
   multiTileObjects?: MultiTileObject[];
   enemies?: Enemy[];
   playerStats?: { hp: number; maxHp: number };
+  currentBoss?: Boss | null;
 }
 
 interface MapViewportProps {
@@ -709,6 +717,62 @@ const EnemyLayer = memo(function EnemyLayer({
   );
 });
 
+interface BossLayerProps {
+  boss: Boss | null | undefined;
+  viewport: ViewportBounds;
+  isTileVisible: (x: number, y: number) => boolean;
+}
+
+const BossLayer = memo(function BossLayer({
+  boss,
+  viewport,
+  isTileVisible,
+}: BossLayerProps) {
+  const [texture, setTexture] = useState<import('pixi.js').Texture | null>(null);
+  
+  const bossType = boss?.type;
+  
+  useEffect(() => {
+    if (!bossType) {
+      setTexture(null);
+      return;
+    }
+    
+    const loadTexture = async () => {
+      try {
+        const { Assets } = await import('pixi.js');
+        const texturePath = getBossTexture(bossType);
+        const loadedTexture = await Assets.load(texturePath);
+        setTexture(loadedTexture);
+      } catch {
+        setTexture(null);
+      }
+    };
+    
+    loadTexture();
+  }, [bossType]);
+  
+  if (!boss?.isAlive || !texture) return null;
+  if (!isTileVisible(boss.position.x, boss.position.y)) return null;
+  
+  const screenX = (boss.position.x - viewport.startX) * TILE_SIZE;
+  const screenY = (boss.position.y - viewport.startY) * TILE_SIZE;
+  
+  const bossSize = TILE_SIZE * 1.5;
+  const offsetX = (bossSize - TILE_SIZE) / 2;
+  const offsetY = (bossSize - TILE_SIZE) / 2;
+  
+  return (
+    <pixiSprite
+      texture={texture}
+      x={screenX - offsetX}
+      y={screenY - offsetY}
+      width={bossSize}
+      height={bossSize}
+    />
+  );
+});
+
 interface HealthBarLayerProps {
   enemies: Enemy[];
   playerStats: { hp: number; maxHp: number };
@@ -765,6 +829,82 @@ const HealthBarLayer = memo(function HealthBarLayer({
   }, [enemies, playerStats, playerPosition, viewport, isTileVisible]);
   
   return <pixiGraphics draw={drawHealthBars} />;
+});
+
+interface DamageNumberLayerProps {
+  viewport: ViewportBounds;
+}
+
+const DAMAGE_TEXT_STYLES = {
+  normal: {
+    fontFamily: 'Courier New, monospace',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fill: 0xff4444,
+    stroke: { color: 0x000000, width: 2 },
+  } as const,
+  critical: {
+    fontFamily: 'Courier New, monospace',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fill: 0xffcc00,
+    stroke: { color: 0x000000, width: 3 },
+  } as const,
+  heal: {
+    fontFamily: 'Courier New, monospace',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fill: 0x44ff44,
+    stroke: { color: 0x000000, width: 2 },
+  } as const,
+};
+
+const DamageNumberLayer = memo(function DamageNumberLayer({
+  viewport,
+}: DamageNumberLayerProps) {
+  const { damageNumbers } = useDamageNumberStore();
+  const [now, setNow] = useState(() => Date.now());
+
+  useTick(() => {
+    // Only trigger re-render when there are damage numbers to animate
+    if (damageNumbers.length > 0) {
+      setNow(Date.now());
+    }
+  });
+
+  return (
+    <pixiContainer>
+      {damageNumbers.map((dmg) => {
+        const age = now - dmg.createdAt;
+        const progress = Math.min(1, age / DAMAGE_NUMBER_DURATION_MS);
+        const floatY = progress * 24;
+        const alpha = 1 - progress * progress;
+
+        const screenX = (dmg.position.x - viewport.startX) * TILE_SIZE + TILE_SIZE / 2;
+        const screenY = (dmg.position.y - viewport.startY) * TILE_SIZE - floatY;
+
+        const style = dmg.isHeal
+          ? DAMAGE_TEXT_STYLES.heal
+          : dmg.isCritical
+            ? DAMAGE_TEXT_STYLES.critical
+            : DAMAGE_TEXT_STYLES.normal;
+
+        const text = dmg.isHeal ? `+${dmg.amount}` : `-${dmg.amount}`;
+
+        return (
+          <pixiText
+            key={dmg.id}
+            text={text}
+            x={screenX}
+            y={screenY}
+            anchor={{ x: 0.5, y: 1 }}
+            alpha={alpha}
+            style={style}
+          />
+        );
+      })}
+    </pixiContainer>
+  );
 });
 
 const SHADOW_CASTING_TILES = new Set<TileType>(['mountain', 'wall', 'dungeon_wall', 'forest']);
@@ -1117,6 +1257,7 @@ function GameScene({
   multiTileObjects = [],
   enemies = [],
   playerStats = { hp: 30, maxHp: 30 },
+  currentBoss,
 }: GameSceneProps) {
   const startTimeRef = useRef(0);
   const [texturesReady, setTexturesReady] = useState(false);
@@ -1158,6 +1299,11 @@ function GameScene({
         viewport={viewport}
         isTileVisible={isTileVisible}
       />
+      <BossLayer
+        boss={currentBoss}
+        viewport={viewport}
+        isTileVisible={isTileVisible}
+      />
       <HealthBarLayer
         enemies={enemies}
         playerStats={playerStats}
@@ -1165,6 +1311,7 @@ function GameScene({
         viewport={viewport}
         isTileVisible={isTileVisible}
       />
+      <DamageNumberLayer viewport={viewport} />
       <LightLayer 
         lights={lightSources} 
         viewport={viewport} 
@@ -1195,6 +1342,7 @@ export function PixiViewport({
   multiTileObjects,
   enemies,
   playerStats,
+  currentBoss,
 }: PixiViewportProps) {
   const width = VIEWPORT_WIDTH_TILES * TILE_SIZE;
   const height = VIEWPORT_HEIGHT_TILES * TILE_SIZE;
@@ -1223,6 +1371,7 @@ export function PixiViewport({
         multiTileObjects={multiTileObjects}
         enemies={enemies}
         playerStats={playerStats}
+        currentBoss={currentBoss}
       />
     </Application>
   );

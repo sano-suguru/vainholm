@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-16 | **Commit**: 544455b | **Branch**: main
+**Generated**: 2026-01-17 | **Commit**: cd9545c | **Branch**: main | **Tests**: 88 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -16,7 +16,7 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 | `pnpm dev` | Vite dev server with HMR |
 | `pnpm build` | Type-check (`tsc -b`) + Vite build |
 | `pnpm lint` | ESLint on all files |
-| `pnpm test` | Vitest run (81 tests) |
+| `pnpm test` | Vitest run (88 tests) |
 | `pnpm similarity` | Detect duplicate code (threshold 0.7) |
 | `pnpm deadcode` | Detect unused files/exports (knip) |
 
@@ -29,7 +29,7 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 | System | Handles | Location |
 |--------|---------|----------|
 | React DOM | Layout, events, debug overlays | `GameContainer.tsx` |
-| Pixi.js Canvas | ALL visual game content | `PixiViewport.tsx` (16 layers) |
+| Pixi.js Canvas | ALL visual game content | `PixiViewport.tsx` (21 layers) |
 
 See `src/components/game/AGENTS.md` for Pixi.js patterns.
 
@@ -41,13 +41,16 @@ src/
 │   ├── game/          # Pixi.js rendering (see game/AGENTS.md)
 │   └── ui/            # HUD (hud/), debug overlay, game over screen
 ├── hooks/             # useKeyboard, useViewport, usePerformanceMetrics, useEffectProcessor
-├── stores/            # Zustand gameStore (single store)
+├── stores/            # Zustand stores (5 separate stores)
 ├── dungeon/           # Dungeon generation system (see dungeon/AGENTS.md)
 ├── combat/            # Turn-based combat (see combat/AGENTS.md)
-├── tiles/             # Tile registry: 59 types, ID mapping
+├── progression/       # Level-up, upgrades, abilities
+├── items/             # Inventory, consumables
+├── tiles/             # Tile registry: 63 types, ID mapping
 ├── types/             # Type definitions barrel
 ├── utils/             # Map generation, constants, textures (see utils/AGENTS.md)
 │   └── mapGeneration/ # Phase-based pipeline (see mapGeneration/AGENTS.md)
+├── paraglide/         # Generated i18n (Paraglide.js, ja/en)
 └── assets/tiles/      # SVG textures (terrain, connected, transitions, overlays, animated)
 
 docs/
@@ -58,28 +61,32 @@ docs/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `useGameStore` | Hook | `stores/gameStore.ts` | Global state access (571 lines) |
-| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (16 layers, 1229 lines) |
+| `useGameStore` | Hook | `stores/gameStore.ts` | Main state (955 lines) |
+| `useDungeonStore` | Hook | `dungeon/dungeonStore.ts` | Dungeon state |
+| `useProgressionStore` | Hook | `progression/progressionStore.ts` | Level-up state |
+| `useInventoryStore` | Hook | `items/inventoryStore.ts` | Inventory state |
+| `useDamageNumberStore` | Hook | `stores/damageNumberStore.ts` | Floating damage |
+| `PixiViewport` | Component | `components/game/PixiViewport.tsx` | WebGL rendering (21 layers) |
 | `GameContainer` | Component | `components/game/GameContainer.tsx` | React orchestrator |
 | `generateMapAsync` | Function | `utils/generateMapAsync.ts` | Web Worker map generation |
-| `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 59 tile definitions |
-| `TILE_DEFINITIONS` | Constant | `utils/constants.ts` | Tile properties (walkable, cost) |
-| `useDungeonStore` | Hook | `dungeon/dungeonStore.ts` | Dungeon state (separate store) |
+| `TILE_REGISTRY` | Constant | `tiles/registry.ts` | 63 tile definitions |
 | `executeTurn` | Function | `combat/turnManager.ts` | Turn execution entry point |
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add tile type | `tiles/registry.ts` + `utils/tileGlyphs.ts` + `utils/tileTextures.ts` | ID, glyph, texture/fallback |
-| Change rendering | `components/game/PixiViewport.tsx` | 16 layers, add after appropriate layer |
+| Add tile type | `tiles/registry.ts` + `utils/tileTextures.ts` | ID, properties, texture/fallback |
+| Change rendering | `components/game/PixiViewport.tsx` | 21 layers, add after appropriate layer |
 | Modify player movement | `stores/gameStore.ts` → `movePlayer` | Collision + visibility delta |
 | Add keyboard binding | `utils/constants.ts` → `KEY_BINDINGS` | Then `hooks/useKeyboard.ts` |
 | Add game state | `stores/gameStore.ts` | Interface + implementation |
 | Add tile interaction | `utils/tileInteractions.ts` | Triggers, effects, chain reactions |
-| Add dungeon region | `dungeon/config/` | Region config + generator |
+| Add dungeon region | `dungeon/config/` | Region config + add to index |
 | Add map generation phase | `utils/mapGeneration/phases/` | See mapGeneration/AGENTS.md |
 | Add enemy type | `combat/enemyTypes.ts` | Stats, behavior, spawning |
+| Add upgrade | `progression/upgrades.ts` | Stats, effects, requirements |
+| Add item | `items/consumables.ts` | Effect, stacking |
 | Debug rendering | Press F3 | Shows FPS, frame time, memory |
 
 ## Import Order (ENFORCED)
@@ -130,14 +137,21 @@ generateMapAsync.ts  →  mapGenerator.worker.ts  →  mapGeneratorCore.ts
 
 **Never**: Import `mapGeneratorCore` directly in main thread.
 
-## Dual Store Pattern
+## Multi-Store Pattern
+
+**5 independent Zustand stores** (not monolithic):
 
 | Store | Purpose | Location |
 |-------|---------|----------|
 | `gameStore` | World map, player, visibility, weather, time, combat | `stores/gameStore.ts` |
 | `dungeonStore` | Dungeon floors, navigation, regions | `dungeon/dungeonStore.ts` |
+| `progressionStore` | Level-up, upgrades, abilities | `progression/progressionStore.ts` |
+| `inventoryStore` | Items, consumables, slots | `items/inventoryStore.ts` |
+| `damageNumberStore` | Floating damage animation | `stores/damageNumberStore.ts` |
 
-Transition: `cacheWorldMap()` / `restoreWorldMap()` for world↔dungeon swaps.
+**Cross-store calls**: Use `.getState()` for inter-store communication.
+
+**Transition**: `cacheWorldMap()` / `restoreWorldMap()` for world↔dungeon swaps.
 
 ## Visibility Delta Optimization
 
@@ -169,10 +183,12 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 | Import `mapGeneratorCore` in main thread | CPU-intensive, blocks UI |
 | Deep imports (`../../../..`) | Max 3 levels, refactor if deeper |
 | Business logic in components | Extract to hooks or utils |
+| Hooks in combat functions | Combat runs outside render cycle |
+| Cross-store direct mutation | Use store actions |
 
 ## Tile System
 
-**59 tile types** across 10 categories:
+**63 tile types** across categories:
 
 | Category | Examples | Count |
 |----------|----------|-------|
@@ -184,20 +200,23 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 | Hazards | miasma, blight, toxic_marsh, cursed_ground | 6 |
 | Structures | pillar, altar_dark, brazier, wall_torch | 8 |
 | Decay | blood, bone_pile, rubble, lichen | 7 |
+| Animated | water, lava, swamp, wall_torch (11 types × 4 frames) | 11 |
 
 **Texture Fallback**: 43 tiles reuse 14 base SVGs. See `utils/tileTextures.ts`.
 
 ## Testing
 
-**Framework**: Vitest 4.0.16 (81 tests passing)
+**Framework**: Vitest 4.0.16 (88 tests passing)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
 | `mapGeneratorCore.test.ts` | 56 | Procedural generation, determinism |
 | `floorGenerator.test.ts` | 19 | Dungeon connectivity, reachability |
 | `LightLayer.test.ts` | 6 | Light calculations |
+| `progressionStore.test.ts` | 3 | Upgrade selection |
+| `i18n.test.ts` | 4 | Localization |
 
-**Pattern**: Co-located tests (`.test.ts` next to source), seeded randomness for determinism.
+**Pattern**: Co-located tests (`.test.ts`), seeded randomness for determinism, no mocking.
 
 ```bash
 pnpm test        # Run once
@@ -209,8 +228,10 @@ pnpm test:watch  # Watch mode
 - **`memo()`** on frequently re-rendered components (all Pixi layers)
 - **`useCallback`** for handlers passed as props
 - **`useMemo`** for expensive computations
+- **`useShallow`** for multi-field Zustand selectors
 - **Visibility hashing** for FogOfWarLayer memoization
 - **Texture caching** — SVGs loaded once, reused
+- **Module-level filters** — BlurFilter wrapped in IIFE
 
 ## Code Quality
 
@@ -225,9 +246,10 @@ pnpm test:watch  # Watch mode
 
 | File | Lines | Notes |
 |------|-------|-------|
-| `PixiViewport.tsx` | 1229 | 16 layers — candidate for splitting |
+| `PixiViewport.tsx` | 1371 | 21 layers — candidate for splitting |
+| `gameStore.ts` | 955 | Visibility delta, map caching, combat |
+| `floorGenerator.ts` | 870 | Dungeon floor pipeline, collapse zones |
 | `tileTextures.ts` | 682 | 168 imports — fallback chain |
-| `gameStore.ts` | 571 | Visibility delta, map caching, combat |
 | `bspGenerator.ts` | 355 | BSP algorithm, Union-Find |
 | `tileInteractions.ts` | 323 | 35+ interactions, chain reactions |
 
@@ -235,7 +257,7 @@ pnpm test:watch  # Watch mode
 
 | Path | Purpose |
 |------|---------|
-| `src/components/game/AGENTS.md` | Pixi.js 16-layer rendering |
+| `src/components/game/AGENTS.md` | Pixi.js 21-layer rendering |
 | `src/components/ui/hud/AGENTS.md` | React DOM HUD overlay |
 | `src/dungeon/AGENTS.md` | BSP dungeon generation |
 | `src/utils/AGENTS.md` | Utilities, textures, lighting |

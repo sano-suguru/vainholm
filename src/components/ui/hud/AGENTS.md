@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/ui/hud
 
-**Generated**: 2026-01-16 | **Parent**: [../../../../AGENTS.md](../../../../AGENTS.md)
+**Generated**: 2026-01-17 | **Parent**: [../../../../AGENTS.md](../../../../AGENTS.md)
 
 React DOM HUD overlay. Fixed position, non-blocking, pointer-events selective.
 
@@ -12,15 +12,19 @@ React DOM HUD overlay. Fixed position, non-blocking, pointer-events selective.
 | `TopBar.tsx` | Region name, floor number, turn counter | 33 |
 | `StatusBar.tsx` | HP bar + attack/defense stats | 58 |
 | `CombatLog.tsx` | Combat event history (last 5 entries) | 52 |
+| `BossHealthBar.tsx` | Boss HP tracking | — |
+| `StatusEffectsDisplay.tsx` | Active status effect icons | — |
 | `index.ts` | Barrel export | 5 |
 
 ## Component Hierarchy
 
 ```
 <Hud>
-  ├── <TopBar />      # Fixed top (36px)
-  ├── <StatusBar />   # Below TopBar (28px)
-  └── <CombatLog />   # Left sidebar (200px width)
+  ├── <TopBar />             # Fixed top (36px)
+  ├── <StatusBar />          # Below TopBar (28px)
+  ├── <StatusEffectsDisplay /> # Status icons
+  ├── <BossHealthBar />      # Boss HP (when active)
+  └── <CombatLog />          # Left sidebar (200px width)
 </Hud>
 ```
 
@@ -50,6 +54,7 @@ const { dungeon, isInDungeon, currentRegion } = useDungeonStore(useShallow(...))
 | `enemy_attack` | Red | `.logDamageTaken` |
 | `enemy_death` | Bold red | `.logDeath` |
 | `player_death` | Bold red | `.logDeath` |
+| `critical` | Emphasized | `.logCritical` |
 
 ## CSS Pattern
 
@@ -74,6 +79,7 @@ All styles in `src/styles/game.module.css`. CSS variables in `variables.css`:
 | Add log entry type | `CombatLog.tsx` + `game.module.css` |
 | Modify positioning | `game.module.css` → `.hud*` classes |
 | Add CSS variable | `variables.css` |
+| Add status effect icon | `StatusEffectsDisplay.tsx` |
 
 ## Conventions
 
@@ -91,3 +97,4 @@ All styles in `src/styles/game.module.css`. CSS variables in `variables.css`:
 | Hardcoded colors | Use CSS variables |
 | Skip `memo()` wrapper | Causes unnecessary re-renders |
 | Pass entire store state | Use specific selectors |
+| Inline complex calculations | Use `useMemo` |

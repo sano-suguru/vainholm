@@ -60,8 +60,66 @@ declare module '../paraglide/messages.js' {
     inputs: { enemy: string; damage: number | string },
     options?: MessageOptions
   ): LocalizedString;
+  export function combat_player_stealth_attack(
+    inputs: { enemy: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
   export function combat_enemy_attack(
     inputs: { enemy: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+
+  export function combat_boss_divine_smite(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_root_grasp(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_spectral_slash(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_summon_shades(
+    inputs: { boss: string; count: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_void_pulse(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_reality_tear(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+  export function combat_boss_attack(
+    inputs: { boss: string; damage: number | string },
+    options?: MessageOptions
+  ): LocalizedString;
+
+  export function status_poison(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function status_bleed(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function status_burn(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function status_stun(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function status_slow(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function status_blind(
+    inputs?: Record<string, never>,
     options?: MessageOptions
   ): LocalizedString;
 
@@ -75,6 +133,47 @@ declare module '../paraglide/messages.js' {
     options?: MessageOptions
   ): LocalizedString;
   export function enemy_cultist(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_wraith(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_crawler(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_shade(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_hollow_knight(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_blight_spawn(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function enemy_void_worm(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+
+  export function boss_hrodrvardr(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function boss_rotgroftr(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function boss_gleymdkonungr(
+    inputs?: Record<string, never>,
+    options?: MessageOptions
+  ): LocalizedString;
+  export function boss_oerslbarn(
     inputs?: Record<string, never>,
     options?: MessageOptions
   ): LocalizedString;
@@ -113,6 +212,4 @@ declare module '../paraglide/messages.js' {
     options?: MessageOptions
   ): LocalizedString;
 
-  // Namespace export
-  export * as m from '../paraglide/messages.js';
 }

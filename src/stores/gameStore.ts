@@ -7,6 +7,7 @@ import type {
   CombatStats,
   Enemy,
   EnemyId,
+  Boss,
   TurnPhase,
   GameEndState,
   CombatLogEntry,
@@ -23,13 +24,20 @@ import {
   combat_player_kill,
   combat_player_hit,
   combat_player_hit_critical,
+  combat_player_stealth_attack,
 } from '../paraglide/messages.js';
 import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/lighting';
 import { TILE_DEFINITIONS } from '../utils/constants';
 import { processTrigger } from '../utils/tileInteractions';
-import { calculateDamage, applyDamageToEnemy } from '../combat/damageCalculation';
-import { getLocalizedEnemyName } from '../utils/i18n';
+import { checkBossPhaseTransition, clearBossAbilitiesCache, resetShadeIdCounter } from '../combat/bossAI';
+import { applyDamageToEnemy } from '../combat/damageCalculation';
+import { createBossStats } from '../combat/enemyTypes';
+import { calculateWeaponDamage } from '../combat/weaponAttack';
+import { WEAPON_PREMIUMS } from '../combat/weapons';
+import { STATUS_EFFECTS } from '../combat/statusEffects';
+import { getLocalizedEnemyName, getLocalizedBossName } from '../utils/i18n';
 import type { StatModifier } from '../progression/types';
+import { useDamageNumberStore } from './damageNumberStore';
 
 function applyStatModifierToStats(
   stats: CombatStats,
@@ -62,6 +70,9 @@ function applyStatModifierToStats(
     case 'visionRange': {
       return stats;
     }
+    default: {
+      return stats;
+    }
   }
 }
 
@@ -80,15 +91,16 @@ const calculateInitialStats = (
   const background = getBackground(backgroundId);
   
   let hp = BASE_PLAYER_STATS.hp + charClass.statModifiers.hp;
-  const maxHp = hp;
+  let maxHp = hp;
   const attack = BASE_PLAYER_STATS.attack + charClass.statModifiers.attack;
   const defense = BASE_PLAYER_STATS.defense + charClass.statModifiers.defense;
-  
+
   if (background.effect.type === 'bonus_hp') {
     hp += background.effect.amount;
+    maxHp += background.effect.amount;
   }
-  
-  return { hp, maxHp: maxHp + (background.effect.type === 'bonus_hp' ? background.effect.amount : 0), attack, defense };
+
+  return { hp, maxHp, attack, defense };
 };
 
 let combatLogIdCounter = 0;
@@ -107,17 +119,19 @@ export type WeatherType = 'clear' | 'rain' | 'fog';
 export type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
 export type MapType = 'world' | 'dungeon';
 
-const VISION_RADIUS = 8;
-const VISION_RADIUS_SQ = VISION_RADIUS * VISION_RADIUS;
+const BASE_VISION_RADIUS = 8;
 const POS_KEY_MULTIPLIER = 100000;
+
+const STATUS_EFFECT_SOURCE_PLAYER = 'player' as const;
 
 const posKey = (x: number, y: number): number => y * POS_KEY_MULTIPLIER + x;
 
-function getVisibleTiles(x: number, y: number): Set<number> {
+function getVisibleTiles(x: number, y: number, visionRadius: number = BASE_VISION_RADIUS): Set<number> {
   const visible = new Set<number>();
-  for (let dy = -VISION_RADIUS; dy <= VISION_RADIUS; dy++) {
-    for (let dx = -VISION_RADIUS; dx <= VISION_RADIUS; dx++) {
-      if (dx * dx + dy * dy <= VISION_RADIUS_SQ) {
+  const radiusSq = visionRadius * visionRadius;
+  for (let dy = -visionRadius; dy <= visionRadius; dy++) {
+    for (let dx = -visionRadius; dx <= visionRadius; dx++) {
+      if (dx * dx + dy * dy <= radiusSq) {
         visible.add(posKey(x + dx, y + dy));
       }
     }
@@ -134,18 +148,20 @@ function getVisibilityDelta(
   oldX: number,
   oldY: number,
   newX: number,
-  newY: number
+  newY: number,
+  visionRadius: number = BASE_VISION_RADIUS
 ): VisibilityDelta {
   const dx = newX - oldX;
   const dy = newY - oldY;
+  const radiusSq = visionRadius * visionRadius;
 
   if (dx === 0 && dy === 0) {
     return { toAdd: [], toRemove: [] };
   }
 
   if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-    const oldVisible = getVisibleTiles(oldX, oldY);
-    const newVisible = getVisibleTiles(newX, newY);
+    const oldVisible = getVisibleTiles(oldX, oldY, visionRadius);
+    const newVisible = getVisibleTiles(newX, newY, visionRadius);
     const toAdd: number[] = [];
     const toRemove: number[] = [];
     
@@ -162,9 +178,9 @@ function getVisibilityDelta(
   const toAdd: number[] = [];
   const toRemove: number[] = [];
 
-  // 1タイル移動時、新位置で見える範囲は旧位置から見ると最大 VISION_RADIUS+1 離れている
+  // 1タイル移動時、新位置で見える範囲は旧位置から見ると最大 visionRadius+1 離れている
   // そのため、ループ範囲を拡張して端のタイルも正しく検出する
-  const DELTA_RANGE = VISION_RADIUS + 1;
+  const DELTA_RANGE = visionRadius + 1;
 
   for (let i = -DELTA_RANGE; i <= DELTA_RANGE; i++) {
     for (let j = -DELTA_RANGE; j <= DELTA_RANGE; j++) {
@@ -173,8 +189,8 @@ function getVisibilityDelta(
       const newJ = j - dy;
       const newDistSq = newI * newI + newJ * newJ;
 
-      const wasVisible = oldDistSq <= VISION_RADIUS_SQ;
-      const isVisible = newDistSq <= VISION_RADIUS_SQ;
+      const wasVisible = oldDistSq <= radiusSq;
+      const isVisible = newDistSq <= radiusSq;
 
       if (isVisible && !wasVisible) {
         toAdd.push(posKey(newX + newI, newY + newJ));
@@ -208,6 +224,8 @@ interface GameStore {
   dungeonEntrancePosition: Position | null;
 
   enemies: Map<EnemyId, Enemy>;
+  currentBoss: Boss | null;
+  bossDefeatedOnFloor: boolean;
   turnPhase: TurnPhase;
   gameEndState: GameEndState;
   combatLog: CombatLogEntry[];
@@ -243,6 +261,14 @@ interface GameStore {
   addCombatLogEntry: (entry: Omit<CombatLogEntry, 'id'>) => void;
   resetCombatState: () => void;
   applyStatModifiers: (modifiers: readonly StatModifier[]) => void;
+  clearStatusEffect: (effectId?: StatusEffectId) => void;
+  addStatusEffect: (effect: StatusEffect) => void;
+  updatePlayerStatusEffects: (effects: Map<StatusEffectId, StatusEffect>) => void;
+  setBoss: (boss: Boss | null) => void;
+  updateBoss: (updates: Partial<Boss>) => void;
+  damageBoss: (amount: number) => void;
+  getBossAt: (x: number, y: number) => Boss | null;
+  recalculateVisibility: () => void;
 }
 
 const DEFAULT_CLASS_ID: CharacterClassId = 'warrior';
@@ -279,6 +305,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dungeonEntrancePosition: null,
 
   enemies: new Map<EnemyId, Enemy>(),
+  currentBoss: null,
+  bossDefeatedOnFloor: false,
   turnPhase: 'player',
   gameEndState: 'playing',
   combatLog: [],
@@ -314,6 +342,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     if (gameEndState !== 'playing') return;
     
+    
     const oldX = player.position.x;
     const oldY = player.position.y;
     const newX = oldX + dx;
@@ -321,20 +350,64 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const enemy = getEnemyAt(newX, newY);
     if (enemy) {
-      const damageResult = calculateDamage(player.stats, enemy.stats);
+      const isStealthAttack = !enemy.isAware;
+      const damageResult = calculateWeaponDamage(
+        player.stats,
+        enemy.stats,
+        player.weapon,
+        isStealthAttack
+      );
       const { newHp, isDead } = applyDamageToEnemy(enemy.stats.hp, damageResult.damage);
       
+      useDamageNumberStore.getState().addDamageNumber(
+        enemy.position,
+        damageResult.damage,
+        damageResult.isCritical,
+        false
+      );
+      
+      const nextStatusEffects = new Map(enemy.statusEffects ?? []);
+      if (player.weapon) {
+        for (const premiumId of player.weapon.premiums) {
+          const premium = WEAPON_PREMIUMS[premiumId];
+          if (premium.effect.type !== 'status_on_hit') continue;
+          if (Math.random() > premium.effect.chance) continue;
+
+          const definition = STATUS_EFFECTS[premium.effect.status];
+          const maxStacks = definition?.maxStacks ?? 1;
+          const existing = nextStatusEffects.get(premium.effect.status);
+          if (existing) {
+            nextStatusEffects.set(premium.effect.status, {
+              ...existing,
+              duration: Math.max(existing.duration, premium.effect.duration),
+              stacks: Math.min(existing.stacks + 1, maxStacks),
+            });
+          } else {
+            nextStatusEffects.set(premium.effect.status, {
+              id: premium.effect.status,
+              duration: premium.effect.duration,
+              stacks: 1,
+              source: STATUS_EFFECT_SOURCE_PLAYER,
+            });
+          }
+        }
+      }
+
       state.updateEnemy(enemy.id, {
         stats: { ...enemy.stats, hp: newHp },
         isAlive: !isDead,
+        isAware: true,
+        statusEffects: nextStatusEffects.size > 0 ? nextStatusEffects : undefined,
       });
       
       const enemyName = getLocalizedEnemyName(enemy.type);
       const message = isDead
         ? combat_player_kill({ enemy: enemyName })
-        : damageResult.isCritical
-          ? combat_player_hit_critical({ enemy: enemyName, damage: damageResult.damage })
-          : combat_player_hit({ enemy: enemyName, damage: damageResult.damage });
+        : isStealthAttack
+          ? combat_player_stealth_attack({ enemy: enemyName, damage: damageResult.damage })
+          : damageResult.isCritical
+            ? combat_player_hit_critical({ enemy: enemyName, damage: damageResult.damage })
+            : combat_player_hit({ enemy: enemyName, damage: damageResult.damage });
       
       state.addCombatLogEntry({
         tick: state.tick,
@@ -350,6 +423,63 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    const boss = state.getBossAt(newX, newY);
+    if (boss) {
+      const isStealthAttack = !boss.isAware;
+      const damageResult = calculateWeaponDamage(
+        player.stats,
+        boss.stats,
+        player.weapon,
+        isStealthAttack
+      );
+      
+      if (!boss.isAware) {
+        state.updateBoss({ isAware: true });
+      }
+      
+      useDamageNumberStore.getState().addDamageNumber(
+        boss.position,
+        damageResult.damage,
+        damageResult.isCritical,
+        false
+      );
+      
+      state.damageBoss(damageResult.damage);
+      
+      const updatedBoss = get().currentBoss;
+      if (updatedBoss) {
+        const phaseResult = checkBossPhaseTransition(updatedBoss);
+        if (phaseResult.transitioned) {
+          const nextStats = createBossStats(updatedBoss.type, phaseResult.newPhase);
+          const adjustedHp = Math.min(nextStats.maxHp, updatedBoss.stats.hp);
+          state.updateBoss({
+            phase: phaseResult.newPhase,
+            stats: { ...nextStats, hp: adjustedHp },
+          });
+          clearBossAbilitiesCache(updatedBoss.id);
+        }
+        
+        const bossName = getLocalizedBossName(boss.type);
+        const isDead = !updatedBoss.isAlive;
+        const message = isDead
+          ? combat_player_kill({ enemy: bossName })
+          : isStealthAttack
+            ? combat_player_stealth_attack({ enemy: bossName, damage: damageResult.damage })
+            : damageResult.isCritical
+              ? combat_player_hit_critical({ enemy: bossName, damage: damageResult.damage })
+              : combat_player_hit({ enemy: bossName, damage: damageResult.damage });
+        
+        state.addCombatLogEntry({
+          tick: state.tick,
+          type: isDead ? 'enemy_death' : 'player_attack',
+          message,
+          damage: damageResult.damage,
+        });
+      }
+      
+      return;
+    }
+
     if (canMoveTo(newX, newY)) {
       let facing: Direction = player.facing;
       if (dy < 0) facing = 'up';
@@ -357,7 +487,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       else if (dx < 0) facing = 'left';
       else if (dx > 0) facing = 'right';
 
-      const delta = getVisibilityDelta(oldX, oldY, newX, newY);
+      const blindEffect = player.statusEffects.get('blind');
+      let visionRadius = BASE_VISION_RADIUS;
+      if (blindEffect && blindEffect.duration > 0) {
+        const blindDef = STATUS_EFFECTS.blind;
+        if (blindDef.effect.type === 'vision_reduction') {
+          visionRadius = Math.max(2, BASE_VISION_RADIUS - blindDef.effect.radiusReduction);
+        }
+      }
+
+      const delta = getVisibilityDelta(oldX, oldY, newX, newY, visionRadius);
       
       const newVisibleTiles = new Set(visibleTiles);
       const newExploredTiles = new Set(exploredTiles);
@@ -600,6 +739,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   damagePlayer: (amount) => {
+    const playerPos = get().player.position;
+    useDamageNumberStore.getState().addDamageNumber(playerPos, amount, false, false);
     set((state) => {
       const newHp = Math.max(0, state.player.stats.hp - amount);
       const newGameEndState = newHp <= 0 ? 'defeat' : state.gameEndState;
@@ -614,6 +755,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   healPlayer: (amount) => {
+    const playerPos = get().player.position;
+    useDamageNumberStore.getState().addDamageNumber(playerPos, amount, false, true);
     set((state) => ({
       player: {
         ...state.player,
@@ -646,6 +789,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetCombatState: () => {
     combatLogIdCounter = 0;
     const currentPlayer = get().player;
+    const currentBoss = get().currentBoss;
+    if (currentBoss) {
+      clearBossAbilitiesCache(currentBoss.id);
+    }
+    resetShadeIdCounter();
     set({
       player: {
         ...currentPlayer,
@@ -653,6 +801,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         statusEffects: new Map(),
       },
       enemies: new Map(),
+      currentBoss: null,
+      bossDefeatedOnFloor: false,
       turnPhase: 'player',
       gameEndState: 'playing',
       combatLog: [],
@@ -677,6 +827,133 @@ export const useGameStore = create<GameStore>((set, get) => ({
           },
         },
       };
+    });
+  },
+
+  clearStatusEffect: (effectId) => {
+    set((state) => {
+      const newEffects = new Map(state.player.statusEffects);
+      if (effectId === undefined) {
+        newEffects.clear();
+      } else {
+        newEffects.delete(effectId);
+      }
+      return {
+        player: {
+          ...state.player,
+          statusEffects: newEffects,
+        },
+      };
+    });
+  },
+
+  addStatusEffect: (effect) => {
+    set((state) => {
+      const definition = STATUS_EFFECTS[effect.id];
+      const maxStacks = definition?.maxStacks ?? 1;
+      const newEffects = new Map(state.player.statusEffects);
+      const existing = newEffects.get(effect.id);
+      if (existing) {
+        newEffects.set(effect.id, {
+          ...effect,
+          stacks: Math.min(existing.stacks + effect.stacks, maxStacks),
+          duration: Math.max(existing.duration, effect.duration),
+        });
+      } else {
+        newEffects.set(effect.id, effect);
+      }
+      return {
+        player: {
+          ...state.player,
+          statusEffects: newEffects,
+        },
+      };
+    });
+  },
+
+  updatePlayerStatusEffects: (effects) => {
+    set((state) => {
+      if (state.player.statusEffects === effects) {
+        return state;
+      }
+      return {
+        player: {
+          ...state.player,
+          statusEffects: new Map(effects),
+        },
+      };
+    });
+  },
+
+  setBoss: (boss) => {
+    set((state) => {
+      const prevBoss = state.currentBoss;
+      if (prevBoss && (!boss || prevBoss.id !== boss.id)) {
+        clearBossAbilitiesCache(prevBoss.id);
+      }
+      return { currentBoss: boss, bossDefeatedOnFloor: false };
+    });
+  },
+
+  updateBoss: (updates) => {
+    set((state) => {
+      if (!state.currentBoss) return state;
+      return {
+        currentBoss: { ...state.currentBoss, ...updates },
+      };
+    });
+  },
+
+  damageBoss: (amount) => {
+    const state = get();
+    if (!state.currentBoss) return;
+    
+    set((s) => {
+      if (!s.currentBoss) return s;
+      const newHp = Math.max(0, s.currentBoss.stats.hp - amount);
+      const isDead = newHp <= 0;
+      return {
+        currentBoss: {
+          ...s.currentBoss,
+          stats: { ...s.currentBoss.stats, hp: newHp },
+          isAlive: !isDead,
+        },
+        bossDefeatedOnFloor: isDead ? true : s.bossDefeatedOnFloor,
+      };
+    });
+  },
+
+  getBossAt: (x, y) => {
+    const { currentBoss } = get();
+    if (currentBoss && currentBoss.isAlive && currentBoss.position.x === x && currentBoss.position.y === y) {
+      return currentBoss;
+    }
+    return null;
+  },
+
+  recalculateVisibility: () => {
+    const { player, exploredTiles } = get();
+    const { x, y } = player.position;
+
+    const blindEffect = player.statusEffects.get('blind');
+    let visionRadius = BASE_VISION_RADIUS;
+    if (blindEffect && blindEffect.duration > 0) {
+      const blindDef = STATUS_EFFECTS.blind;
+      if (blindDef.effect.type === 'vision_reduction') {
+        visionRadius = Math.max(2, BASE_VISION_RADIUS - blindDef.effect.radiusReduction);
+      }
+    }
+
+    const newVisibleTiles = getVisibleTiles(x, y, visionRadius);
+    const newExploredTiles = new Set(exploredTiles);
+    for (const key of newVisibleTiles) {
+      newExploredTiles.add(key);
+    }
+
+    set({
+      visibleTiles: newVisibleTiles,
+      exploredTiles: newExploredTiles,
+      visibilityHash: x * 10000 + y,
     });
   },
 }));

@@ -10,7 +10,12 @@ import { usePerformanceMetrics, useStatsOverlay } from '../../hooks/usePerforman
 import { generateMapAsync, terminateWorker } from '../../utils/generateMapAsync';
 import { clearColorNoiseCache } from '../../utils/colorNoiseCache';
 import { getMapSeed, updateUrlWithSeed } from '../../utils/seedUtils';
-import { PixiViewport } from './PixiViewport';
+import { lazy } from 'react';
+
+const PixiViewport = lazy(async () => {
+  const mod = await import('./PixiViewport');
+  return { default: mod.PixiViewport };
+});
 import { DebugInfo } from '../ui/DebugInfo';
 import { GameOverScreen } from '../ui/GameOverScreen';
 import { LevelUpScreen } from '../ui/LevelUpScreen';
@@ -21,7 +26,7 @@ import type { Enemy } from '../../combat/types';
 import styles from '../../styles/game.module.css';
 
 export function GameContainer() {
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -32,6 +37,8 @@ export function GameContainer() {
       mapSeed: state.mapSeed,
       enemies: state.enemies,
       gameEndState: state.gameEndState,
+      currentBoss: state.currentBoss,
+      bossDefeatedOnFloor: state.bossDefeatedOnFloor,
     }))
   );
 
@@ -124,6 +131,12 @@ export function GameContainer() {
     }
   }, [isInDungeon, dungeon?.currentFloor, checkLevelUp, triggerLevelUp, dungeon]);
 
+  useEffect(() => {
+    if (bossDefeatedOnFloor && isInDungeon && dungeon && !pendingLevelUp) {
+      triggerLevelUp(dungeon.currentFloor);
+    }
+  }, [bossDefeatedOnFloor, isInDungeon, dungeon, pendingLevelUp, triggerLevelUp]);
+
   const handleUpgradeSelect = useCallback(
     (upgradeId: string) => {
       selectUpgrade(upgradeId);
@@ -144,6 +157,9 @@ export function GameContainer() {
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      if (gameEndState !== 'playing') return;
+      if (pendingLevelUp) return;
+
       const rect = e.currentTarget.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
@@ -156,9 +172,12 @@ export function GameContainer() {
 
       if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1 && (dx !== 0 || dy !== 0)) {
         movePlayer(dx, dy);
+        if (isInDungeon) {
+          executeTurn();
+        }
       }
     },
-    [player.position, movePlayer, viewport]
+    [player.position, movePlayer, viewport, gameEndState, pendingLevelUp, isInDungeon]
   );
 
   const currentTile = useMemo(
@@ -218,6 +237,7 @@ export function GameContainer() {
           multiTileObjects={currentFloor?.multiTileObjects}
           enemies={enemiesArray}
           playerStats={playerStats}
+          currentBoss={currentBoss}
         />
       </div>
       <Hud />

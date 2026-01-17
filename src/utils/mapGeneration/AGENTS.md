@@ -1,19 +1,19 @@
 # AGENTS.md - src/utils/mapGeneration
 
-**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Phase-based procedural generation pipeline. Topological sort ensures dependency order.
 
 ## Architecture
 
-| File | Role |
-|------|------|
-| `types.ts` | Core interfaces (PlacementContext, PlacementMutator, GenerationPhase) |
-| `pipeline.ts` | Pipeline runner with topological sort |
-| `PlacementContext.ts` | Read-only access to terrain/features |
-| `PlacementMutator.ts` | Write operations for terrain/features |
-| `constraints.ts` | Reusable placement constraints |
-| `phases/index.ts` | Barrel export of all 12 phases |
+| File | Role | Lines |
+|------|------|-------|
+| `types.ts` | Core interfaces (PlacementContext, PlacementMutator, GenerationPhase) | — |
+| `pipeline.ts` | Pipeline runner with topological sort (Kahn's algorithm) | 109 |
+| `PlacementContext.ts` | Read-only access to terrain/features + metadata | 98 |
+| `PlacementMutator.ts` | Write operations for terrain/features | 42 |
+| `constraints.ts` | Reusable placement constraints | 152 |
+| `phases/index.ts` | Barrel export of all 12 phases | — |
 
 ## Pipeline Flow
 
@@ -24,7 +24,7 @@ generateBiomeData()  →  terrain[][] + features[][]
     ↓
 runPipeline(ALL_PHASES, layers, width, height, random)
     ↓
-topologicalSort(phases)  →  dependency-ordered execution
+topologicalSort(phases)  →  dependency-ordered execution (Kahn's algorithm)
     ↓
 For each phase:
     phase.execute(ctx, mutator)
@@ -42,18 +42,18 @@ Phases declare dependencies via `dependsOn: string[]`. Topological sort resolves
 
 | Phase | Depends On | Effect |
 |-------|------------|--------|
-| `river` | [] | Water stripe across map |
-| `lakes` | [] | Circular water bodies |
-| `roads` | [] | Cross-shaped path |
+| `river` | [] | Vertical water stripe with drift (3-width) |
+| `lakes` | [] | Circular water bodies (3-6 count) |
+| `roads` | [] | Cross-shaped path network |
 | `swamps` | ['river', 'lakes'] | Adjacent to water |
-| `ruins` | ['roads'] | Scattered floor patches |
-| `graveyards` | ['roads'] | Rectangular zones |
-| `blightedAreas` | [] | Circular blight |
+| `ruins` | ['roads'] | Scattered floor patches on roads |
+| `graveyards` | ['ruins'] | Rectangular zones |
+| `blightedAreas` | [] | Circular blight zones |
 | `deadForest` | ['blightedAreas'] | Withered trees near blight |
 | `toxicMarshes` | ['swamps'] | Poison areas near swamps |
 | `charredAreas` | [] | Burned ground |
-| `environmentDetails` | ['*'] | Final overlay pass |
-| `dungeonEntrance` | ['roads'] | Stairs_down placement |
+| `environmentDetails` | ['charredAreas'] | Final overlay pass (bone piles, rubble, flowers) |
+| `dungeonEntrance` | ['roads'] | Stairs_down placement with constraints |
 
 ## Core Interfaces
 
@@ -85,31 +85,52 @@ interface GenerationPhase {
 }
 ```
 
+## Constraints System (152 lines)
+
+Factory functions returning `NamedConstraint` objects:
+
+| Category | Constraints |
+|----------|-------------|
+| **Terrain** | `terrainIs()`, `terrainNot()`, `walkableTerrain()` |
+| **Feature** | `featureEmpty()`, `featureIs()`, `featureNot()` |
+| **Area** | `areaWalkable(radius)`, `areaTerrainWalkable(radius)` |
+| **Spatial** | `awayFrom(positions[], minDistance)`, `nearTo(position, maxDistance)` |
+| **Probability** | `probability(chance, random)` |
+| **Bounds** | `inBounds(margin)` |
+
 ## Creating a New Phase
 
 ```typescript
 // phases/myPhase.ts
-import type { GenerationPhase } from '../types';
-import { isWalkable } from '../constraints';
+import type { GenerationPhase, PhaseResult } from '../types';
+import { TILE_ID_BY_TYPE as T } from '../../tiles';
+import * as Constraints from '../constraints';
+
+function myPhaseExecute(ctx, mutator): PhaseResult {
+  // 1. Find valid position
+  const result = ctx.findValidPosition([
+    Constraints.walkable(),
+    Constraints.inBounds(10),
+    Constraints.awayFrom([existingPositions], 5)
+  ]);
+  
+  if (!result.valid) {
+    return { success: false, reason: result.reason };
+  }
+  
+  // 2. Mutate terrain/features
+  mutator.setTerrain(result.position.x, result.position.y, T.my_tile);
+  
+  // 3. Store metadata for downstream phases
+  mutator.setMetadata('myPhase.position', result.position);
+  
+  return { success: true, metadata: { myKey: 'value' } };
+}
 
 export const MY_PHASE: GenerationPhase = {
   name: 'myPhase',
   dependsOn: ['roads'],  // Runs after roads phase
-  execute: (ctx, mutator) => {
-    // 1. Find valid position
-    const result = ctx.findValidPosition([isWalkable]);
-    if (!result.valid) {
-      return { success: false, reason: 'No valid position' };
-    }
-    
-    // 2. Mutate terrain/features
-    mutator.setTerrain(result.position.x, result.position.y, 'my_tile');
-    
-    // 3. Store metadata for downstream phases
-    mutator.setMetadata('myPhase.position', result.position);
-    
-    return { success: true, metadata: { myKey: 'value' } };
-  },
+  execute: myPhaseExecute,
 };
 ```
 
@@ -131,17 +152,30 @@ export const ALL_PHASES: GenerationPhase[] = [
 | Modify pipeline execution | `pipeline.ts` → `runPipeline` |
 | Access phase metadata | `ctx.getMetadata<T>(key)` |
 | Debug phase failure | Check `PhaseResult.reason` |
+| Read terrain data | `ctx.getTerrain(x, y)` |
+| Write terrain data | `mutator.setTerrain(x, y, tileId)` |
 
-## Constraints
-
-Reusable constraint functions in `constraints.ts`:
+## Tile ID Pattern
 
 ```typescript
-isWalkable     // Terrain allows movement
-isNotWater     // Not water/deep_water
-isNearWater    // Adjacent to water tile
-isOnGrass      // Terrain is grass
-hasNoFeature   // No feature at position
+import { TILE_ID_BY_TYPE as T } from '../../tiles';
+
+// Use shorthand in all phases
+layers.terrain[y][x] = T.water;
+layers.features[y][x] = T.forest;
+const NO_FEATURE = 0;
+```
+
+## Constraint Composition
+
+```typescript
+// Multiple constraints ANDed together
+ctx.findValidPosition([
+  Constraints.walkable(),
+  Constraints.awayFrom([existingPosition], 5),
+  Constraints.inBounds(10),
+  Constraints.probability(0.3, ctx.random)
+]);
 ```
 
 ## Anti-Patterns
@@ -152,3 +186,4 @@ hasNoFeature   // No feature at position
 | Modify terrain without mutator | Breaks metadata tracking |
 | Circular dependencies | Topological sort fails (returns null) |
 | Skip success check | Pipeline continues on failure |
+| Use random() directly | Use ctx.random for determinism |

@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/game
 
-**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 
@@ -9,9 +9,9 @@ Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 | File | Role |
 |------|------|
 | `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions |
-| `PixiViewport.tsx` | Pixi Application + 16-layer scene graph (1229 lines) |
+| `PixiViewport.tsx` | Pixi Application + 21-layer scene graph (1371 lines) |
 | `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) |
-| `animationTime.ts` | Global animation time state |
+| `animationTime.ts` | Global animation time state (module-level singleton) |
 
 ## Pixi.js Setup (CRITICAL)
 
@@ -26,26 +26,31 @@ extend({ Container, Graphics, Text, Sprite }); // MUST call before JSX
 
 ## Layer Order (Z-Index)
 
-Bottom-to-top rendering:
+Bottom-to-top rendering (21 layers):
 
 | # | Layer | Purpose |
 |---|-------|---------|
 | 1 | TileLayer | Non-animated terrain (grass, walls) |
-| 2 | AnimatedTileLayer | Animated tiles (water, lava, swamp) |
+| 2 | AnimatedTileLayer | Animated tiles (water, lava, swamp) - 4 frames @ 250ms |
 | 3 | FeatureLayer | Feature overlay (structures, objects) |
 | 4 | TransitionLayer | Water-to-land edge transitions (8-direction) |
 | 5 | ConnectedTileLayer | Connected tiles (roads, 16-state) |
-| 6 | OverlayLayer | Decorative overlays (flowers, grass) |
-| 7 | ShadowLayer | Time-of-day shadows |
-| 8 | FogOfWarLayer | Visibility/exploration overlay |
-| 9 | PlayerLayer | Player sprite |
-| 10 | LightLayer | Light sources (torches, player torch, 3 sub-layers) |
-| 11 | DayNightLayer | Global time-of-day tint |
-| 12 | RainLayer | Weather: rain drops |
-| 13 | FogLayer | Weather: fog patches |
-| 14 | FireflyLayer | Ambient: night/dusk fireflies |
-| 15 | AmbientDustLayer | Floating dust particles |
-| 16 | VignetteLayer | Screen-edge darkening |
+| 6 | MultiTileObjectLayer | 2x2+ objects with animation |
+| 7 | OverlayLayer | Decorative overlays (flowers, grass) - deterministic spatial hash |
+| 8 | ShadowLayer | Time-of-day shadows |
+| 9 | FogOfWarLayer | Visibility/exploration overlay |
+| 10 | PlayerLayer | Player sprite |
+| 11 | EnemyLayer | Dynamic enemy sprites |
+| 12 | BossLayer | Scaled 1.5x boss sprite |
+| 13 | HealthBarLayer | Graphics-based HP bars |
+| 14 | DamageNumberLayer | Floating damage text |
+| 15 | LightLayer | Light sources (3 sub-layers: glow + darkness + flicker) |
+| 16 | DayNightLayer | Global time-of-day tint with night pulse |
+| 17 | RainLayer | Weather: rain drops |
+| 18 | FogLayer | Weather: fog patches |
+| 19 | FireflyLayer | Ambient: night/dusk fireflies |
+| 20 | AmbientDustLayer | Floating dust particles |
+| 21 | VignetteLayer | Screen-edge darkening |
 
 ## Graphics Draw Pattern
 
@@ -64,43 +69,58 @@ Bottom-to-top rendering:
 ## Filter/Style Memoization (CRITICAL)
 
 ```typescript
-// DO: Module-level, created once
+// DO: Module-level, created once (IIFE wrapped)
+const FOG_BLUR_FILTER = (() => {
+  const filter = new BlurFilter({ strength: 30, quality: 1 });
+  return [filter];
+})();
+
 const SHARED_TEXT_STYLE = new TextStyle({
   fontFamily: 'Courier New, monospace',
   fontSize: TILE_SIZE,
   fill: 0xffffff,
 });
 
-const BLUR_FILTER = (() => {
-  const filter = new BlurFilter({ strength: 8, quality: 2 });
-  return [filter];
-})();
-
 // DON'T: Inline (recreates every render)
 <pixiText style={new TextStyle({ ... })} />  // BAD
 ```
 
-## Animation Pattern
+## Global Animation Time Pattern
 
 ```typescript
-const [animationTime, setAnimationTime] = useState(0);
-const startTimeRef = useRef(0);
+// animationTime.ts - Module-level singleton
+let moduleAnimationTime = 0;
+export const getAnimationTime = (): number => moduleAnimationTime;
+export const setAnimationTime = (time: number): void => { moduleAnimationTime = time; };
 
-useEffect(() => { startTimeRef.current = Date.now(); }, []);
-
+// GameScene - Updates via useTick
 useTick(() => {
   setAnimationTime(Date.now() - startTimeRef.current);
 });
+
+// Layers read directly
+const frameIndex = Math.floor(getAnimationTime() / 250) % 4;
 ```
 
 ## Visibility Hashing
 
 FogOfWarLayer memoization key:
 ```typescript
-visibilityHash: playerX * 10000 + playerY
+<FogOfWarLayer key={visibilityHash} ... />
+// visibilityHash = playerX * 10000 + playerY
 ```
 
-Only re-renders on player position change.
+Forces remount on player move. Only re-renders when player position changes.
+
+## Deterministic Spatial Hashing (Overlays)
+
+```typescript
+function positionHash(x: number, y: number): number {
+  const hash = (x * 374761393 + y * 668265263) ^ (x * 1274126177);
+  return ((hash & 0x7fffffff) % 1000) / 1000;
+}
+// Same tile always has same overlay across sessions
+```
 
 ## Coordinate Conversion
 
@@ -113,20 +133,26 @@ screenY = (tileY - viewport.startY) * TILE_SIZE
 
 | Filter | Strength | Use |
 |--------|----------|-----|
+| Fog (weather) | 30px | Weather fog patches |
 | Ambient light | 25px | Soft torch outer glow |
+| Darkness | 24px | Cell-based darkness |
 | Torch core | 12px | Bright torch center |
-| Fog | 30px | Weather fog patches |
 | Firefly | 4px | Subtle ambient |
 
-## Complexity Hotspots
+## Texture Loading
 
-| Component | Lines | Complexity |
-|-----------|-------|------------|
-| TransitionLayer | 80 | 8-directional neighbor checking |
-| ConnectedTileLayer | 71 | 16-state connection detection |
-| OverlayLayer | 62 | Deterministic spatial hashing |
-| ShadowLayer | 50 | Time-of-day shadow casting |
-| WeatherLayers | 110 | Rain/fog/firefly animations |
+```typescript
+// Parallel loading on startup
+const textureCache = new Map<string, Texture>();
+export async function loadTileTextures(): Promise<void> {
+  const loadPromises = urls.map(url => Assets.load(url));
+  await Promise.all(loadPromises);
+}
+```
+
+- 168 SVG imports, 43 tiles reuse 14 base SVGs (fallback chains)
+- Single promise for deduplication (idempotent calls)
+- Lazy initialization on first GameScene render
 
 ## Anti-Patterns
 
@@ -137,3 +163,4 @@ screenY = (tileY - viewport.startY) * TILE_SIZE
 | Inline TextStyle/BlurFilter | Recreated every render |
 | `<Text>` instead of `<pixiText>` | Breaks JSX resolution |
 | Skip `extend()` call | JSX elements won't work |
+| Multiple `useTick` with different timing | Use global animationTime |

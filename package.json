@@ -14,7 +14,8 @@
     "similarity": "similarity-ts src/ --threshold 0.7 --print",
     "similarity:types": "similarity-ts src/ --threshold 0.7 --types --print",
     "deadcode": "knip",
-    "deadcode:fix": "knip --fix"
+    "deadcode:fix": "knip --fix",
+    "check:chunks": "node scripts/checkChunks.ts"
   },
   "dependencies": {
     "@pixi/react": "^8.0.5",

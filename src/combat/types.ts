@@ -138,7 +138,7 @@ export interface StatusEffect {
   id: StatusEffectId;
   duration: number;
   stacks: number;
-  source: 'tile' | 'enemy' | 'self';
+  source: 'tile' | 'enemy' | 'self' | 'player';
 }
 
 export interface CombatStats {
@@ -150,7 +150,22 @@ export interface CombatStats {
 
 export type EnemyId = string;
 
-export type EnemyTypeId = 'skeleton' | 'ghost' | 'cultist';
+export type EnemyTypeId = 
+  | 'skeleton' 
+  | 'ghost' 
+  | 'cultist'
+  | 'wraith'
+  | 'crawler'
+  | 'shade'
+  | 'hollow_knight'
+  | 'blight_spawn'
+  | 'void_worm';
+
+export type BossTypeId = 
+  | 'hrodrvardr'
+  | 'rotgroftr'
+  | 'gleymdkonungr'
+  | 'oerslbarn';
 
 export interface Enemy {
   id: EnemyId;
@@ -158,7 +173,20 @@ export interface Enemy {
   position: Position;
   stats: CombatStats;
   isAlive: boolean;
+  isAware: boolean;
   statusEffects?: Map<StatusEffectId, StatusEffect>;
+}
+
+export interface Boss {
+  id: string;
+  type: BossTypeId;
+  position: Position;
+  stats: CombatStats;
+  isAlive: boolean;
+  isAware: boolean;
+  statusEffects?: Map<StatusEffectId, StatusEffect>;
+  phase: number;
+  maxPhases: number;
 }
 
 export interface DamageResult {

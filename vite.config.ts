@@ -12,14 +12,6 @@ export default defineConfig({
     }),
   ],
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          pixi: ['pixi.js', '@pixi/react'],
-          react: ['react', 'react-dom'],
-          vendor: ['zustand'],
-        },
-      },
-    },
+    manifest: true,
   },
 })

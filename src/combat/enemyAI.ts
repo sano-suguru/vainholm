@@ -5,17 +5,30 @@ import { useGameStore } from '../stores/gameStore';
 import { ENEMY_TYPES } from './enemyTypes';
 import { getManhattanDistance, getDirectionToward } from './pathfinding';
 import { getLocalizedEnemyName } from '../utils/i18n';
+import { isEnemyStunned } from './turnManager';
 
 export const processEnemyAI = (enemy: Enemy): void => {
   const store = useGameStore.getState();
   const { player, canMoveTo, getEnemyAt, updateEnemy, damagePlayer, addCombatLogEntry, tick } = store;
   
   if (!enemy.isAlive) return;
+  if (isEnemyStunned(enemy)) return;
   
   const enemyDef = ENEMY_TYPES[enemy.type];
   const distance = getManhattanDistance(enemy.position, player.position);
   
-  if (distance > enemyDef.detectionRange) return;
+  if (enemy.isAware) {
+    if (distance > enemyDef.detectionRange) {
+      updateEnemy(enemy.id, { isAware: false });
+      return;
+    }
+  } else {
+    if (distance <= enemyDef.detectionRange) {
+      updateEnemy(enemy.id, { isAware: true });
+    } else {
+      return;
+    }
+  }
   
   if (distance === 1) {
     const damage = Math.max(1, enemy.stats.attack - player.stats.defense);

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Dungeon, DungeonFloor, RegionConfig } from './types';
 import { generateFloor } from './generator';
 import { getRegionConfigForFloor, getTotalFloors, REGION_CONFIGS } from './config';
+import { spawnBossForFloor } from './bossSpawner';
 
 const FLOOR_SEED_MULTIPLIER = 1000;
 
@@ -54,6 +55,8 @@ function generateFloorForLevel(
   if (level > dungeon.deepestReached) {
     dungeon.deepestReached = level;
   }
+
+  spawnBossForFloor(floor);
 
   return floor;
 }

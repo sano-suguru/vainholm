@@ -3,9 +3,9 @@ import type {
   WeaponTypeId,
   WeaponPremium,
   WeaponPremiumId,
-  StatusEffectDefinition,
-  StatusEffectId,
 } from './types';
+
+export { getStatusEffect } from './statusEffects';
 
 export const WEAPON_PATTERNS: Record<WeaponTypeId, WeaponPattern> = {
   sword: {
@@ -103,65 +103,9 @@ export const WEAPON_PREMIUMS: Record<WeaponPremiumId, WeaponPremium> = {
   },
 };
 
-export const STATUS_EFFECTS: Record<StatusEffectId, StatusEffectDefinition> = {
-  poison: {
-    id: 'poison',
-    name: 'Poison',
-    displayName: '毒',
-    description: '毎ターンダメージを受ける。',
-    stackable: true,
-    maxStacks: 5,
-    effect: { type: 'damage_over_time', damagePerTurn: 2 },
-  },
-  bleed: {
-    id: 'bleed',
-    name: 'Bleed',
-    displayName: '出血',
-    description: '毎ターンダメージを受ける。移動するとさらに悪化。',
-    stackable: true,
-    maxStacks: 5,
-    effect: { type: 'damage_over_time', damagePerTurn: 3 },
-  },
-  burn: {
-    id: 'burn',
-    name: 'Burn',
-    displayName: '炎上',
-    description: '毎ターン大ダメージを受ける。',
-    stackable: false,
-    maxStacks: 1,
-    effect: { type: 'damage_over_time', damagePerTurn: 5 },
-  },
-  stun: {
-    id: 'stun',
-    name: 'Stun',
-    displayName: 'スタン',
-    description: 'ターンをスキップする。',
-    stackable: false,
-    maxStacks: 1,
-    effect: { type: 'skip_turn' },
-  },
-  slow: {
-    id: 'slow',
-    name: 'Slow',
-    displayName: '鈍足',
-    description: '移動速度が低下する。',
-    stackable: false,
-    maxStacks: 1,
-    effect: { type: 'slow', movementPenalty: 1 },
-  },
-  blind: {
-    id: 'blind',
-    name: 'Blind',
-    displayName: '盲目',
-    description: '視界が狭まる。',
-    stackable: false,
-    maxStacks: 1,
-    effect: { type: 'vision_reduction', radiusReduction: 4 },
-  },
-};
 
 export const getWeaponPattern = (id: WeaponTypeId): WeaponPattern => WEAPON_PATTERNS[id];
 export const getWeaponPremium = (id: WeaponPremiumId): WeaponPremium => WEAPON_PREMIUMS[id];
-export const getStatusEffect = (id: StatusEffectId): StatusEffectDefinition => STATUS_EFFECTS[id];
+
 
 export const WEAPON_TYPE_IDS: WeaponTypeId[] = ['sword', 'axe', 'spear', 'dagger', 'mace'];

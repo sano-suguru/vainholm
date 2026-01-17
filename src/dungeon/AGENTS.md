@@ -1,6 +1,6 @@
 # AGENTS.md - src/dungeon
 
-**Generated**: 2026-01-16 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Dungeon generation system. Procedural floors with BSP algorithm, separate Zustand store.
 
@@ -9,13 +9,17 @@ Dungeon generation system. Procedural floors with BSP algorithm, separate Zustan
 | File | Role |
 |------|------|
 | `dungeonStore.ts` | Zustand store: dungeon state, floor navigation |
-| `types.ts` | Type definitions (Dungeon, Floor, Room, Corridor, BSPNode) |
+| `types.ts` | Type definitions (Dungeon, Floor, Room, Corridor, BSPNode, RegionConfig) |
+| `bossSpawner.ts` | Boss placement logic per region |
+| `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) |
 | `generator/index.ts` | Floor generation orchestrator |
 | `generator/floorGenerator.ts` | Floor layout + tile placement |
 | `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity (355 lines) |
 | `config/index.ts` | Region config lookup |
-| `config/hrodrgraf.ts` | First region: "Glory's Tomb" (2/4 floors) |
-| `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) |
+| `config/hrodrgraf.ts` | Region 1: Hróðrgraf (栄光の墓) |
+| `config/rotmyrkr.ts` | Region 2: Rótmyrkr (根の闘) |
+| `config/gleymdariki.ts` | Region 3: Gleymdaríki (忘却の王国) |
+| `config/upphafsdjup.ts` | Region 4: Upphafsdjúp (起源の深淵) |
 
 ## Dungeon Structure
 
@@ -32,12 +36,34 @@ Dungeon
 
 ## Regions (from GAME_DESIGN.md)
 
-| Region | Name | Floors (Normal/Advanced) | Theme |
-|--------|------|--------------------------|-------|
-| Hróðrgraf | 栄光の墓 | 1-2 / 1-4 | Temple ruins |
-| Rótmyrkr | 根の闇 | 3-4 / 5-8 | Corrupted roots |
-| Gleymdaríki | 忘却の王国 | 5-6 / 9-12 | Gothic fortress |
-| Upphafsdjúp | 起源の深淵 | 7-8 / 13-16 | Primordial void |
+| Region | Name | Floors (Normal/Advanced) | Theme | Base Size |
+|--------|------|--------------------------|-------|-----------|
+| Hróðrgraf | 栄光の墓 | 1-2 / 1-4 | Temple ruins | 40x40 |
+| Rótmyrkr | 根の闇 | 3-4 / 5-8 | Corrupted roots | 45x45 |
+| Gleymdaríki | 忘却の王国 | 5-6 / 9-12 | Gothic fortress | — |
+| Upphafsdjúp | 起源の深淵 | 7-8 / 13-16 | Primordial void | — |
+
+## RegionConfig Interface
+
+```typescript
+interface RegionConfig {
+  theme: DungeonTheme;
+  name: string;
+  displayName: string;           // Japanese name
+  floors: number;
+  startFloor: number;
+  generatorStyle: 'bsp' | 'cellular' | 'hybrid';
+  size: FloorSizeConfig;
+  bspConfig: BSPConfig;
+  decorationConfig?: DecorationConfig;
+  trapConfig?: TrapConfig;
+  lightingConfig?: LightingConfig;
+  hazardConfig?: HazardConfig;
+  doorConfig?: DoorConfig;
+  multiTileConfig?: MultiTileConfig;
+  collapseConfig?: CollapseConfig;
+}
+```
 
 ## BSP Algorithm
 
@@ -48,9 +74,10 @@ Dungeon
 2. Recursively split nodes (horizontal/vertical)
 3. Stop when node can't fit minRoomSize
 4. Create room in each leaf node
-5. Connect sibling rooms with corridors
+5. Connect sibling rooms with corridors (L-shaped or multi-bend)
 6. Validate connectivity (Union-Find)
 7. Add corridors for isolated components
+8. Optional shortcuts for distant rooms
 ```
 
 **Config** (`BSPConfig`):
@@ -65,10 +92,15 @@ Dungeon
 2. Place floor tiles
 3. Place wall tiles (border + fill)
 4. Carve rooms
-5. Carve corridors (L-shaped)
-6. Place stairsUp (linked to previous floor's stairsDown)
-7. Place stairsDown (random room, not entrance)
-8. Generate MapData
+5. Carve corridors (L-shaped with optional extra bends)
+6. Place decorations (pillar, rubble, bone_pile, etc.)
+7. Place traps (web, pit, spike)
+8. Place hazards (toxic_marsh, miasma, blight)
+9. Place lights (brazier, wall_torch)
+10. Place doors (regular, locked, secret)
+11. Place stairsUp (linked to previous floor's stairsDown)
+12. Place stairsDown (random room, not entrance)
+13. Generate MapData
 ```
 
 ## Store Actions
@@ -95,16 +127,32 @@ const floor = generateFloor({
 
 Ensures vertical alignment between floors.
 
+## Region-Specific Features
+
+**Hróðrgraf (Region 1)**:
+- Decorations: pillar (0.25), rubble (0.25), bone_pile (0.20), sarcophagus (0.15), altar_dark (0.10)
+- Lighting: 15% chance, brazier (0.4), wall_torch (0.6)
+- Doors: 50% chance, 20% locked, 10% secret
+- Collapse: 60% chance, 5-8 size, max 2 zones
+
+**Rótmyrkr (Region 2)**:
+- Traps: 40% chance, 2 per room, web (0.40), pit (0.30), spike (0.30)
+- Hazards: 50% chance, toxic_marsh (0.40), miasma (0.30), blight (0.30)
+- Shortcuts: 20 max distance, 40% chance, max 3
+- Extra corridor bends: 40% chance, max 2 per corridor
+
 ## WHERE TO LOOK
 
 | Task | Location |
 |------|----------|
-| Add region | `config/` + add to `REGION_CONFIGS` |
+| Add region | `config/` + add to `REGION_CONFIGS` in `config/index.ts` |
 | Modify BSP params | Region config → `bspConfig` |
 | Change floor size | Region config → `size.base` or `size.perFloor` |
 | Modify room generation | `generator/bspGenerator.ts` |
 | Modify floor tiles | `generator/floorGenerator.ts` |
 | Add floor feature | `generator/floorGenerator.ts` |
+| Add decoration type | Region config → `decorationConfig.decorations` |
+| Add trap type | Region config → `trapConfig.trapTypes` |
 | Debug connectivity | Use `testUtils.ts` → `floodFill`, `mapToAscii` |
 
 ## Testing
@@ -125,12 +173,16 @@ pnpm test src/dungeon
 ```typescript
 interface DungeonFloor {
   level: number;
+  regionLevel: number;
   theme: DungeonTheme;
   map: MapData;
   stairsUp: Position | null;
   stairsDown: Position | null;
   rooms: Room[];
   corridors: Corridor[];
+  multiTileObjects: MultiTileObject[];
+  visited: boolean;
+  seed: number;
 }
 
 interface Room {
@@ -138,6 +190,14 @@ interface Room {
   x, y, width, height: number;
   center: Position;
   roomType?: 'entrance' | 'exit' | 'boss' | 'treasure';
+}
+
+interface Corridor {
+  start: Position;
+  end: Position;
+  width: number;
+  bend?: Position;      // Single L-bend
+  bends?: Position[];   // Multiple waypoints
 }
 ```
 

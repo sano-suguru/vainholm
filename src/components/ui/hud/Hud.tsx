@@ -9,7 +9,9 @@ import {
 } from '../../../utils/i18n';
 import { TopBar } from './TopBar';
 import { StatusBar } from './StatusBar';
+import { StatusEffectsDisplay } from './StatusEffectsDisplay';
 import { CombatLog } from './CombatLog';
+import { BossHealthBar } from './BossHealthBar';
 import styles from '../../../styles/game.module.css';
 
 export const Hud = memo(function Hud() {
@@ -21,13 +23,14 @@ export const Hud = memo(function Hud() {
     }))
   );
 
-  const { dungeon, isInDungeon, currentRegion } = useDungeonStore(
+  const { dungeon, isInDungeon } = useDungeonStore(
     useShallow((state) => ({
       dungeon: state.dungeon,
       isInDungeon: state.isInDungeon,
-      currentRegion: state.getCurrentRegion(),
     }))
   );
+
+  const currentRegion = useDungeonStore((state) => state.getCurrentRegion());
 
   const currentFloor = dungeon?.currentFloor ?? 0;
   const maxFloors = dungeon?.maxFloors ?? 8;
@@ -53,7 +56,9 @@ export const Hud = memo(function Hud() {
         attack={player.stats.attack}
         defense={player.stats.defense}
       />
-      <CombatLog entries={combatLog} maxVisible={5} />
+      <StatusEffectsDisplay statusEffects={player.statusEffects} />
+      <BossHealthBar />
+      <CombatLog entries={combatLog} />
     </div>
   );
 });

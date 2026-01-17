@@ -266,6 +266,78 @@
   color: var(--stat-defense);
 }
 
+.statusEffectsContainer {
+  display: flex;
+  gap: 6px;
+  margin-left: 16px;
+}
+
+.statusEffectIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 18, 15, 0.9);
+  border: 1px solid;
+  border-radius: 3px;
+}
+
+.statusEffect_poison {
+  border-color: #7a9a4a;
+  color: #7a9a4a;
+}
+
+.statusEffect_bleed {
+  border-color: #9a4a4a;
+  color: #9a4a4a;
+}
+
+.statusEffect_burn {
+  border-color: #cc6030;
+  color: #cc6030;
+}
+
+.statusEffect_stun {
+  border-color: #ccaa30;
+  color: #ccaa30;
+}
+
+.statusEffect_slow {
+  border-color: #6080a0;
+  color: #6080a0;
+}
+
+.statusEffect_blind {
+  border-color: #505050;
+  color: #505050;
+}
+
+.statusEffectDuration {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 9px;
+  color: var(--hud-text-primary);
+  background: rgba(10, 8, 6, 0.95);
+  padding: 0 3px;
+  border-radius: 2px;
+  line-height: 1.2;
+}
+
+.statusEffectStacks {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  font-size: 9px;
+  color: #cc8844;
+  background: rgba(10, 8, 6, 0.95);
+  padding: 0 3px;
+  border-radius: 2px;
+  line-height: 1.2;
+}
+
 .combatLog {
   position: absolute;
   top: 80px;
@@ -329,26 +401,6 @@
   font-style: italic;
 }
 
-.statusEffects {
-  display: flex;
-  gap: 6px;
-  margin-left: 16px;
-}
-
-.statusEffect {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 3px;
-  font-size: 11px;
-}
-
-.effectDuration {
-  font-size: 10px;
-  opacity: 0.8;
-}
 
 .levelUpOverlay {
   position: fixed;
@@ -589,4 +641,52 @@
 
 .levelUpCard_remnant .levelUpCardGlow {
   background: radial-gradient(ellipse at center, rgba(154, 122, 90, 0.08) 0%, transparent 70%);
+}
+
+.bossHealthBar {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  pointer-events: auto;
+  z-index: 100;
+}
+
+.bossNameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.bossName {
+  color: var(--hud-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bossPhase {
+  color: var(--hud-text-secondary);
+  font-size: 11px;
+}
+
+.bossHpBar {
+  width: 100%;
+  height: 14px;
+  background: var(--hp-background);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bossHpFill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
 }

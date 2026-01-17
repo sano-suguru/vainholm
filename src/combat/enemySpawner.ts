@@ -1,7 +1,10 @@
 import type { Enemy, EnemyTypeId } from './types';
 import type { Position } from '../types';
-import { createEnemyStats } from './enemyTypes';
+import type { EnemyRegion } from './enemyTypes';
+import { createEnemyStats, selectRandomEnemy } from './enemyTypes';
+import { isEnemyRegion } from './enemyTypes';
 import { useGameStore } from '../stores/gameStore';
+import { useDungeonStore } from '../dungeon/dungeonStore';
 
 let enemyIdCounter = 0;
 
@@ -17,28 +20,11 @@ export const createEnemy = (type: EnemyTypeId, position: Position): Enemy => {
     position,
     stats: createEnemyStats(type),
     isAlive: true,
+    isAware: false,
   };
 };
 
-const ENEMY_SPAWN_WEIGHTS: Array<{ type: EnemyTypeId; weight: number }> = [
-  { type: 'skeleton', weight: 50 },
-  { type: 'ghost', weight: 30 },
-  { type: 'cultist', weight: 20 },
-];
-
-const selectRandomEnemyType = (): EnemyTypeId => {
-  const totalWeight = ENEMY_SPAWN_WEIGHTS.reduce((sum, e) => sum + e.weight, 0);
-  let random = Math.random() * totalWeight;
-  
-  for (const entry of ENEMY_SPAWN_WEIGHTS) {
-    random -= entry.weight;
-    if (random <= 0) {
-      return entry.type;
-    }
-  }
-  
-  return 'skeleton';
-};
+const DEFAULT_REGION: EnemyRegion = 'hrodrgraf';
 
 export const spawnEnemiesForFloor = (
   floorNumber: number,
@@ -47,6 +33,13 @@ export const spawnEnemiesForFloor = (
 ): void => {
   const store = useGameStore.getState();
   store.clearEnemies();
+  
+  const dungeonStore = useDungeonStore.getState();
+  const regionConfig = dungeonStore.getCurrentRegion();
+  const theme = regionConfig?.theme;
+  const region: EnemyRegion = theme !== undefined && isEnemyRegion(theme) ? theme : DEFAULT_REGION;
+  
+  const rng = Math.random;
   
   const minDistance = 5;
   const validTiles = walkableTiles.filter((tile) => {
@@ -59,11 +52,11 @@ export const spawnEnemiesForFloor = (
   const floorBonus = floorNumber;
   const enemyCount = Math.min(baseCount + floorBonus, validTiles.length);
   
-  const shuffled = [...validTiles].sort(() => Math.random() - 0.5);
+  const shuffled = [...validTiles].sort(() => rng() - 0.5);
   const spawnPositions = shuffled.slice(0, enemyCount);
   
   for (const pos of spawnPositions) {
-    const enemyType = selectRandomEnemyType();
+    const enemyType = selectRandomEnemy(floorNumber, region, rng);
     const enemy = createEnemy(enemyType, pos);
     store.addEnemy(enemy);
   }
