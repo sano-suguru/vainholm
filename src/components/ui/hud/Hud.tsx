@@ -13,6 +13,7 @@ import { StatusEffectsDisplay } from './StatusEffectsDisplay';
 import { CombatLog } from './CombatLog';
 import { BossHealthBar } from './BossHealthBar';
 import { QuickBar } from './QuickBar';
+import { Sidebar } from './Sidebar';
 import styles from '../../../styles/game.module.css';
 
 export const Hud = memo(function Hud() {
@@ -60,6 +61,7 @@ export const Hud = memo(function Hud() {
       <StatusEffectsDisplay statusEffects={player.statusEffects} />
       <BossHealthBar />
       <CombatLog entries={combatLog} />
+      <Sidebar />
       <QuickBar />
     </div>
   );

@@ -62,63 +62,121 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #1a1510 0%, #0a0806 70%, #020202 100%);
+  background: 
+    radial-gradient(ellipse at center, rgba(20, 16, 12, 0.9) 0%, rgba(8, 6, 4, 0.95) 40%, var(--bg-void) 100%),
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
 }
 
 .gameOverContent {
   text-align: center;
   padding: 48px 64px;
-  background: rgba(15, 12, 10, 0.95);
-  border: 1px solid #2a2420;
+  background: rgba(10, 8, 6, 0.96);
+  border: 1px solid var(--border-subtle);
   box-shadow:
-    0 0 60px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(60, 50, 40, 0.1);
+    0 0 80px rgba(0, 0, 0, 0.9),
+    0 0 120px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(168, 144, 100, 0.08),
+    inset 0 1px 0 rgba(60, 50, 40, 0.12);
+  animation: gameOverFadeIn 0.6s ease-out;
+}
+
+@keyframes gameOverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .gameOverTitleDefeat {
   font-family: 'Times New Roman', serif;
   font-size: 48px;
   font-weight: normal;
-  color: #8a3030;
-  text-shadow: 0 0 20px rgba(138, 48, 48, 0.5);
+  color: #dd4444;
+  text-shadow: 
+    0 0 30px rgba(221, 68, 68, 0.6),
+    0 0 60px rgba(221, 68, 68, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.9);
   margin: 0 0 16px 0;
   letter-spacing: 4px;
+  animation: gameOverDefeatPulse 3s ease-in-out infinite;
+}
+
+@keyframes gameOverDefeatPulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 30px rgba(221, 68, 68, 0.6),
+      0 0 60px rgba(221, 68, 68, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
+  50% {
+    text-shadow: 
+      0 0 40px rgba(221, 68, 68, 0.75),
+      0 0 80px rgba(221, 68, 68, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
 }
 
 .gameOverTitleVictory {
   font-family: 'Times New Roman', serif;
   font-size: 48px;
   font-weight: normal;
-  color: #c9a227;
-  text-shadow: 0 0 20px rgba(201, 162, 39, 0.5);
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 30px rgba(255, 204, 51, 0.6),
+    0 0 60px rgba(255, 204, 51, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.9);
   margin: 0 0 16px 0;
   letter-spacing: 4px;
+  animation: gameOverVictoryPulse 3s ease-in-out infinite;
+}
+
+@keyframes gameOverVictoryPulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 30px rgba(255, 204, 51, 0.6),
+      0 0 60px rgba(255, 204, 51, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
+  50% {
+    text-shadow: 
+      0 0 45px rgba(255, 204, 51, 0.75),
+      0 0 90px rgba(255, 204, 51, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
 }
 
 .gameOverMessage {
   font-family: 'Courier New', monospace;
   font-size: 14px;
-  color: #6a5a4a;
+  color: var(--text-secondary);
   margin: 0 0 32px 0;
   letter-spacing: 1px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .gameOverButton {
   font-family: 'Courier New', monospace;
   font-size: 14px;
   padding: 12px 32px;
-  background: rgba(40, 35, 30, 0.9);
-  color: #a89878;
-  border: 1px solid #3a3430;
+  background: rgba(20, 18, 14, 0.9);
+  color: var(--text-primary);
+  border: 1px solid var(--border-accent);
   cursor: pointer;
   letter-spacing: 1px;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
 }
 
 .gameOverButton:hover {
-  background: rgba(50, 45, 40, 0.95);
-  color: #c8b898;
-  border-color: #4a4440;
+  background: rgba(30, 26, 22, 0.95);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  box-shadow: 
+    0 0 20px rgba(255, 204, 51, 0.25),
+    0 0 40px rgba(255, 204, 51, 0.1);
 }
 
 .gameOverButtons {
@@ -131,10 +189,28 @@
 .gameOverUnlock {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #c9a227;
+  color: var(--accent-gold);
   margin: 24px 0 0 0;
   letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
+  text-shadow: 
+    0 0 15px rgba(255, 204, 51, 0.5),
+    0 0 30px rgba(255, 204, 51, 0.3);
+  animation: gameOverUnlockShimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes gameOverUnlockShimmer {
+  0%, 100% {
+    opacity: 0.9;
+    text-shadow: 
+      0 0 15px rgba(255, 204, 51, 0.5),
+      0 0 30px rgba(255, 204, 51, 0.3);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 
+      0 0 20px rgba(255, 204, 51, 0.7),
+      0 0 40px rgba(255, 204, 51, 0.4);
+  }
 }
 
 .hud {
@@ -156,6 +232,7 @@
   height: 36px;
   background: var(--hud-bg);
   border-bottom: 1px solid var(--hud-border);
+  box-shadow: 0 1px 8px var(--hud-border-glow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -167,6 +244,7 @@
   color: var(--hud-text-primary);
   font-size: 13px;
   letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(224, 212, 192, 0.3);
 }
 
 .topBarFloor {
@@ -211,6 +289,7 @@
   height: 28px;
   background: var(--hud-bg);
   border-bottom: 1px solid var(--hud-border);
+  box-shadow: 0 1px 6px var(--hud-border-glow);
   display: flex;
   align-items: center;
   gap: 24px;
@@ -231,6 +310,7 @@
   border: 1px solid var(--hud-border);
   border-radius: 2px;
   overflow: hidden;
+  transition: box-shadow var(--transition-normal);
 }
 
 .hpFill {
@@ -240,14 +320,17 @@
 
 .hpFillHealthy {
   background: var(--hp-healthy);
+  box-shadow: 0 0 10px var(--hp-glow);
 }
 
 .hpFillWarning {
   background: var(--hp-warning);
+  box-shadow: 0 0 12px var(--hp-glow-warning);
 }
 
 .hpFillCritical {
   background: var(--hp-critical);
+  box-shadow: 0 0 14px var(--hp-glow-critical);
   animation: pulse 0.5s ease-in-out infinite;
 }
 
@@ -260,6 +343,7 @@
   color: var(--hud-text-primary);
   font-size: 12px;
   min-width: 50px;
+  text-shadow: 0 0 6px rgba(224, 212, 192, 0.25);
 }
 
 .statGroup {
@@ -276,10 +360,12 @@
 
 .statAttack {
   color: var(--stat-attack);
+  text-shadow: 0 0 8px var(--stat-attack-glow);
 }
 
 .statDefense {
   color: var(--stat-defense);
+  text-shadow: 0 0 8px var(--stat-defense-glow);
 }
 
 .statusEffectsContainer {
@@ -301,33 +387,39 @@
 }
 
 .statusEffect_poison {
-  border-color: #7a9a4a;
-  color: #7a9a4a;
+  border-color: var(--effect-poison);
+  color: var(--effect-poison);
+  box-shadow: var(--effect-glow) rgba(68, 255, 102, 0.4);
 }
 
 .statusEffect_bleed {
-  border-color: #9a4a4a;
-  color: #9a4a4a;
+  border-color: var(--effect-bleed);
+  color: var(--effect-bleed);
+  box-shadow: var(--effect-glow) rgba(255, 68, 68, 0.4);
 }
 
 .statusEffect_burn {
-  border-color: #cc6030;
-  color: #cc6030;
+  border-color: var(--effect-burn);
+  color: var(--effect-burn);
+  box-shadow: var(--effect-glow) rgba(255, 136, 51, 0.4);
 }
 
 .statusEffect_stun {
-  border-color: #ccaa30;
-  color: #ccaa30;
+  border-color: var(--effect-stun);
+  color: var(--effect-stun);
+  box-shadow: var(--effect-glow) rgba(255, 238, 68, 0.4);
 }
 
 .statusEffect_slow {
-  border-color: #6080a0;
-  color: #6080a0;
+  border-color: var(--effect-slow);
+  color: var(--effect-slow);
+  box-shadow: var(--effect-glow) rgba(102, 153, 238, 0.4);
 }
 
 .statusEffect_blind {
-  border-color: #505050;
-  color: #505050;
+  border-color: var(--effect-blind);
+  color: var(--effect-blind);
+  box-shadow: var(--effect-glow) rgba(153, 136, 187, 0.4);
 }
 
 .statusEffectDuration {
@@ -366,16 +458,18 @@
   padding: 8px 10px;
   pointer-events: auto;
   overflow-y: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 .combatLogHeader {
-  color: var(--hud-text-secondary);
+  color: var(--sidebar-header);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 6px;
   padding-bottom: 4px;
   border-bottom: 1px solid var(--hud-border);
+  text-shadow: 0 0 6px rgba(170, 144, 85, 0.3);
 }
 
 .combatLogEntry {
@@ -384,6 +478,18 @@
   padding-left: 10px;
   position: relative;
   color: var(--hud-text-secondary);
+  animation: logEntryFadeIn 0.3s ease-out;
+}
+
+@keyframes logEntryFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .combatLogEntry::before {
@@ -395,20 +501,24 @@
 
 .logDamageDealt {
   color: var(--log-damage-dealt);
+  text-shadow: 0 0 6px rgba(68, 238, 136, 0.35);
 }
 
 .logDamageTaken {
   color: var(--log-damage-taken);
+  text-shadow: 0 0 6px rgba(255, 102, 85, 0.35);
 }
 
 .logCritical {
   color: var(--log-critical);
   font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 221, 68, 0.4);
 }
 
 .logDeath {
   color: var(--log-death);
   font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.45);
 }
 
 .combatLogEmpty {
@@ -417,6 +527,204 @@
   font-style: italic;
 }
 
+/* === Sidebar === */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  right: 0;
+  width: var(--sidebar-width);
+  height: calc(100vh - 64px - 80px);
+  background: var(--sidebar-bg);
+  border-left: 1px solid var(--sidebar-border);
+  padding: 12px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.sidebarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebarSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--sidebar-header);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sidebar-section-border);
+  text-shadow: 0 0 6px rgba(170, 144, 85, 0.3);
+}
+
+.sidebarSectionIcon {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.sidebarPlayerHp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarHpLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--hud-text-secondary);
+}
+
+.sidebarHpLabel svg {
+  color: var(--hp-healthy);
+}
+
+.sidebarHpBarContainer {
+  height: 8px;
+  background: var(--hp-background);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sidebarHpBar {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebarHpHealthy {
+  background: var(--hp-healthy);
+  box-shadow: 0 0 8px var(--hp-glow);
+}
+
+.sidebarHpWarning {
+  background: var(--hp-warning);
+  box-shadow: 0 0 10px var(--hp-glow-warning);
+}
+
+.sidebarHpCritical {
+  background: var(--hp-critical);
+  box-shadow: 0 0 12px var(--hp-glow-critical);
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+.sidebarHpValue {
+  font-size: 12px;
+  color: var(--hud-text-primary);
+  text-shadow: 0 0 6px rgba(224, 212, 192, 0.25);
+  align-self: flex-end;
+}
+
+.sidebarStats {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.sidebarStatItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebarStatIconAttack {
+  color: var(--stat-attack);
+  filter: drop-shadow(0 0 4px var(--stat-attack-glow));
+}
+
+.sidebarStatIconDefense {
+  color: var(--stat-defense);
+  filter: drop-shadow(0 0 4px var(--stat-defense-glow));
+}
+
+.sidebarStatValue {
+  font-size: 13px;
+  color: var(--hud-text-primary);
+  font-weight: 500;
+}
+
+.sidebarEquipmentItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(20, 18, 14, 0.6);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+}
+
+.sidebarEquipmentName {
+  font-size: 11px;
+  color: var(--hud-text-primary);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.sidebarEquipmentStat {
+  font-size: 11px;
+  color: var(--stat-attack);
+  text-shadow: 0 0 6px var(--stat-attack-glow);
+}
+
+.sidebarEnemyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba(20, 18, 14, 0.4);
+  border: 1px solid var(--hud-border);
+  border-radius: 2px;
+}
+
+.sidebarEnemyInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebarEnemySymbol {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 102, 85, 0.15);
+  border: 1px solid var(--log-damage-taken);
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--log-damage-taken);
+  font-weight: bold;
+}
+
+.sidebarEnemyName {
+  font-size: 11px;
+  color: var(--hud-text-primary);
+  text-transform: capitalize;
+}
+
+.sidebarEnemyHpContainer {
+  height: 4px;
+  background: var(--hp-background);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.sidebarEnemyHpBar {
+  height: 100%;
+  background: var(--log-damage-taken);
+  box-shadow: 0 0 4px rgba(255, 102, 85, 0.4);
+  transition: width 0.2s ease;
+}
 
 .levelUpOverlay {
   position: fixed;
@@ -425,7 +733,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(10, 8, 6, 0.92) 0%, rgba(5, 4, 3, 0.98) 100%);
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.94) 0%, rgba(3, 2, 1, 0.98) 100%);
   backdrop-filter: blur(4px);
   animation: levelUpFadeIn 0.4s ease-out;
 }
@@ -458,15 +766,18 @@
 .levelUpHeaderLine {
   width: 80px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--hud-text-secondary), transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-gold-dim), transparent);
 }
 
 .levelUpTitle {
   font-family: 'Noto Serif JP', 'Times New Roman', serif;
   font-size: 28px;
   font-weight: 400;
-  color: var(--stat-attack);
-  text-shadow: 0 0 30px rgba(201, 162, 39, 0.4);
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 10px rgba(255, 204, 51, 0.8),
+    0 0 30px rgba(255, 204, 51, 0.5),
+    0 0 60px rgba(255, 204, 51, 0.3);
   margin: 0;
   letter-spacing: 6px;
   white-space: nowrap;
@@ -475,7 +786,7 @@
 .levelUpSubtitle {
   font-family: 'Noto Serif JP', 'Courier New', monospace;
   font-size: 13px;
-  color: var(--hud-text-secondary);
+  color: var(--text-secondary);
   margin: 0 0 36px 0;
   letter-spacing: 3px;
 }
@@ -496,8 +807,8 @@
 
 .levelUpCard {
   position: relative;
-  background: rgba(18, 15, 12, 0.95);
-  border: 1px solid var(--hud-border);
+  background: rgba(14, 12, 10, 0.96);
+  border: 1px solid var(--border-subtle);
   padding: 0;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -526,11 +837,11 @@
 }
 
 .levelUpCard:hover {
-  border-color: var(--hud-text-secondary);
+  border-color: var(--border-highlight);
   transform: translateY(-4px);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.6),
-    0 0 1px rgba(168, 152, 120, 0.3);
+    0 0 20px rgba(168, 152, 120, 0.15);
 }
 
 .levelUpCard:hover::after {
@@ -556,33 +867,51 @@
 }
 
 .levelUpCategory_stat {
-  color: var(--stat-attack);
-  text-shadow: 0 0 12px rgba(201, 162, 39, 0.5);
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 8px rgba(255, 204, 51, 0.9),
+    0 0 20px rgba(255, 204, 51, 0.6),
+    0 0 35px rgba(255, 204, 51, 0.3);
 }
 
 .levelUpCategory_passive {
-  color: #6a8a6a;
-  text-shadow: 0 0 12px rgba(106, 138, 106, 0.5);
+  color: #55dd77;
+  text-shadow: 
+    0 0 8px rgba(85, 221, 119, 0.9),
+    0 0 20px rgba(85, 221, 119, 0.6),
+    0 0 35px rgba(85, 221, 119, 0.3);
 }
 
 .levelUpCategory_active {
-  color: #7a6a9a;
-  text-shadow: 0 0 12px rgba(122, 106, 154, 0.5);
+  color: #aa77dd;
+  text-shadow: 
+    0 0 8px rgba(170, 119, 221, 0.9),
+    0 0 20px rgba(170, 119, 221, 0.6),
+    0 0 35px rgba(170, 119, 221, 0.3);
 }
 
 .levelUpCategory_weapon {
-  color: var(--hp-healthy);
-  text-shadow: 0 0 12px rgba(139, 32, 32, 0.5);
+  color: #dd5555;
+  text-shadow: 
+    0 0 8px rgba(221, 85, 85, 0.9),
+    0 0 20px rgba(221, 85, 85, 0.6),
+    0 0 35px rgba(221, 85, 85, 0.3);
 }
 
 .levelUpCategory_terrain {
   color: var(--stat-defense);
-  text-shadow: 0 0 12px rgba(106, 138, 154, 0.5);
+  text-shadow: 
+    0 0 8px rgba(85, 187, 238, 0.9),
+    0 0 20px rgba(85, 187, 238, 0.6),
+    0 0 35px rgba(85, 187, 238, 0.3);
 }
 
 .levelUpCategory_remnant {
-  color: #9a7a5a;
-  text-shadow: 0 0 12px rgba(154, 122, 90, 0.5);
+  color: #ddaa66;
+  text-shadow: 
+    0 0 8px rgba(221, 170, 102, 0.9),
+    0 0 20px rgba(221, 170, 102, 0.6),
+    0 0 35px rgba(221, 170, 102, 0.3);
 }
 
 .levelUpCardName {
@@ -636,27 +965,69 @@
 }
 
 .levelUpCard_stat .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(255, 204, 51, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_stat:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(255, 204, 51, 0.25),
+    inset 0 0 30px rgba(255, 204, 51, 0.05);
 }
 
 .levelUpCard_passive .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(106, 138, 106, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(85, 221, 119, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_passive:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(85, 221, 119, 0.25),
+    inset 0 0 30px rgba(85, 221, 119, 0.05);
 }
 
 .levelUpCard_active .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(122, 106, 154, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(170, 119, 221, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_active:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(170, 119, 221, 0.25),
+    inset 0 0 30px rgba(170, 119, 221, 0.05);
 }
 
 .levelUpCard_weapon .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(139, 32, 32, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(221, 85, 85, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_weapon:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(221, 85, 85, 0.25),
+    inset 0 0 30px rgba(221, 85, 85, 0.05);
 }
 
 .levelUpCard_terrain .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(106, 138, 154, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(85, 187, 238, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_terrain:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(85, 187, 238, 0.25),
+    inset 0 0 30px rgba(85, 187, 238, 0.05);
 }
 
 .levelUpCard_remnant .levelUpCardGlow {
-  background: radial-gradient(ellipse at center, rgba(154, 122, 90, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(221, 170, 102, 0.12) 0%, transparent 70%);
+}
+
+.levelUpCard_remnant:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(221, 170, 102, 0.25),
+    inset 0 0 30px rgba(221, 170, 102, 0.05);
 }
 
 .bossHealthBar {
@@ -714,7 +1085,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(10, 8, 6, 0.95) 0%, rgba(5, 4, 3, 0.98) 100%);
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.94) 0%, rgba(3, 2, 1, 0.98) 100%);
+  backdrop-filter: blur(4px);
   animation: levelUpFadeIn 0.4s ease-out;
 }
 
@@ -766,8 +1138,8 @@
 
 .characterSelectCard {
   position: relative;
-  background: rgba(18, 15, 12, 0.95);
-  border: 1px solid var(--hud-border);
+  background: rgba(14, 12, 10, 0.96);
+  border: 1px solid var(--border-subtle);
   padding: 0;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -784,18 +1156,19 @@
 }
 
 .characterSelectCard:hover {
-  border-color: var(--hud-text-secondary);
+  border-color: var(--border-highlight);
   transform: translateY(-2px);
   box-shadow:
     0 6px 24px rgba(0, 0, 0, 0.5),
-    0 0 1px rgba(168, 152, 120, 0.3);
+    0 0 20px rgba(168, 152, 120, 0.15);
 }
 
 .characterSelectCardSelected {
-  border-color: var(--stat-attack);
+  border-color: var(--accent-gold);
   box-shadow:
-    0 0 20px rgba(201, 162, 39, 0.3),
-    inset 0 0 30px rgba(201, 162, 39, 0.05);
+    0 0 25px rgba(255, 204, 51, 0.35),
+    0 0 50px rgba(255, 204, 51, 0.15),
+    inset 0 0 40px rgba(255, 204, 51, 0.08);
 }
 
 .characterSelectCardSelected::after {
@@ -805,7 +1178,8 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--stat-attack);
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(255, 204, 51, 0.6);
 }
 
 .characterSelectCardSmall {
@@ -884,11 +1258,13 @@
 }
 
 .statPositive {
-  color: #6a9a6a;
+  color: #55dd77;
+  text-shadow: 0 0 6px rgba(85, 221, 119, 0.4);
 }
 
 .statNegative {
-  color: #9a6a6a;
+  color: #dd5555;
+  text-shadow: 0 0 6px rgba(221, 85, 85, 0.4);
 }
 
 .characterSelectCardGlow {
@@ -903,8 +1279,8 @@
   font-size: 14px;
   padding: 14px 40px;
   background: rgba(40, 35, 30, 0.9);
-  color: var(--stat-attack);
-  border: 1px solid var(--stat-attack);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.2s ease;
@@ -913,7 +1289,9 @@
 
 .characterSelectConfirmButton:hover:not(:disabled) {
   background: rgba(60, 50, 40, 0.95);
-  box-shadow: 0 0 20px rgba(201, 162, 39, 0.2);
+  box-shadow: 
+    0 0 20px rgba(255, 204, 51, 0.3),
+    0 0 40px rgba(255, 204, 51, 0.15);
 }
 
 .characterSelectConfirmDisabled {
@@ -931,7 +1309,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(10, 8, 6, 0.92) 0%, rgba(5, 4, 3, 0.98) 100%);
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.94) 0%, rgba(3, 2, 1, 0.98) 100%);
   backdrop-filter: blur(4px);
   animation: levelUpFadeIn 0.4s ease-out;
 }
@@ -960,15 +1338,18 @@
 .weaponDropHeaderLine {
   width: 60px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--hud-text-secondary), transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-gold-dim), transparent);
 }
 
 .weaponDropTitle {
   font-family: 'Noto Serif JP', 'Times New Roman', serif;
   font-size: 22px;
   font-weight: 400;
-  color: var(--stat-attack);
-  text-shadow: 0 0 24px rgba(201, 162, 39, 0.4);
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 10px rgba(255, 204, 51, 0.8),
+    0 0 30px rgba(255, 204, 51, 0.5),
+    0 0 60px rgba(255, 204, 51, 0.3);
   margin: 0;
   letter-spacing: 4px;
   white-space: nowrap;
@@ -991,10 +1372,15 @@
 
 .weaponDropCard {
   width: 100%;
-  background: rgba(18, 15, 12, 0.95);
-  border: 1px solid var(--hud-border);
+  background: rgba(14, 12, 10, 0.96);
+  border: 1px solid var(--border-subtle);
   padding: 16px 20px;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.weaponDropCard:hover {
+  border-color: var(--border-highlight);
+  box-shadow: 0 0 20px rgba(168, 152, 120, 0.1);
 }
 
 .weaponDropCardLabel {
@@ -1026,6 +1412,28 @@
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+.weaponDropCardTier_common {
+  color: #9a9a9a;
+  text-shadow: 0 0 6px rgba(154, 154, 154, 0.4);
+}
+
+.weaponDropCardTier_rare {
+  color: #55aadd;
+  text-shadow: 0 0 6px rgba(85, 170, 221, 0.5);
+}
+
+.weaponDropCardTier_epic {
+  color: #aa77dd;
+  text-shadow: 0 0 8px rgba(170, 119, 221, 0.6);
+}
+
+.weaponDropCardTier_legendary {
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 8px rgba(255, 204, 51, 0.8),
+    0 0 16px rgba(255, 204, 51, 0.4);
 }
 
 .weaponDropCardDivider {
@@ -1073,8 +1481,8 @@
   font-size: 13px;
   padding: 12px 28px;
   background: rgba(40, 35, 30, 0.9);
-  color: var(--stat-attack);
-  border: 1px solid var(--stat-attack);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.2s ease;
@@ -1082,7 +1490,9 @@
 
 .weaponDropButtonEquip:hover {
   background: rgba(60, 50, 40, 0.95);
-  box-shadow: 0 0 16px rgba(201, 162, 39, 0.25);
+  box-shadow: 
+    0 0 20px rgba(255, 204, 51, 0.35),
+    0 0 40px rgba(255, 204, 51, 0.15);
 }
 
 .weaponDropButtonDiscard {
@@ -1090,8 +1500,8 @@
   font-size: 13px;
   padding: 12px 28px;
   background: rgba(30, 28, 26, 0.9);
-  color: var(--hud-text-secondary);
-  border: 1px solid var(--hud-border);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.2s ease;
@@ -1099,8 +1509,8 @@
 
 .weaponDropButtonDiscard:hover {
   background: rgba(40, 38, 36, 0.95);
-  color: var(--hud-text-primary);
-  border-color: var(--hud-text-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }
 
 /* RemnantTradeModal */
@@ -1141,7 +1551,7 @@
 .remnantTradeHeaderLine {
   width: 50px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #6a5a4a, transparent);
+  background: linear-gradient(90deg, transparent, #ddaa66, transparent);
 }
 
 .remnantTradeNames {
@@ -1155,8 +1565,11 @@
   font-family: 'Noto Serif JP', 'Times New Roman', serif;
   font-size: 24px;
   font-weight: 400;
-  color: #9a8a6a;
-  text-shadow: 0 0 30px rgba(154, 138, 106, 0.4);
+  color: #ddaa66;
+  text-shadow: 
+    0 0 10px rgba(221, 170, 102, 0.8),
+    0 0 30px rgba(221, 170, 102, 0.5),
+    0 0 60px rgba(221, 170, 102, 0.3);
   margin: 0;
   letter-spacing: 4px;
   white-space: nowrap;
@@ -1173,15 +1586,18 @@
 .remnantTradeDialogue {
   font-family: 'Noto Serif JP', 'Times New Roman', serif;
   font-size: 14px;
-  color: #7a6a5a;
+  color: #b8a080;
   text-align: center;
   line-height: 1.8;
   margin-bottom: 28px;
   padding: 16px 20px;
   background: rgba(20, 16, 12, 0.6);
-  border-left: 2px solid #4a3a2a;
-  border-right: 2px solid #4a3a2a;
+  border-left: 2px solid #ddaa66;
+  border-right: 2px solid #ddaa66;
   max-width: 100%;
+  box-shadow: 
+    inset 4px 0 12px rgba(221, 170, 102, 0.05),
+    inset -4px 0 12px rgba(221, 170, 102, 0.05);
 }
 
 .remnantTradeQuoteMark {
@@ -1199,15 +1615,15 @@
 }
 
 .remnantTradeItem {
-  background: rgba(16, 13, 10, 0.9);
-  border: 1px solid #2a2420;
+  background: rgba(14, 12, 10, 0.96);
+  border: 1px solid var(--border-subtle);
   padding: 16px 18px;
   transition: all 0.2s ease;
 }
 
 .remnantTradeItem:hover {
-  border-color: #4a4030;
-  box-shadow: 0 0 20px rgba(80, 60, 40, 0.2);
+  border-color: #7a6a50;
+  box-shadow: 0 0 25px rgba(221, 170, 102, 0.15);
 }
 
 .remnantTradeItemDesc {
@@ -1228,7 +1644,8 @@
 .remnantTradeBenefit {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #6a9a5a;
+  color: var(--log-damage-dealt);
+  text-shadow: 0 0 6px rgba(68, 238, 136, 0.4);
   margin-bottom: 6px;
   display: flex;
   align-items: baseline;
@@ -1238,7 +1655,8 @@
 .remnantTradeCost {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #9a5a5a;
+  color: var(--log-damage-taken);
+  text-shadow: 0 0 6px rgba(255, 102, 85, 0.4);
   margin-bottom: 12px;
   display: flex;
   align-items: baseline;
@@ -1258,8 +1676,8 @@
   font-size: 12px;
   padding: 10px 20px;
   background: rgba(35, 30, 25, 0.9);
-  color: #9a8a6a;
-  border: 1px solid #5a4a3a;
+  color: #ddaa66;
+  border: 1px solid #ddaa66;
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.2s ease;
@@ -1268,9 +1686,11 @@
 
 .remnantTradeButtonAccept:hover {
   background: rgba(50, 42, 34, 0.95);
-  color: #c9b27a;
-  border-color: #7a6a5a;
-  box-shadow: 0 0 16px rgba(154, 138, 106, 0.2);
+  color: #ffcc88;
+  border-color: #ffcc88;
+  box-shadow: 
+    0 0 20px rgba(221, 170, 102, 0.35),
+    0 0 40px rgba(221, 170, 102, 0.15);
 }
 
 .remnantTradeButtonDecline {
@@ -1278,8 +1698,8 @@
   font-size: 13px;
   padding: 12px 32px;
   background: rgba(25, 22, 20, 0.9);
-  color: var(--hud-text-secondary);
-  border: 1px solid var(--hud-border);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.2s ease;
@@ -1287,8 +1707,8 @@
 
 .remnantTradeButtonDecline:hover {
   background: rgba(35, 32, 30, 0.95);
-  color: var(--hud-text-primary);
-  border-color: var(--hud-text-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }
 
 /* QuickBar */
@@ -1305,7 +1725,8 @@
   border-radius: 4px;
   pointer-events: auto;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.6),
+    0 -2px 16px rgba(0, 0, 0, 0.6),
+    0 0 1px var(--hud-border-glow),
     inset 0 1px 0 rgba(60, 50, 40, 0.1);
 }
 
@@ -1319,12 +1740,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .quickBarSlot:hover {
-  border-color: var(--hud-text-secondary);
+  border-color: var(--border-highlight);
   background: rgba(35, 30, 25, 0.95);
+  box-shadow:
+    0 0 8px rgba(255, 200, 100, 0.2),
+    inset 0 0 4px rgba(255, 200, 100, 0.1);
+}
+
+.quickBarSlot:hover .quickBarIcon {
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 200, 100, 0.3);
 }
 
 .quickBarSlotEmpty {
@@ -1335,6 +1765,7 @@
 .quickBarSlotEmpty:hover {
   background: rgba(20, 17, 14, 0.8);
   border-color: rgba(60, 52, 46, 0.7);
+  box-shadow: 0 0 4px rgba(255, 200, 100, 0.08);
 }
 
 .quickBarHotkey {
@@ -1343,9 +1774,10 @@
   left: 4px;
   font-family: 'Courier New', monospace;
   font-size: 10px;
-  color: var(--hud-text-muted);
+  color: var(--text-muted);
   line-height: 1;
   pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .quickBarSlotEmpty .quickBarHotkey {
@@ -1355,7 +1787,8 @@
 .quickBarIcon {
   font-size: 18px;
   color: var(--hud-text-primary);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  transition: text-shadow var(--transition-fast);
 }
 
 .quickBarQuantity {
@@ -1364,23 +1797,47 @@
   right: 4px;
   font-family: 'Courier New', monospace;
   font-size: 10px;
-  color: var(--hud-text-secondary);
+  color: var(--stat-attack);
   background: rgba(10, 8, 6, 0.9);
   padding: 0 3px;
   border-radius: 2px;
   line-height: 1.3;
   pointer-events: none;
+  text-shadow: 0 0 4px var(--stat-attack-glow);
 }
 
 /* Title Screen */
+@keyframes titleBackgroundPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes titleGlow {
+  0%, 100% { 
+    text-shadow: 
+      0 0 40px rgba(255, 204, 51, 0.5),
+      0 0 80px rgba(255, 204, 51, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
+  50% { 
+    text-shadow: 
+      0 0 50px rgba(255, 204, 51, 0.6),
+      0 0 100px rgba(255, 204, 51, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.9);
+  }
+}
+
 .titleScreenContainer {
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #12100d 0%, #080706 60%, #020202 100%);
+  background: 
+    radial-gradient(ellipse at 50% 30%, rgba(255, 204, 51, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at center, #0a0908 0%, #050404 50%, var(--bg-void) 100%);
   overflow: hidden;
+  animation: titleBackgroundPulse 8s ease-in-out infinite;
 }
 
 .titleScreenContent {
@@ -1406,28 +1863,32 @@
 
 .titleScreenRune {
   font-size: 28px;
-  color: #4a4035;
-  opacity: 0.6;
+  color: var(--accent-gold-dim);
+  opacity: 0.8;
+  text-shadow: 0 0 12px var(--accent-gold-glow);
 }
 
 .titleScreenTitle {
   font-family: 'Times New Roman', serif;
   font-size: 72px;
   font-weight: normal;
-  color: #c9a227;
+  color: var(--accent-gold);
   text-shadow: 
-    0 0 40px rgba(201, 162, 39, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.8);
+    0 0 40px rgba(255, 204, 51, 0.5),
+    0 0 80px rgba(255, 204, 51, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.9);
   margin: 0;
   letter-spacing: 12px;
+  animation: titleGlow 4s ease-in-out infinite;
 }
 
 .titleScreenSubtitle {
   font-family: 'Courier New', monospace;
   font-size: 16px;
-  color: #6a5a4a;
+  color: var(--text-secondary);
   margin: 0 0 32px 0;
   letter-spacing: 8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .titleScreenDivider {
@@ -1441,7 +1902,7 @@
 .titleScreenDividerLine {
   width: 80px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #3a3025, transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-gold-dim), transparent);
 }
 
 .titleScreenDividerRune {
@@ -1453,32 +1914,32 @@
 .titleScreenTagline {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #5a4a3a;
+  color: var(--text-muted);
   margin: 0 0 48px 0;
   font-style: italic;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
 .titleScreenButton {
   font-family: 'Courier New', monospace;
   font-size: 16px;
-  color: #a89070;
-  background: rgba(30, 25, 20, 0.8);
-  border: 1px solid #3a3025;
+  color: var(--text-primary);
+  background: rgba(20, 18, 14, 0.9);
+  border: 1px solid var(--border-accent);
   padding: 16px 48px;
   cursor: pointer;
   letter-spacing: 4px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   margin-bottom: 48px;
 }
 
 .titleScreenButton:hover {
-  color: #c9a227;
-  border-color: #c9a227;
-  background: rgba(40, 35, 28, 0.9);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  background: rgba(25, 22, 18, 0.95);
   box-shadow: 
-    0 0 20px rgba(201, 162, 39, 0.15),
-    inset 0 1px 0 rgba(201, 162, 39, 0.1);
+    0 0 20px rgba(255, 204, 51, 0.2),
+    inset 0 1px 0 rgba(255, 204, 51, 0.15);
 }
 
 .titleScreenStats {
@@ -1498,7 +1959,7 @@
 .titleScreenStatLabel {
   font-family: 'Courier New', monospace;
   font-size: 10px;
-  color: #4a4035;
+  color: var(--text-secondary);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -1506,7 +1967,8 @@
 .titleScreenStatValue {
   font-family: 'Courier New', monospace;
   font-size: 18px;
-  color: #8a7a6a;
+  color: var(--text-primary);
+  text-shadow: 0 0 8px rgba(255, 204, 51, 0.15);
 }
 
 .titleScreenStatDivider {
@@ -1521,7 +1983,7 @@
 .titleScreenHint {
   font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #3a3530;
+  color: var(--text-dim);
   margin: 0;
   letter-spacing: 1px;
 }
@@ -1537,18 +1999,19 @@
 .titleScreenButtonSecondary {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #6a5a4a;
+  color: var(--text-muted);
   background: transparent;
   border: 1px solid #2a2520;
   padding: 10px 32px;
   cursor: pointer;
   letter-spacing: 2px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .titleScreenButtonSecondary:hover {
-  color: #8a7a6a;
-  border-color: #3a3530;
+  color: var(--text-secondary);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 12px rgba(255, 204, 51, 0.1);
 }
 
 .encyclopediaContainer {
@@ -1557,7 +2020,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #12100d 0%, #080706 60%, #020202 100%);
+  background: 
+    radial-gradient(ellipse at 50% 30%, rgba(255, 204, 51, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at center, #0a0908 0%, #050404 50%, var(--bg-void) 100%);
   overflow: hidden;
 }
 
@@ -1567,9 +2032,13 @@
   height: 85%;
   display: flex;
   flex-direction: column;
-  background: rgba(15, 12, 10, 0.95);
-  border: 1px solid #2a2420;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+  background: rgba(10, 8, 6, 0.96);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 0 80px rgba(0, 0, 0, 0.9),
+    0 0 120px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(168, 144, 100, 0.06),
+    inset 0 1px 0 rgba(60, 50, 40, 0.1);
 }
 
 .encyclopediaHeader {
@@ -1577,32 +2046,37 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid #2a2420;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .encyclopediaTitle {
   font-family: 'Times New Roman', serif;
   font-size: 28px;
   font-weight: normal;
-  color: #c9a227;
+  color: var(--accent-gold);
   margin: 0;
   letter-spacing: 4px;
+  text-shadow:
+    0 0 20px rgba(255, 204, 51, 0.5),
+    0 0 40px rgba(255, 204, 51, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .encyclopediaBackButton {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #6a5a4a;
+  color: var(--text-muted);
   background: transparent;
-  border: 1px solid #2a2520;
+  border: 1px solid var(--border-subtle);
   padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .encyclopediaBackButton:hover {
-  color: #a89070;
-  border-color: #3a3530;
+  color: var(--text-secondary);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 12px rgba(255, 204, 51, 0.1);
 }
 
 .encyclopediaBackButtonPlaceholder {
@@ -1611,30 +2085,31 @@
 
 .encyclopediaTabs {
   display: flex;
-  border-bottom: 1px solid #2a2420;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .encyclopediaTab {
   flex: 1;
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #5a5040;
+  color: var(--text-muted);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   padding: 12px 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .encyclopediaTab:hover {
-  color: #8a7a6a;
-  background: rgba(40, 35, 30, 0.3);
+  color: var(--text-secondary);
+  background: rgba(40, 35, 30, 0.4);
 }
 
 .encyclopediaTabActive {
-  color: #c9a227;
-  border-bottom-color: #c9a227;
+  color: var(--accent-gold);
+  border-bottom-color: var(--accent-gold);
+  text-shadow: 0 0 8px rgba(255, 204, 51, 0.3);
 }
 
 .encyclopediaBody {
@@ -1650,35 +2125,44 @@
 }
 
 .encyclopediaCard {
-  background: rgba(25, 22, 18, 0.8);
-  border: 1px solid #2a2520;
+  background: rgba(18, 16, 12, 0.9);
+  border: 1px solid var(--border-subtle);
   padding: 16px;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .encyclopediaCard:hover {
-  border-color: #3a3530;
-  background: rgba(30, 27, 22, 0.9);
+  border-color: var(--border-accent);
+  background: rgba(25, 22, 18, 0.95);
+  box-shadow: 0 0 20px rgba(168, 144, 100, 0.1);
 }
 
 .encyclopediaCardLocked {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+}
+
+.encyclopediaCardLocked:hover {
   opacity: 0.5;
+  filter: grayscale(0.4);
 }
 
 .encyclopediaCardBoss {
-  border-color: #4a3020;
+  border-color: rgba(221, 68, 68, 0.4);
 }
 
 .encyclopediaCardBoss:hover {
-  border-color: #6a4030;
+  border-color: rgba(221, 68, 68, 0.6);
+  box-shadow: 0 0 25px rgba(221, 68, 68, 0.15);
 }
 
 .encyclopediaCardRemnant {
-  border-color: #3a3520;
+  border-color: rgba(221, 170, 102, 0.4);
 }
 
 .encyclopediaCardRemnant:hover {
-  border-color: #5a5530;
+  border-color: rgba(221, 170, 102, 0.6);
+  box-shadow: 0 0 25px rgba(221, 170, 102, 0.15);
 }
 
 .encyclopediaCardHeader {
@@ -1688,26 +2172,27 @@
 .encyclopediaCardName {
   font-family: 'Courier New', monospace;
   font-size: 16px;
-  color: #c9a227;
+  color: var(--accent-gold);
   margin: 0 0 4px 0;
+  text-shadow: 0 0 8px rgba(255, 204, 51, 0.25);
 }
 
 .encyclopediaCardNameSub {
   font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #5a5040;
+  color: var(--text-muted);
 }
 
 .encyclopediaCardDivider {
   height: 1px;
-  background: #2a2520;
+  background: var(--border-subtle);
   margin: 10px 0;
 }
 
 .encyclopediaCardDesc {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #7a6a5a;
+  color: var(--text-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -1726,11 +2211,12 @@
 }
 
 .encyclopediaStatLabel {
-  color: #5a5040;
+  color: var(--text-muted);
 }
 
 .encyclopediaStatValue {
-  color: #a89070;
+  color: var(--text-primary);
+  text-shadow: 0 0 6px rgba(224, 212, 192, 0.15);
 }
 
 .encyclopediaCardMeta {
@@ -1739,15 +2225,16 @@
   gap: 4px;
   font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #4a4535;
+  color: var(--text-dim);
 }
 
 .encyclopediaCardQuote {
   font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #5a5545;
+  color: var(--text-muted);
   font-style: italic;
   line-height: 1.5;
+  opacity: 0.8;
 }
 
 .encyclopediaCardUnknown {
@@ -1761,11 +2248,12 @@
 
 .encyclopediaCardUnknownIcon {
   font-size: 32px;
-  color: #3a3530;
+  color: var(--border-accent);
+  opacity: 0.6;
 }
 
 .encyclopediaCardUnknownText {
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #3a3530;
+  color: var(--text-dim);
 }

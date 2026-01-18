@@ -1,131 +1,157 @@
 :root {
-  /* === Background Hierarchy (60%) === */
-  --bg-base: #0a0a0a;
+  /* === Background Hierarchy === */
+  --bg-void: #030303;
+  --bg-base: #0a0908;
+  --bg-surface: #12100d;
+  --bg-elevated: #1a1714;
+  --bg-hover: #221f1a;
   --bg-elevation-1: #1a1a1a;
   --bg-elevation-2: #2d2d2d;
   --bg-elevation-3: #383838;
 
   /* === Tile Base Colors === */
-  /* Natural terrain */
   --tile-grass-base: #3a3a2d;
   --tile-grass-accent: #4a4a3a;
   --tile-grass-shadow: #2a2a20;
-
   --tile-water-base: #1a2a35;
   --tile-water-accent: #2a3a45;
   --tile-water-deep: #0a1a25;
-
   --tile-forest-base: #2a3a28;
   --tile-forest-canopy: #1f2f1d;
   --tile-forest-trunk: #1a1a15;
-
   --tile-mountain-base: #404045;
   --tile-mountain-peak: #505055;
   --tile-mountain-shadow: #2a2a2f;
-
   --tile-sand-base: #4a4540;
   --tile-sand-accent: #5a5550;
   --tile-sand-shadow: #3a3530;
-
   --tile-road-base: #3a3530;
   --tile-road-accent: #4a4540;
   --tile-road-shadow: #2a2520;
-
-  /* Indoor/Dungeon */
   --tile-floor-base: #35302a;
   --tile-floor-accent: #453f38;
   --tile-floor-shadow: #252018;
-
   --tile-wall-base: #454545;
   --tile-wall-accent: #555555;
   --tile-wall-shadow: #353535;
-
-  /* Hazards */
   --tile-lava-core: #8a2010;
   --tile-lava-glow: #c04020;
   --tile-lava-crust: #3a1a10;
-
   --tile-swamp-base: #2a3525;
   --tile-swamp-water: #1a2a1f;
   --tile-swamp-muck: #1f2a1a;
-
   --tile-chasm-void: #020204;
   --tile-chasm-edge: #1a1a1f;
-
-  /* Dark fantasy */
   --tile-ruins-base: #3a3835;
   --tile-ruins-stone: #454340;
   --tile-ruins-moss: #2a3528;
-
   --tile-graveyard-base: #2a2a28;
   --tile-graveyard-stone: #3a3a38;
   --tile-graveyard-earth: #252320;
-
   --tile-blight-base: #3a2a35;
   --tile-blight-corrupt: #4a3545;
   --tile-blight-dead: #2a1a25;
-
-  /* Stairs */
   --tile-stairs-base: #353535;
   --tile-stairs-step: #454545;
   --tile-stairs-shadow: #252525;
-
-  /* Dungeon specific */
   --tile-dungeon-floor-base: #2a2825;
   --tile-dungeon-floor-accent: #3a3835;
   --tile-dungeon-wall-base: #3a3a3a;
   --tile-dungeon-wall-brick: #454545;
 
-  /* === Accent Colors (10%) === */
-  --accent-danger: #8a2020;
-  --accent-magic: #4a3a6a;
-  --accent-interact: #6a5030;
-  --accent-warning: #8a6020;
+  /* === Accent Colors === */
+  --accent-danger: #dd4444;
+  --accent-magic: #aa66dd;
+  --accent-interact: #ddaa44;
+  --accent-warning: #ee8833;
+  --accent-success: #44dd88;
+  --accent-gold: #ffcc33;
+  --accent-gold-dim: #aa8833;
+  --accent-gold-glow: rgba(255, 204, 51, 0.4);
+  --accent-rune: #aa9055;
 
   /* === Player Glow Effect === */
-  --player-glow-core: rgba(180, 140, 80, 0.15);
-  --player-glow-mid: rgba(140, 100, 50, 0.08);
+  --player-glow-core: rgba(255, 200, 100, 0.18);
+  --player-glow-mid: rgba(200, 150, 80, 0.10);
   --player-glow-outer: transparent;
 
+  /* === Text Colors === */
+  --text-bright: #f0e6d6;
+  --text-primary: #e0d4c0;
+  --text-secondary: #b8a888;
+  --text-muted: #7a6a5a;
+  --text-dim: #4a4035;
+
   /* === UI Colors === */
-  --ui-text-primary: #8a7a6a;
-  --ui-text-secondary: #6a5a4a;
-  --ui-border: #2a2420;
-  --ui-bg: rgba(20, 18, 15, 0.95);
+  --ui-text-primary: #e0d4c0;
+  --ui-text-secondary: #b8a888;
+  --ui-border: #3a3025;
+  --ui-border-accent: #5a4a35;
+  --ui-bg: rgba(12, 10, 8, 0.96);
 
   /* === HUD Colors === */
-  --hud-bg: rgba(15, 12, 10, 0.92);
-  --hud-border: #2a2420;
-  --hud-text-primary: #a89878;
-  --hud-text-secondary: #6a5a4a;
-  --hud-text-muted: #4a4a3a;
+  --hud-bg: rgba(10, 8, 6, 0.94);
+  --hud-border: #2a2218;
+  --hud-border-glow: rgba(255, 200, 100, 0.15);
+  --hud-text-primary: #e0d4c0;
+  --hud-text-secondary: #a89878;
+  --hud-text-muted: #5a5040;
 
-  /* HP Bar */
-  --hp-healthy: #8b2020;
-  --hp-warning: #c56020;
-  --hp-critical: #cc3030;
-  --hp-background: #1a1512;
+  /* === HP Bar === */
+  --hp-full: #dd4444;
+  --hp-healthy: #dd4444;
+  --hp-warning: #ee7733;
+  --hp-critical: #ff4444;
+  --hp-background: #1a1210;
+  --hp-glow: rgba(221, 68, 68, 0.5);
+  --hp-glow-warning: rgba(238, 119, 51, 0.5);
+  --hp-glow-critical: rgba(255, 68, 68, 0.6);
 
-  /* Stats */
-  --stat-attack: #c9a227;
-  --stat-defense: #6a8a9a;
+  /* === Stats === */
+  --stat-attack: #ffcc33;
+  --stat-defense: #55bbee;
+  --stat-attack-glow: rgba(255, 204, 51, 0.4);
+  --stat-defense-glow: rgba(85, 187, 238, 0.4);
 
-  /* Combat Log */
-  --log-damage-dealt: #7a9a6a;
-  --log-damage-taken: #9a5a5a;
-  --log-critical: #c9a227;
-  --log-death: #aa3333;
+  /* === Combat Log === */
+  --log-damage-dealt: #44ee88;
+  --log-damage-taken: #ff6655;
+  --log-critical: #ffdd44;
+  --log-death: #ff4444;
+  --log-info: #88bbdd;
+  --log-heal: #44ddaa;
 
-  /* Status Effects */
-  --effect-poison: #4a7a4a;
-  --effect-bleed: #8a3333;
-  --effect-burn: #c96030;
-  --effect-stun: #c9c927;
-  --effect-slow: #5a7a9a;
-  --effect-blind: #6a6a6a;
+  /* === Status Effects === */
+  --effect-poison: #44ff66;
+  --effect-bleed: #ff4444;
+  --effect-burn: #ff8833;
+  --effect-stun: #ffee44;
+  --effect-slow: #6699ee;
+  --effect-blind: #9988bb;
+  --effect-glow: 0 0 8px;
+
+  /* === Borders === */
+  --border-subtle: #2a2218;
+  --border-accent: #4a3a28;
+  --border-glow: rgba(255, 200, 100, 0.2);
+  --border-highlight: #6a5a40;
 
   /* === Frame/Viewport === */
-  --viewport-border: #2a201a;
+  --viewport-border: #3a2a1a;
   --viewport-outline: #1a1210;
-  --viewport-shadow: rgba(0, 0, 0, 0.9);
+  --viewport-shadow: rgba(0, 0, 0, 0.95);
+  --viewport-glow: rgba(255, 180, 80, 0.08);
+
+  /* === Sidebar === */
+  --sidebar-bg: rgba(8, 6, 4, 0.96);
+  --sidebar-width: 200px;
+  --sidebar-border: #2a2218;
+  --sidebar-section-border: #3a3025;
+  --sidebar-header: #aa9055;
+
+  /* === Animations === */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s ease;
+  --pulse-speed: 1.5s;
 }
