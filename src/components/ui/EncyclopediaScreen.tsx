@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { useShallow } from 'zustand/react/shallow';
 
@@ -18,7 +18,7 @@ interface EncyclopediaScreenProps {
 
 const REGION_NAMES = {
   hrodrgraf: '栄光の墓',
-  rotmyrkr: '根の闇',
+  rotmyrkr: '根の闘',
   gleymdariki: '忘却の王国',
   upphafsdjup: '起源の深淵',
 } as const;
@@ -28,6 +28,10 @@ type KnownRegionId = keyof typeof REGION_NAMES;
 function getRegionName(region: string): string {
   return REGION_NAMES[region as KnownRegionId] ?? region;
 }
+
+const ENEMY_LIST = Object.values(ENEMY_TYPES);
+const BOSS_LIST = Object.values(BOSS_TYPES);
+const REMNANT_LIST = Object.values(REMNANTS);
 
 export const EncyclopediaScreen = memo(function EncyclopediaScreen({
   onBack,
@@ -54,25 +58,13 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
     return new Set(remnantTrades.map((t) => t.remnantId));
   }, [remnantTrades]);
 
-  const handleEnemiesTab = useCallback(() => {
-    setActiveTab('enemies');
-  }, []);
+  const handleEnemiesTab = () => setActiveTab('enemies');
+  const handleBossesTab = () => setActiveTab('bosses');
+  const handleRemnantsTab = () => setActiveTab('remnants');
 
-  const handleBossesTab = useCallback(() => {
-    setActiveTab('bosses');
-  }, []);
-
-  const handleRemnantsTab = useCallback(() => {
-    setActiveTab('remnants');
-  }, []);
-
-  const enemyList = useMemo(() => Object.values(ENEMY_TYPES), []);
-  const bossList = useMemo(() => Object.values(BOSS_TYPES), []);
-  const remnantList = useMemo(() => Object.values(REMNANTS), []);
-
-  const enemyCount = `${encounteredEnemyIds.size}/${enemyList.length}`;
-  const bossCount = `${encounteredBossIds.size}/${bossList.length}`;
-  const remnantCount = `${tradedRemnantIds.size}/${remnantList.length}`;
+  const enemyCount = `${encounteredEnemyIds.size}/${ENEMY_LIST.length}`;
+  const bossCount = `${encounteredBossIds.size}/${BOSS_LIST.length}`;
+  const remnantCount = `${tradedRemnantIds.size}/${REMNANT_LIST.length}`;
 
   return (
     <div className={styles.encyclopediaContainer}>
@@ -118,21 +110,21 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
         <div className={styles.encyclopediaBody}>
           {activeTab === 'enemies' && (
             <EnemyTab
-              enemies={enemyList}
+              enemies={ENEMY_LIST}
               encountered={encounteredEnemyIds}
               encounters={enemyEncounters}
             />
           )}
           {activeTab === 'bosses' && (
             <BossTab
-              bosses={bossList}
+              bosses={BOSS_LIST}
               encountered={encounteredBossIds}
               encounters={bossEncounters}
             />
           )}
           {activeTab === 'remnants' && (
             <RemnantTab
-              remnants={remnantList}
+              remnants={REMNANT_LIST}
               traded={tradedRemnantIds}
             />
           )}
