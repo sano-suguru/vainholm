@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
@@ -23,14 +23,6 @@ export const TitleScreen = memo(function TitleScreen({ onStartGame, onOpenEncycl
     const timer = setTimeout(() => setFadeIn(true), 100);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleStart = useCallback(() => {
-    onStartGame();
-  }, [onStartGame]);
-
-  const handleEncyclopedia = useCallback(() => {
-    onOpenEncyclopedia();
-  }, [onOpenEncyclopedia]);
 
   const hasProgress = totalRuns > 0;
 
@@ -59,7 +51,7 @@ export const TitleScreen = memo(function TitleScreen({ onStartGame, onOpenEncycl
           <button
             type="button"
             className={styles.titleScreenButton}
-            onClick={handleStart}
+            onClick={onStartGame}
           >
             旅を始める
           </button>
@@ -67,7 +59,7 @@ export const TitleScreen = memo(function TitleScreen({ onStartGame, onOpenEncycl
             <button
               type="button"
               className={styles.titleScreenButtonSecondary}
-              onClick={handleEncyclopedia}
+              onClick={onOpenEncyclopedia}
             >
               図鑑
             </button>

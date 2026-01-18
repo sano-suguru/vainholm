@@ -54,8 +54,16 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
     return new Set(remnantTrades.map((t) => t.remnantId));
   }, [remnantTrades]);
 
-  const handleTabChange = useCallback((tab: TabId) => {
-    setActiveTab(tab);
+  const handleEnemiesTab = useCallback(() => {
+    setActiveTab('enemies');
+  }, []);
+
+  const handleBossesTab = useCallback(() => {
+    setActiveTab('bosses');
+  }, []);
+
+  const handleRemnantsTab = useCallback(() => {
+    setActiveTab('remnants');
   }, []);
 
   const enemyList = useMemo(() => Object.values(ENEMY_TYPES), []);
@@ -87,21 +95,21 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
           <button
             type="button"
             className={`${styles.encyclopediaTab} ${activeTab === 'enemies' ? styles.encyclopediaTabActive : ''}`}
-            onClick={() => handleTabChange('enemies')}
+            onClick={handleEnemiesTab}
           >
             敵 ({enemyCount})
           </button>
           <button
             type="button"
             className={`${styles.encyclopediaTab} ${activeTab === 'bosses' ? styles.encyclopediaTabActive : ''}`}
-            onClick={() => handleTabChange('bosses')}
+            onClick={handleBossesTab}
           >
             ボス ({bossCount})
           </button>
           <button
             type="button"
             className={`${styles.encyclopediaTab} ${activeTab === 'remnants' ? styles.encyclopediaTabActive : ''}`}
-            onClick={() => handleTabChange('remnants')}
+            onClick={handleRemnantsTab}
           >
             残滓 ({remnantCount})
           </button>
