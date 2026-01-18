@@ -8,7 +8,6 @@ import {
   getLocalizedWorldName,
 } from '../../../utils/i18n';
 import { TopBar } from './TopBar';
-import { StatusBar } from './StatusBar';
 import { StatusEffectsDisplay } from './StatusEffectsDisplay';
 import { CombatLog } from './CombatLog';
 import { BossHealthBar } from './BossHealthBar';
@@ -51,12 +50,6 @@ export const Hud = memo(function Hud() {
         maxFloors={maxFloors}
         turn={tick}
         isInDungeon={isInDungeon}
-      />
-      <StatusBar
-        hp={player.stats.hp}
-        maxHp={player.stats.maxHp}
-        attack={player.stats.attack}
-        defense={player.stats.defense}
       />
       <StatusEffectsDisplay statusEffects={player.statusEffects} />
       <BossHealthBar />

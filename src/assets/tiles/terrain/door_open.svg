@@ -1,14 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
-<rect x="0" y="0" width="16" height="16" fill="#1a1a1a"/>
-<rect x="1" y="0" width="14" height="2" fill="#4a4a4a"/>
-<rect x="0" y="0" width="2" height="16" fill="#4a4a4a"/>
-<rect x="14" y="0" width="2" height="16" fill="#4a4a4a"/>
-<rect x="2" y="2" width="12" height="14" fill="#0a0a0a"/>
-<rect x="1" y="1" width="1" height="1" fill="#5a5a5a"/>
-<rect x="14" y="1" width="1" height="1" fill="#5a5a5a"/>
-<rect x="3" y="3" width="2" height="2" fill="#151515"/>
-<rect x="7" y="5" width="3" height="3" fill="#151515"/>
-<rect x="11" y="8" width="2" height="2" fill="#151515"/>
-<rect x="4" y="10" width="2" height="2" fill="#151515"/>
-<rect x="9" y="12" width="2" height="2" fill="#151515"/>
+  <!-- Dark passage beyond -->
+  <rect width="16" height="16" fill="#080a0c"/>
+  
+  <!-- Stone frame -->
+  <rect x="0" y="0" width="2" height="16" fill="#2a2830"/>
+  <rect x="14" y="0" width="2" height="16" fill="#2a2830"/>
+  <rect x="0" y="0" width="16" height="2" fill="#343240"/>
+  
+  <!-- Frame highlights -->
+  <rect x="0" y="0" width="1" height="16" fill="#3a3840"/>
+  <rect x="15" y="0" width="1" height="16" fill="#1c1a20"/>
+  <rect x="0" y="0" width="16" height="1" fill="#3a3840"/>
+  
+  <!-- Corner accents -->
+  <rect x="1" y="1" width="1" height="1" fill="#444250"/>
+  <rect x="14" y="1" width="1" height="1" fill="#444250"/>
+  
+  <!-- Void/darkness with subtle depth -->
+  <rect x="2" y="2" width="12" height="14" fill="#0a0c10"/>
+  <rect x="4" y="4" width="2" height="2" fill="#0c0e12"/>
+  <rect x="8" y="6" width="3" height="3" fill="#0c0e12"/>
+  <rect x="10" y="10" width="2" height="2" fill="#0c0e12"/>
+  <rect x="3" y="11" width="2" height="2" fill="#0c0e12"/>
 </svg>

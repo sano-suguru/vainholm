@@ -1,37 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
-  <rect width="16" height="16" fill="#252830"/>
+  <!-- Base: dark stone wall -->
+  <rect width="16" height="16" fill="#1c1a20"/>
   
-  <rect x="0" y="0" width="16" height="2" fill="#3a3c44"/>
-  <rect x="0" y="14" width="16" height="2" fill="#161a22"/>
+  <!-- Top highlight (light source from above) -->
+  <rect x="0" y="0" width="16" height="2" fill="#2a2830"/>
+  <rect x="0" y="0" width="16" height="1" fill="#343240"/>
   
-  <rect x="0" y="2" width="8" height="6" fill="#202430"/>
-  <rect x="8" y="2" width="8" height="6" fill="#2a2e38"/>
-  <rect x="0" y="8" width="8" height="6" fill="#2a2e38"/>
-  <rect x="8" y="8" width="8" height="6" fill="#202430"/>
+  <!-- Bottom shadow -->
+  <rect x="0" y="14" width="16" height="2" fill="#0e0c12"/>
   
-  <rect x="0" y="7" width="16" height="1" fill="#141820"/>
-  <rect x="7" y="2" width="1" height="5" fill="#141820"/>
-  <rect x="7" y="8" width="1" height="6" fill="#141820"/>
+  <!-- Stone block pattern -->
+  <rect x="0" y="2" width="7" height="6" fill="#201e26"/>
+  <rect x="8" y="2" width="8" height="6" fill="#242228"/>
+  <rect x="0" y="8" width="8" height="6" fill="#242228"/>
+  <rect x="9" y="8" width="7" height="6" fill="#201e26"/>
   
-  <rect x="0" y="8" width="1" height="6" fill="#141820"/>
-  <rect x="15" y="2" width="1" height="5" fill="#141820"/>
+  <!-- Mortar lines -->
+  <rect x="7" y="2" width="1" height="6" fill="#121016"/>
+  <rect x="0" y="7" width="16" height="1" fill="#121016"/>
+  <rect x="8" y="8" width="1" height="6" fill="#121016"/>
   
-  <rect x="1" y="0" width="1" height="1" fill="#464854"/>
-  <rect x="9" y="0" width="1" height="1" fill="#464854"/>
+  <!-- Moss/weathering (subtle green-gray) -->
+  <rect x="1" y="3" width="1" height="1" fill="#1a2018"/>
+  <rect x="5" y="4" width="1" height="1" fill="#1a2018"/>
+  <rect x="2" y="10" width="1" height="1" fill="#1a2018"/>
+  <rect x="12" y="5" width="1" height="1" fill="#1a2018"/>
+  <rect x="10" y="11" width="1" height="1" fill="#1a2018"/>
   
-  <rect x="2" y="3" width="1" height="1" fill="#161a22"/>
-  <rect x="4" y="4" width="1" height="1" fill="#161a22"/>
-  <rect x="10" y="4" width="1" height="1" fill="#161a22"/>
-  <rect x="13" y="3" width="1" height="1" fill="#161a22"/>
+  <!-- Stone highlights -->
+  <rect x="3" y="3" width="1" height="1" fill="#2c2a32"/>
+  <rect x="10" y="4" width="1" height="1" fill="#2c2a32"/>
+  <rect x="4" y="9" width="1" height="1" fill="#2c2a32"/>
+  <rect x="13" y="10" width="1" height="1" fill="#2c2a32"/>
   
-  <rect x="3" y="9" width="1" height="1" fill="#161a22"/>
-  <rect x="5" y="11" width="1" height="1" fill="#161a22"/>
-  <rect x="11" y="10" width="1" height="1" fill="#161a22"/>
-  <rect x="14" y="12" width="1" height="1" fill="#161a22"/>
-  
-  <rect x="1" y="4" width="1" height="1" fill="#303440"/>
-  <rect x="5" y="5" width="1" height="1" fill="#303440"/>
-  <rect x="11" y="3" width="1" height="1" fill="#303440"/>
-  <rect x="2" y="10" width="1" height="1" fill="#303440"/>
-  <rect x="12" y="11" width="1" height="1" fill="#303440"/>
+  <!-- Cracks -->
+  <rect x="5" y="2" width="1" height="2" fill="#0e0c12"/>
+  <rect x="11" y="9" width="1" height="3" fill="#0e0c12"/>
 </svg>
