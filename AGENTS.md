@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-18 | **Commit**: 094c72a | **Branch**: main | **Tests**: 99 passing
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Branch**: feat/title-encyclopedia-ui | **Tests**: 99 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -63,7 +63,7 @@ docs/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `useGameStore` | Hook | `stores/gameStore.ts` | Main state (955 lines) |
+| `useGameStore` | Hook | `stores/gameStore.ts` | Main state (1238 lines) |
 | `useDungeonStore` | Hook | `dungeon/dungeonStore.ts` | Dungeon state |
 | `useProgressionStore` | Hook | `progression/progressionStore.ts` | Level-up state |
 | `useInventoryStore` | Hook | `items/inventoryStore.ts` | Inventory state |
@@ -253,12 +253,12 @@ pnpm test:watch  # Watch mode
 
 | File | Lines | Notes |
 |------|-------|-------|
-| `PixiViewport.tsx` | 1371 | 21 layers — candidate for splitting |
-| `gameStore.ts` | 955 | Visibility delta, map caching, combat |
-| `floorGenerator.ts` | 870 | Dungeon floor pipeline, collapse zones |
+| `PixiViewport.tsx` | 1372 | 21 layers — candidate for splitting |
+| `gameStore.ts` | 1238 | Visibility delta, map caching, combat, hub store |
+| `floorGenerator.ts` | 937 | Dungeon floor pipeline, collapse zones |
 | `tileTextures.ts` | 682 | 168 imports — fallback chain |
-| `bspGenerator.ts` | 355 | BSP algorithm, Union-Find |
-| `tileInteractions.ts` | 323 | 35+ interactions, chain reactions |
+| `bspGenerator.ts` | 437 | BSP algorithm, Union-Find |
+| `tileInteractions.ts` | 331 | 35+ interactions, chain reactions |
 
 ## Subdirectory Documentation
 

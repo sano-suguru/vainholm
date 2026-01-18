@@ -1,6 +1,6 @@
 # AGENTS.md - src/utils
 
-**Generated**: 2026-01-18 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Utility layer: map generation, rendering data, game systems, configuration.
 

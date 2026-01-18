@@ -1,6 +1,6 @@
 # AGENTS.md - src/dungeon
 
-**Generated**: 2026-01-18 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Dungeon generation system. Procedural floors with BSP algorithm, separate Zustand store.
 
@@ -13,8 +13,8 @@ Dungeon generation system. Procedural floors with BSP algorithm, separate Zustan
 | `bossSpawner.ts` | Boss placement logic per region | — |
 | `testUtils.ts` | Test helpers (floodFill, isReachable, mapToAscii) | — |
 | `generator/index.ts` | Floor generation orchestrator | — |
-| `generator/floorGenerator.ts` | Floor layout + tile placement | 870 |
-| `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity | 355 |
+| `generator/floorGenerator.ts` | Floor layout + tile placement | 937 |
+| `generator/bspGenerator.ts` | BSP algorithm + Union-Find connectivity | 437 |
 | `config/index.ts` | Region config lookup | — |
 | `config/hrodrgraf.ts` | Region 1: Hróðrgraf (栄光の墓) | 77 |
 | `config/rotmyrkr.ts` | Region 2: Rótmyrkr (根の闇) | 77 |

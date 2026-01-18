@@ -1,6 +1,6 @@
 # AGENTS.md - src/stores
 
-**Generated**: 2026-01-18 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Central Zustand stores. Hub for game state, meta-progression, floating damage.
 
@@ -8,7 +8,7 @@ Central Zustand stores. Hub for game state, meta-progression, floating damage.
 
 | File | Purpose | Lines | Persistence |
 |------|---------|-------|-------------|
-| `gameStore.ts` | World map, player, visibility, combat, enemies, bosses, weapons, remnant trades | 955 | No |
+| `gameStore.ts` | World map, player, visibility, combat, enemies, bosses, weapons, remnant trades | 1238 | No |
 | `metaProgressionStore.ts` | Enemy/boss encounters, relics, unlocks, run statistics | 213 | localStorage |
 | `damageNumberStore.ts` | Floating damage animation, auto-cleanup | 105 | No |
 | `gameStore.progression.test.ts` | Integration tests for stat application | 2 tests | — |

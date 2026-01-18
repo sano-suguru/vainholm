@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/game
 
-**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 
@@ -9,7 +9,7 @@ Pixi.js rendering layer. ALL visual game content rendered here via WebGL.
 | File | Role | Lines |
 |------|------|-------|
 | `GameContainer.tsx` | React orchestrator: map init, keyboard/click handlers, Zustand subscriptions | 250+ |
-| `PixiViewport.tsx` | Pixi Application + 21-layer scene graph | 1371 |
+| `PixiViewport.tsx` | Pixi Application + 21-layer scene graph | 1372 |
 | `LightLayer.tsx` | Light source rendering with flicker (3 sub-layers) | — |
 | `animationTime.ts` | Global animation time state (module-level singleton) | — |
 

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import {
   game_over_defeat_title,
   game_over_defeat_message,
@@ -18,6 +18,7 @@ interface GameOverScreenProps {
 
 export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: GameOverScreenProps) {
   const gameMode = useDungeonStore((state) => state.gameMode);
+  const advancedModeUnlocked = useMetaProgressionStore((state) => state.advancedModeUnlocked);
   const unlockAdvancedMode = useMetaProgressionStore((state) => state.unlockAdvancedMode);
   const recordRunEnd = useMetaProgressionStore((state) => state.recordRunEnd);
 
@@ -27,23 +28,21 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
   const isVictory = type === 'victory' || type === 'victory_true';
   const isTrueEnding = type === 'victory_true';
 
+  const shouldUnlockAdvancedMode = isVictory && gameMode === 'normal' && !advancedModeUnlocked;
+
   useEffect(() => {
     if (hasRecordedRef.current) return;
     hasRecordedRef.current = true;
 
     recordRunEnd(isVictory);
 
-    if (isVictory && gameMode === 'normal') {
+    if (shouldUnlockAdvancedMode) {
       unlockAdvancedMode();
     }
 
     useMetaProgressionStore.getState().clearCurrentRunRemnantTrades();
-  }, [isVictory, gameMode, recordRunEnd, unlockAdvancedMode]);
+  }, [isVictory, recordRunEnd, shouldUnlockAdvancedMode, unlockAdvancedMode]);
 
-  const handleNewGame = useCallback(() => {
-    onNewGame();
-  }, [onNewGame]);
-  
   const getTitle = () => {
     if (isDefeat) return game_over_defeat_title();
     if (isTrueEnding) return game_over_victory_true_title();
@@ -65,12 +64,12 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
         <p className={styles.gameOverMessage}>{getMessage()}</p>
         
         <div className={styles.gameOverButtons}>
-          <button className={styles.gameOverButton} onClick={handleNewGame}>
+          <button className={styles.gameOverButton} onClick={onNewGame}>
             新しい旅を始める
           </button>
         </div>
 
-        {isVictory && gameMode === 'normal' && (
+        {shouldUnlockAdvancedMode && (
           <p className={styles.gameOverUnlock}>上級モードが解放されました</p>
         )}
       </div>

@@ -1,6 +1,6 @@
 # AGENTS.md - src/progression
 
-**Generated**: 2026-01-17 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Level-up system. Weighted upgrade selection, passive effects, active abilities.
 

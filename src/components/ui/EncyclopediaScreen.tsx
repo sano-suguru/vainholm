@@ -1,5 +1,7 @@
 import { memo, useCallback, useState, useMemo } from 'react';
 
+import { useShallow } from 'zustand/react/shallow';
+
 import type { EnemyTypeId, BossTypeId } from '../../combat/types';
 import type { RemnantId } from '../../progression/remnants';
 
@@ -32,11 +34,13 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
 }: EncyclopediaScreenProps) {
   const [activeTab, setActiveTab] = useState<TabId>('enemies');
   
-  const { enemyEncounters, bossEncounters, remnantTrades } = useMetaProgressionStore((state) => ({
-    enemyEncounters: state.enemyEncounters,
-    bossEncounters: state.bossEncounters,
-    remnantTrades: state.remnantTrades,
-  }));
+  const { enemyEncounters, bossEncounters, remnantTrades } = useMetaProgressionStore(
+    useShallow((state) => ({
+      enemyEncounters: state.enemyEncounters,
+      bossEncounters: state.bossEncounters,
+      remnantTrades: state.remnantTrades,
+    }))
+  );
 
   const encounteredEnemyIds = useMemo(() => {
     return new Set(Object.keys(enemyEncounters) as EnemyTypeId[]);
