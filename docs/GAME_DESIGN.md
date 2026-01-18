@@ -1,5 +1,7 @@
 # Vainholm — Game Design Document
 
+> 設計の哲学的背景については [DESIGN_PHILOSOPHY.md](./DESIGN_PHILOSOPHY.md) を参照。
+
 ## 概要
 
 Vainholmは、北欧神話をベースにグノーシス主義とコズミックホラーの要素を融合させたダークファンタジー・ダンジョンクロウラー。
