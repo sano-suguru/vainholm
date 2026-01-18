@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
+
 import type { CombatLogEntry } from '../../../combat/types';
-import { ui_combat_log } from '../../../paraglide/messages.js';
+import { m } from '../../../utils/i18nHelpers';
 import styles from '../../../styles/game.module.css';
 
 interface CombatLogProps {
@@ -38,7 +39,7 @@ export const CombatLog = memo(function CombatLog({
 
   return (
     <div className={styles.combatLog}>
-      <div className={styles.combatLogHeader}>{ui_combat_log()}</div>
+      <div className={styles.combatLogHeader}>{m.ui_combat_log()}</div>
       {visibleEntries.map((entry) => (
         <div
           key={entry.id}

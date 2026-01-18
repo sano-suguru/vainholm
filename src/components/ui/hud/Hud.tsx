@@ -15,7 +15,11 @@ import { QuickBar } from './QuickBar';
 import { Sidebar } from './Sidebar';
 import styles from '../../../styles/game.module.css';
 
-export const Hud = memo(function Hud() {
+interface HudProps {
+  onEquipmentClick?: () => void;
+}
+
+export const Hud = memo(function Hud({ onEquipmentClick }: HudProps) {
   const { player, tick, combatLog } = useGameStore(
     useShallow((state) => ({
       player: state.player,
@@ -24,14 +28,16 @@ export const Hud = memo(function Hud() {
     }))
   );
 
-  const { dungeon, isInDungeon } = useDungeonStore(
+  const { dungeon, isInDungeon, getTurnsUntilCollapse } = useDungeonStore(
     useShallow((state) => ({
       dungeon: state.dungeon,
       isInDungeon: state.isInDungeon,
+      getTurnsUntilCollapse: state.getTurnsUntilCollapse,
     }))
   );
 
   const currentRegion = useDungeonStore((state) => state.getCurrentRegion());
+  const turnsUntilCollapse = isInDungeon ? getTurnsUntilCollapse(tick) : null;
 
   const currentFloor = dungeon?.currentFloor ?? 0;
   const maxFloors = dungeon?.maxFloors ?? 8;
@@ -50,11 +56,12 @@ export const Hud = memo(function Hud() {
         maxFloors={maxFloors}
         turn={tick}
         isInDungeon={isInDungeon}
+        turnsUntilCollapse={turnsUntilCollapse}
       />
       <StatusEffectsDisplay statusEffects={player.statusEffects} />
       <BossHealthBar />
       <CombatLog entries={combatLog} />
-      <Sidebar />
+      <Sidebar onEquipmentClick={onEquipmentClick} />
       <QuickBar />
     </div>
   );

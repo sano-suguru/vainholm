@@ -1,4 +1,5 @@
 import { useGameStore } from '../stores/gameStore';
+import { useDungeonStore } from '../dungeon';
 import type { TurnPhase, StatusEffectId, StatusEffect, EnemyId, Enemy } from './types';
 import { processAllEnemies } from './enemyAI';
 import { processBossAI } from './bossAI';
@@ -29,6 +30,18 @@ export const executeTurn = (): void => {
   processEffects();
   store.setTurnPhase('player');
   store.incrementTick();
+  
+  checkCollapseGameOver();
+};
+
+const checkCollapseGameOver = (): void => {
+  const dungeonStore = useDungeonStore.getState();
+  if (!dungeonStore.isInDungeon) return;
+  
+  const tick = useGameStore.getState().tick;
+  if (dungeonStore.checkCollapseGameOver(tick)) {
+    useGameStore.getState().setGameEndState('defeat');
+  }
 };
 
 type StatusEffectTickResult = {

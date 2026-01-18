@@ -79,6 +79,16 @@ const CONSUMABLE_DEFINITIONS: Record<ConsumableType, ConsumableDefinition> = {
     stackable: true,
     maxStack: 3,
   },
+  scroll_enchant: {
+    consumableType: 'scroll_enchant',
+    nameKey: '強化の巻物',
+    descriptionKey: '装備にプレミアムを1つ追加する',
+    icon: 'scroll_gold',
+    rarity: 'legendary',
+    effect: { type: 'enchant', target: 'weapon' },
+    stackable: true,
+    maxStack: 3,
+  },
 };
 
 export const createConsumable = (

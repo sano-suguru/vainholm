@@ -257,6 +257,41 @@
   font-size: 12px;
 }
 
+.topBarCollapse {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.topBarCollapseSafe {
+  color: #7a9a6a;
+  background: rgba(100, 140, 90, 0.15);
+}
+
+.topBarCollapseWarning {
+  color: #c9a227;
+  background: rgba(200, 160, 40, 0.15);
+}
+
+.topBarCollapseDanger {
+  color: #c56020;
+  background: rgba(200, 100, 40, 0.2);
+  animation: collapsePulse 2s ease-in-out infinite;
+}
+
+.topBarCollapseCritical {
+  color: #cc3030;
+  background: rgba(200, 50, 50, 0.25);
+  animation: collapsePulse 0.8s ease-in-out infinite;
+}
+
+@keyframes collapsePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .topBarRight {
   display: flex;
   align-items: center;
@@ -462,6 +497,36 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.sidebarSectionClickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.sidebarSectionClickable:hover {
+  background-color: rgba(170, 144, 85, 0.08);
+  border-color: rgba(170, 144, 85, 0.2);
+}
+
+.sidebarSectionClickable:active {
+  background-color: rgba(170, 144, 85, 0.12);
+}
+
+.sidebarKeyHint {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.sidebarSectionClickable:hover .sidebarKeyHint {
+  opacity: 0.7;
 }
 
 .sidebarSectionHeader {
@@ -1049,6 +1114,43 @@
   }
 }
 
+.characterSelectCollapseToggle {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(30, 25, 20, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.characterSelectToggleLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.characterSelectToggleInput {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.characterSelectToggleText {
+  color: var(--text-primary);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.characterSelectToggleHint {
+  color: var(--text-secondary);
+  font-size: 11px;
+  flex-basis: 100%;
+  margin-left: 24px;
+}
+
 .characterSelectCard {
   position: relative;
   background: rgba(14, 12, 10, 0.96);
@@ -1406,6 +1508,37 @@
   box-shadow: 
     0 0 20px rgba(255, 204, 51, 0.35),
     0 0 40px rgba(255, 204, 51, 0.15);
+}
+
+.weaponDropButtonInventory {
+  font-family: 'Noto Serif JP', 'Courier New', monospace;
+  font-size: 13px;
+  padding: 12px 28px;
+  background: rgba(35, 40, 35, 0.9);
+  color: #8aad8a;
+  border: 1px solid #5a7a5a;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+}
+
+.weaponDropButtonInventory:hover {
+  background: rgba(45, 55, 45, 0.95);
+  box-shadow: 
+    0 0 20px rgba(100, 150, 100, 0.35),
+    0 0 40px rgba(100, 150, 100, 0.15);
+}
+
+.weaponDropButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #666;
+  border-color: #444;
+}
+
+.weaponDropButtonDisabled:hover {
+  background: rgba(35, 40, 35, 0.9);
+  box-shadow: none;
 }
 
 .weaponDropButtonDiscard {
@@ -2169,4 +2302,221 @@
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: var(--text-dim);
+}
+
+/* Equipment Screen */
+.equipmentOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.94) 0%, rgba(3, 2, 1, 0.98) 100%);
+  backdrop-filter: blur(4px);
+  animation: levelUpFadeIn 0.3s ease-out;
+}
+
+.equipmentModal {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  background: rgba(10, 8, 6, 0.96);
+  border: 1px solid #3a3028;
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(60, 50, 40, 0.15);
+}
+
+.equipmentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.equipmentTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: normal;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.equipmentCloseButton {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.equipmentCloseButton:hover {
+  color: var(--text-primary);
+}
+
+.equipmentContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.equipmentSlotsSection {
+  display: flex;
+  gap: 12px;
+}
+
+.equipmentSlot {
+  flex: 1;
+  padding: 12px;
+  background: rgba(20, 18, 16, 0.6);
+  border: 1px solid #2a2420;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.equipmentSlotLabel {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.equipmentSlotEmpty {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.equipmentSlotName {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.equipmentSlotType {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.equipmentSlotPremiums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.equipmentSlotUnequip {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #3a3028;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.equipmentSlotUnequip:hover {
+  background: rgba(40, 35, 30, 0.5);
+  color: var(--text-primary);
+}
+
+.equipmentDivider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3a3028 20%, #3a3028 80%, transparent);
+}
+
+.inventorySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inventorySectionHeader {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.inventoryEmpty {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 16px;
+  text-align: center;
+}
+
+.inventoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventoryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(20, 18, 16, 0.4);
+  border-left: 2px solid transparent;
+}
+
+.inventoryRow:hover {
+  background: rgba(30, 28, 26, 0.6);
+}
+
+.inventoryRowInfo {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.inventoryRowName {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.inventoryRowQuantity {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.inventoryRowTier {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.inventoryRowActions {
+  display: flex;
+  gap: 6px;
+}
+
+.inventoryRowActions button {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid #3a3028;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.inventoryRowActions button:hover {
+  background: rgba(40, 35, 30, 0.5);
+  color: var(--text-primary);
 }

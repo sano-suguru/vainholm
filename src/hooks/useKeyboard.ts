@@ -5,6 +5,7 @@ interface UseKeyboardOptions {
   onMove: (dx: number, dy: number) => void;
   onDebugToggle?: () => void;
   onQuickbarUse?: (slotIndex: number) => void;
+  onEquipmentToggle?: () => void;
   moveDelay?: number;
 }
 
@@ -25,6 +26,7 @@ export function useKeyboard({
   onMove,
   onDebugToggle,
   onQuickbarUse,
+  onEquipmentToggle,
   moveDelay = 150,
 }: UseKeyboardOptions) {
   const pressedKeys = useRef<Set<string>>(new Set());
@@ -50,14 +52,19 @@ export function useKeyboard({
       return;
     }
 
-    const quickbarIndex = KEY_BINDINGS.quickbar.indexOf(e.code as typeof KEY_BINDINGS.quickbar[number]);
+    if (KEY_BINDINGS.equipment.includes(e.code as typeof KEY_BINDINGS.equipment[number])) {
+      onEquipmentToggle?.();
+      return;
+    }
+
+    const quickbarIndex = KEY_BINDINGS.quickbar.indexOf(e.code as typeof KEY_BINDINGS.quickbar[number])
     if (quickbarIndex !== -1) {
       onQuickbarUse?.(quickbarIndex);
       return;
     }
 
     tryMove(Date.now());
-  }, [onDebugToggle, onQuickbarUse, tryMove]);
+  }, [onDebugToggle, onQuickbarUse, onEquipmentToggle, tryMove]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     pressedKeys.current.delete(e.code);

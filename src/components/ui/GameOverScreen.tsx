@@ -1,14 +1,8 @@
 import { memo, useEffect, useRef } from 'react';
-import {
-  game_over_defeat_title,
-  game_over_defeat_message,
-  game_over_victory_title,
-  game_over_victory_message,
-  game_over_victory_true_title,
-  game_over_victory_true_message,
-} from '../../paraglide/messages.js';
+
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
 import { useDungeonStore } from '../../dungeon';
+import { m } from '../../utils/i18nHelpers';
 import styles from '../../styles/game.module.css';
 
 interface GameOverScreenProps {
@@ -44,15 +38,15 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
   }, [isVictory, recordRunEnd, shouldUnlockAdvancedMode, unlockAdvancedMode]);
 
   const getTitle = () => {
-    if (isDefeat) return game_over_defeat_title();
-    if (isTrueEnding) return game_over_victory_true_title();
-    return game_over_victory_title();
+    if (isDefeat) return m.game_over_defeat_title();
+    if (isTrueEnding) return m.game_over_victory_true_title();
+    return m.game_over_victory_title();
   };
   
   const getMessage = () => {
-    if (isDefeat) return game_over_defeat_message();
-    if (isTrueEnding) return game_over_victory_true_message();
-    return game_over_victory_message();
+    if (isDefeat) return m.game_over_defeat_message();
+    if (isTrueEnding) return m.game_over_victory_true_message();
+    return m.game_over_victory_message();
   };
 
   return (

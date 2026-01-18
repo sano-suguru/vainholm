@@ -1,43 +1,45 @@
 import { memo } from 'react';
 
-import type { Weapon } from '../../combat/types';
+import type { Armor } from '../../combat/types';
 
-import { TIER_COLORS } from '../../combat/colors';
 import { 
-  getWeaponGlowColor,
-  WEAPON_GLOW_COLORS,
-} from '../../combat/weapons';
+  getArmorGlowColor,
+  ARMOR_GLOW_COLORS,
+} from '../../combat/armor';
+import { TIER_COLORS } from '../../combat/colors';
+import { WEAPON_GLOW_COLORS } from '../../combat/weapons';
 import { 
   m,
-  getWeaponTypeDisplayName,
-  getWeaponPremiumDisplayName, 
+  getArmorPremiumDisplayName, 
   getPassivePremiumDisplayName, 
   getTierDisplayName,
 } from '../../utils/i18nHelpers';
 
 import styles from '../../styles/game.module.css';
 
-interface WeaponDropModalProps {
-  weapon: Weapon;
-  currentWeapon: Weapon | null;
+interface ArmorDropModalProps {
+  armor: Armor;
+  currentArmor: Armor | null;
   onEquip: () => void;
   onAddToInventory?: () => void;
   onDiscard: () => void;
   isInventoryFull?: boolean;
 }
 
-const WeaponCard = memo(function WeaponCard({
-  weapon,
+
+
+const ArmorCard = memo(function ArmorCard({
+  armor,
   label,
   isDropped,
 }: {
-  weapon: Weapon;
+  armor: Armor;
   label?: string;
   isDropped?: boolean;
 }) {
-  const tierColor = TIER_COLORS[weapon.tier];
-  const glowColor = getWeaponGlowColor(weapon);
-  const glowColorHex = WEAPON_GLOW_COLORS[glowColor];
+  const tierColor = TIER_COLORS[armor.tier];
+  const glowColor = getArmorGlowColor(armor);
+  const glowColorHex = ARMOR_GLOW_COLORS[glowColor];
 
   return (
     <div
@@ -49,31 +51,31 @@ const WeaponCard = memo(function WeaponCard({
     >
       {label && <div className={styles.weaponDropCardLabel}>{label}</div>}
       <div className={styles.weaponDropCardHeader}>
-        <span className={styles.weaponDropCardName}>{weapon.name}</span>
+        <span className={styles.weaponDropCardName}>{armor.name}</span>
         <span
           className={styles.weaponDropCardTier}
           style={{ color: tierColor }}
         >
-          {getTierDisplayName(weapon.tier)}
+          {getTierDisplayName(armor.tier)}
         </span>
       </div>
       <div className={styles.weaponDropCardDivider} />
-      <div className={styles.weaponDropCardType}>{getWeaponTypeDisplayName(weapon.typeId)}</div>
+      <div className={styles.weaponDropCardType}>{m.ui_armor()}</div>
       <div className={styles.weaponDropCardAttack}>
-        +{weapon.attackBonus} {m.ui_attack_power()}
+        +{armor.defenseBonus} {m.ui_defense()}
       </div>
-      {weapon.premiums.length > 0 && (
+      {armor.premiums.length > 0 && (
         <div className={styles.weaponDropCardPremiums}>
-          {weapon.premiums.map((premiumId) => (
+          {armor.premiums.map((premiumId) => (
             <span key={premiumId} className={styles.weaponDropCardPremium} style={{ color: WEAPON_GLOW_COLORS.blue }}>
-              ✦ {getWeaponPremiumDisplayName(premiumId)}
+              ✦ {getArmorPremiumDisplayName(premiumId)}
             </span>
           ))}
         </div>
       )}
-      {weapon.passivePremiums.length > 0 && (
+      {armor.passivePremiums.length > 0 && (
         <div className={styles.weaponDropCardPremiums}>
-          {weapon.passivePremiums.map((premiumId) => (
+          {armor.passivePremiums.map((premiumId) => (
             <span key={premiumId} className={styles.weaponDropCardPremium} style={{ color: WEAPON_GLOW_COLORS.green }}>
               ◆ {getPassivePremiumDisplayName(premiumId)}
             </span>
@@ -84,30 +86,30 @@ const WeaponCard = memo(function WeaponCard({
   );
 });
 
-export const WeaponDropModal = memo(function WeaponDropModal({
-  weapon,
-  currentWeapon,
+export const ArmorDropModal = memo(function ArmorDropModal({
+  armor,
+  currentArmor,
   onEquip,
   onAddToInventory,
   onDiscard,
   isInventoryFull = false,
-}: WeaponDropModalProps) {
+}: ArmorDropModalProps) {
   return (
     <div className={styles.weaponDropOverlay}>
       <div className={styles.weaponDropModal}>
         <div className={styles.weaponDropHeader}>
           <div className={styles.weaponDropHeaderLine} />
-          <h2 className={styles.weaponDropTitle}>{m.ui_weapon_found()}</h2>
+          <h2 className={styles.weaponDropTitle}>{m.ui_armor_found()}</h2>
           <div className={styles.weaponDropHeaderLine} />
         </div>
 
         <div className={styles.weaponDropContent}>
-          <WeaponCard weapon={weapon} label={m.ui_dropped_weapon()} isDropped />
+          <ArmorCard armor={armor} label={m.ui_dropped_armor()} isDropped />
 
-          {currentWeapon && (
+          {currentArmor && (
             <>
               <div className={styles.weaponDropVs}>▼</div>
-              <WeaponCard weapon={currentWeapon} label={m.ui_current_weapon()} />
+              <ArmorCard armor={currentArmor} label={m.ui_current_armor()} />
             </>
           )}
         </div>

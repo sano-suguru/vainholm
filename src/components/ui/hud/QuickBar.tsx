@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useShallow } from 'zustand/shallow';
 
 import type { InventorySlot } from '../../../items/types';
+import { isWeapon, isArmor } from '../../../items/types';
 import { useInventoryStore } from '../../../items/inventoryStore';
 import styles from '../../../styles/game.module.css';
 
@@ -12,14 +13,25 @@ interface QuickBarSlotProps {
   hotkey: number;
 }
 
+const getItemDisplayInfo = (item: NonNullable<InventorySlot['item']>): { icon: string | null; name: string } => {
+  if (isWeapon(item)) {
+    return { icon: null, name: item.name };
+  }
+  if (isArmor(item)) {
+    return { icon: null, name: item.name };
+  }
+  return { icon: item.icon, name: item.nameKey };
+};
+
 const QuickBarSlot = memo(function QuickBarSlot({ slot, hotkey }: QuickBarSlotProps) {
   const isEmpty = slot.item === null;
   const slotClassName = isEmpty
     ? `${styles.quickBarSlot} ${styles.quickBarSlotEmpty}`
     : styles.quickBarSlot;
 
-  const displayIcon = slot.item?.icon ?? null;
-  const displayName = slot.item?.nameKey ?? null;
+  const { icon: displayIcon, name: displayName } = slot.item 
+    ? getItemDisplayInfo(slot.item) 
+    : { icon: null, name: '' };
   const placeholder = displayName ? displayName.charAt(0).toUpperCase() : '?';
 
   return (

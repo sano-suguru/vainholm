@@ -6,6 +6,8 @@ import type { GameMode } from '../../dungeon/types';
 import { BACKGROUNDS, BACKGROUND_IDS } from '../../combat/backgrounds';
 import { CLASSES, CLASS_IDS } from '../../combat/classes';
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
+import { useDungeonStore } from '../../dungeon';
+import { m } from '../../utils/i18nHelpers';
 import styles from '../../styles/game.module.css';
 
 interface CharacterSelectionScreenProps {
@@ -31,6 +33,8 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
   onConfirm,
 }: CharacterSelectionScreenProps) {
   const advancedModeUnlocked = useMetaProgressionStore((state) => state.advancedModeUnlocked);
+  const collapseEnabled = useDungeonStore((state) => state.collapseEnabled);
+  const setCollapseEnabled = useDungeonStore((state) => state.setCollapseEnabled);
   const [selectedMode, setSelectedMode] = useState<GameMode>('normal');
   const [selectedClass, setSelectedClass] = useState<CharacterClassId | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<BackgroundId | null>(null);
@@ -98,6 +102,24 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
               </div>
               {selectedMode === 'advanced' && <div className={styles.characterSelectCardGlow} />}
             </button>
+          </div>
+          <div className={styles.characterSelectCollapseToggle}>
+            <label className={styles.characterSelectToggleLabel}>
+              <input
+                type="checkbox"
+                checked={collapseEnabled}
+                onChange={(e) => {
+                  setCollapseEnabled(e.target.checked);
+                }}
+                className={styles.characterSelectToggleInput}
+              />
+              <span className={styles.characterSelectToggleText}>
+                {collapseEnabled ? m.ui_collapse_system_on() : m.ui_collapse_system_off()}
+              </span>
+              <span className={styles.characterSelectToggleHint}>
+                {collapseEnabled ? m.ui_collapse_hint_on() : m.ui_collapse_hint_off()}
+              </span>
+            </label>
           </div>
         </div>
 

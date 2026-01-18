@@ -1,4 +1,4 @@
-import type { StatusEffectId } from '../combat/types';
+import type { StatusEffectId, Weapon, Armor } from '../combat/types';
 
 // =============================================================================
 // Item Categories
@@ -11,6 +11,7 @@ export type ConsumableType =
   | 'antidote'
   | 'scroll_identify'
   | 'scroll_teleport'
+  | 'scroll_enchant'
   | 'food_ration'
   | 'bomb';
 
@@ -48,7 +49,8 @@ export type ConsumableEffect =
   | { type: 'reveal_map'; radius: number }
   | { type: 'teleport'; random: boolean }
   | { type: 'identify'; range: 'single' | 'all' }
-  | { type: 'damage_aoe'; radius: number; damage: number };
+  | { type: 'damage_aoe'; radius: number; damage: number }
+  | { type: 'enchant'; target: 'weapon' | 'armor' };
 
 export interface KeyItem extends BaseItem {
   category: 'key';
@@ -68,6 +70,17 @@ export type RelicEffect =
 
 export type Item = ConsumableItem | KeyItem | RelicItem;
 
+export type InventoryItem = Item | Weapon | Armor;
+
+export const isWeapon = (item: InventoryItem): item is Weapon => 
+  'typeId' in item && 'attackBonus' in item;
+
+export const isArmor = (item: InventoryItem): item is Armor =>
+  'slot' in item && 'defenseBonus' in item && !('typeId' in item);
+
+export const isConsumable = (item: InventoryItem): item is ConsumableItem =>
+  'category' in item && item.category === 'consumable';
+
 // =============================================================================
 // Inventory
 // =============================================================================
@@ -75,7 +88,7 @@ export type Item = ConsumableItem | KeyItem | RelicItem;
 export const INVENTORY_SIZE = 8;
 
 export interface InventorySlot {
-  item: Item | null;
+  item: InventoryItem | null;
   quantity: number;
 }
 

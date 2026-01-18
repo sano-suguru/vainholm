@@ -3,7 +3,11 @@ import type {
   WeaponTypeId,
   WeaponPremium,
   WeaponPremiumId,
+  PassivePremium,
+  PassivePremiumId,
 } from './types';
+import type { GlowColor } from './colors';
+import { GLOW_COLORS } from './colors';
 
 export { getStatusEffect } from './statusEffects';
 
@@ -101,11 +105,122 @@ export const WEAPON_PREMIUMS: Record<WeaponPremiumId, WeaponPremium> = {
     displayName: '聖別',
     effect: { type: 'slayer', enemyType: 'undead', damageMultiplier: 1.5 },
   },
+  ice_damage: {
+    id: 'ice_damage',
+    name: 'Freezing',
+    displayName: '冷気',
+    effect: { type: 'elemental_damage', element: 'ice', damage: 3 },
+  },
+  lightning_damage: {
+    id: 'lightning_damage',
+    name: 'Shocking',
+    displayName: '雷撃',
+    effect: { type: 'elemental_damage', element: 'lightning', damage: 4 },
+  },
+  attack_count: {
+    id: 'attack_count',
+    name: 'Multi-Strike',
+    displayName: 'かず+1',
+    effect: { type: 'attack_count', extraAttacks: 1 },
+  },
+  pierce: {
+    id: 'pierce',
+    name: 'Piercing',
+    displayName: '貫通',
+    effect: { type: 'pierce_enemies' },
+  },
+  knockback: {
+    id: 'knockback',
+    name: 'Forceful',
+    displayName: '吹飛',
+    effect: { type: 'knockback_on_hit', distance: 1 },
+  },
+};
+
+export const PASSIVE_PREMIUMS: Record<PassivePremiumId, PassivePremium> = {
+  max_hp_percent: {
+    id: 'max_hp_percent',
+    name: 'Vigor',
+    displayName: '生命',
+    effect: { type: 'max_hp_percent', percent: 20 },
+  },
+  vision_bonus: {
+    id: 'vision_bonus',
+    name: 'Far Sight',
+    displayName: '遠視',
+    effect: { type: 'vision_bonus', radius: 1 },
+  },
+  trap_sense: {
+    id: 'trap_sense',
+    name: 'Trap Sense',
+    displayName: '罠感知',
+    effect: { type: 'trap_detection', radius: 3 },
+  },
+  stealth: {
+    id: 'stealth',
+    name: 'Stealth',
+    displayName: '忍び足',
+    effect: { type: 'stealth_bonus', detectionReduction: 2 },
+  },
+  poison_resist: {
+    id: 'poison_resist',
+    name: 'Poison Ward',
+    displayName: '毒耐性',
+    effect: { type: 'resistance', resistType: 'poison', percent: 50 },
+  },
+  fire_resist: {
+    id: 'fire_resist',
+    name: 'Fire Ward',
+    displayName: '炎耐性',
+    effect: { type: 'resistance', resistType: 'fire', percent: 50 },
+  },
 };
 
 
 export const getWeaponPattern = (id: WeaponTypeId): WeaponPattern => WEAPON_PATTERNS[id];
 export const getWeaponPremium = (id: WeaponPremiumId): WeaponPremium => WEAPON_PREMIUMS[id];
-
+export const getPassivePremium = (id: PassivePremiumId): PassivePremium => PASSIVE_PREMIUMS[id];
 
 export const WEAPON_TYPE_IDS: WeaponTypeId[] = ['sword', 'axe', 'spear', 'dagger', 'mace'];
+export const PASSIVE_PREMIUM_IDS: PassivePremiumId[] = [
+  'max_hp_percent',
+  'vision_bonus', 
+  'trap_sense',
+  'stealth',
+  'poison_resist',
+  'fire_resist',
+];
+
+export const selectRandomUnique = <T>(pool: readonly T[], count: number): T[] => {
+  if (count === 0) return [];
+  
+  const available = [...pool];
+  const selected: T[] = [];
+  
+  for (let i = 0; i < count && available.length > 0; i++) {
+    const idx = Math.floor(Math.random() * available.length);
+    selected.push(available[idx]);
+    available.splice(idx, 1);
+  }
+  
+  return selected;
+};
+
+export type WeaponGlowColor = GlowColor;
+export const WEAPON_GLOW_COLORS = GLOW_COLORS;
+
+export const getWeaponGlowColor = (weapon: {
+  premiums: readonly unknown[];
+  passivePremiums: readonly unknown[];
+  isUnique?: boolean;
+}): WeaponGlowColor => {
+  if (weapon.isUnique) return 'gold';
+  
+  const hasBluePremium = weapon.premiums.length > 0;
+  const hasGreenPremium = weapon.passivePremiums.length > 0;
+  
+  if (hasBluePremium && hasGreenPremium) return 'cyan';
+  if (hasGreenPremium) return 'green';
+  if (hasBluePremium) return 'blue';
+  return 'white';
+};

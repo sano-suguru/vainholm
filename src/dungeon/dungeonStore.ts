@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Dungeon, DungeonFloor, GameMode, RegionConfig } from './types';
+import { getCollapsedFloor, getTurnsUntilCollapse, isPlayerCaughtByCollapse } from './types';
 import { generateFloor } from './generator';
 import { getFloorsPerRegion, getRegionConfigForFloor, getTotalFloors, REGION_CONFIGS } from './config';
 import { spawnBossForFloor } from './bossSpawner';
@@ -10,17 +11,24 @@ interface DungeonStore {
   dungeon: Dungeon | null;
   isInDungeon: boolean;
   gameMode: GameMode;
+  collapseEnabled: boolean;
 
   setGameMode: (mode: GameMode) => void;
+  setCollapseEnabled: (enabled: boolean) => void;
   enterDungeon: (seed: number) => DungeonFloor;
   exitDungeon: () => void;
   goToFloor: (level: number) => DungeonFloor | null;
   descendStairs: () => DungeonFloor | null;
-  ascendStairs: () => DungeonFloor | null;
+  ascendStairs: (tick: number) => DungeonFloor | null;
 
   getCurrentFloor: () => DungeonFloor | null;
   getFloor: (level: number) => DungeonFloor | null;
   getCurrentRegion: () => RegionConfig | null;
+  
+  getCollapsedFloor: (tick: number) => number;
+  getTurnsUntilCollapse: (tick: number) => number | null;
+  isFloorCollapsed: (floor: number, tick: number) => boolean;
+  checkCollapseGameOver: (tick: number) => boolean;
 }
 
 function generateFloorForLevel(
@@ -73,9 +81,14 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
   dungeon: null,
   isInDungeon: false,
   gameMode: 'normal',
+  collapseEnabled: true,
 
   setGameMode: (mode: GameMode) => {
     set({ gameMode: mode });
+  },
+
+  setCollapseEnabled: (enabled: boolean) => {
+    set({ collapseEnabled: enabled });
   },
 
   enterDungeon: (seed: number) => {
@@ -144,8 +157,8 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
     return goToFloor(dungeon.currentFloor + 1);
   },
 
-  ascendStairs: () => {
-    const { dungeon, goToFloor, getCurrentFloor } = get();
+  ascendStairs: (tick: number) => {
+    const { dungeon, goToFloor, getCurrentFloor, isFloorCollapsed } = get();
     if (!dungeon) return null;
 
     const currentFloor = getCurrentFloor();
@@ -155,7 +168,12 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
       return null;
     }
 
-    return goToFloor(dungeon.currentFloor - 1);
+    const targetFloor = dungeon.currentFloor - 1;
+    if (isFloorCollapsed(targetFloor, tick)) {
+      return null;
+    }
+
+    return goToFloor(targetFloor);
   },
 
   getCurrentFloor: () => {
@@ -174,5 +192,29 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
     const { dungeon, gameMode } = get();
     if (!dungeon) return null;
     return getRegionConfigForFloor(dungeon.currentFloor, gameMode) ?? null;
+  },
+
+  getCollapsedFloor: (tick: number) => {
+    const { collapseEnabled } = get();
+    if (!collapseEnabled) return 0;
+    return getCollapsedFloor(tick);
+  },
+
+  getTurnsUntilCollapse: (tick: number) => {
+    const { dungeon, collapseEnabled } = get();
+    if (!collapseEnabled || !dungeon) return null;
+    return getTurnsUntilCollapse(tick, dungeon.currentFloor);
+  },
+
+  isFloorCollapsed: (floor: number, tick: number) => {
+    const { collapseEnabled } = get();
+    if (!collapseEnabled) return false;
+    return floor <= getCollapsedFloor(tick);
+  },
+
+  checkCollapseGameOver: (tick: number) => {
+    const { dungeon, collapseEnabled } = get();
+    if (!collapseEnabled || !dungeon) return false;
+    return isPlayerCaughtByCollapse(dungeon.currentFloor, tick);
   },
 }));

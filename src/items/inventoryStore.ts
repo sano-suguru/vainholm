@@ -1,20 +1,20 @@
 import { create } from 'zustand';
 
-import type { Item, ItemId, InventorySlot, ConsumableItem } from './types';
-import { INVENTORY_SIZE } from './types';
+import type { Item, ItemId, InventorySlot, ConsumableItem, InventoryItem } from './types';
+import { INVENTORY_SIZE, isWeapon, isArmor } from './types';
 import { useGameStore } from '../stores/gameStore';
 
 interface InventoryStore {
   slots: InventorySlot[];
   selectedSlot: number | null;
 
-  addItem: (item: Item, quantity?: number) => boolean;
-  removeItem: (slotIndex: number, quantity?: number) => Item | null;
-  useItem: (slotIndex: number) => boolean;
+  addItem: (item: InventoryItem, quantity?: number) => boolean;
+  removeItem: (slotIndex: number, quantity?: number) => InventoryItem | null;
+  consumeItem: (slotIndex: number) => boolean;
   swapSlots: (fromIndex: number, toIndex: number) => void;
   selectSlot: (slotIndex: number | null) => void;
-  getItemAt: (slotIndex: number) => Item | null;
-  findItemById: (itemId: ItemId) => { slotIndex: number; item: Item } | null;
+  getItemAt: (slotIndex: number) => InventoryItem | null;
+  findItemById: (itemId: ItemId) => { slotIndex: number; item: InventoryItem } | null;
   hasItem: (itemId: ItemId) => boolean;
   getFreeSlotCount: () => number;
   clearInventory: () => void;
@@ -27,29 +27,43 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   slots: createEmptySlots(),
   selectedSlot: null,
 
-  addItem: (item: Item, quantity = 1): boolean => {
+  addItem: (item: InventoryItem, quantity = 1): boolean => {
+    const { slots } = get();
+
+    if (isWeapon(item) || isArmor(item)) {
+      const emptySlotIndex = slots.findIndex((slot) => slot.item === null);
+      if (emptySlotIndex === -1) return false;
+
+      const newSlots = [...slots];
+      newSlots[emptySlotIndex] = { item, quantity: 1 };
+      set({ slots: newSlots });
+      return true;
+    }
+
     let remaining = quantity;
+    const baseItem = item as Item;
 
     while (remaining > 0) {
-      const { slots } = get();
+      const currentSlots = get().slots;
 
-      if (item.stackable) {
-        const existingSlotIndex = slots.findIndex(
+      if (baseItem.stackable) {
+        const existingSlotIndex = currentSlots.findIndex(
           (slot) =>
             slot.item !== null &&
-            slot.item.category === item.category &&
+            'category' in slot.item &&
+            slot.item.category === baseItem.category &&
             'consumableType' in slot.item &&
-            'consumableType' in item &&
-            slot.item.consumableType === item.consumableType &&
-            slot.quantity < item.maxStack
+            'consumableType' in baseItem &&
+            slot.item.consumableType === baseItem.consumableType &&
+            slot.quantity < baseItem.maxStack
         );
 
         if (existingSlotIndex !== -1) {
-          const existingSlot = slots[existingSlotIndex];
-          const spaceAvailable = item.maxStack - existingSlot.quantity;
+          const existingSlot = currentSlots[existingSlotIndex];
+          const spaceAvailable = baseItem.maxStack - existingSlot.quantity;
           const toAdd = Math.min(remaining, spaceAvailable);
 
-          const newSlots = [...slots];
+          const newSlots = [...currentSlots];
           newSlots[existingSlotIndex] = {
             ...existingSlot,
             quantity: existingSlot.quantity + toAdd,
@@ -61,13 +75,13 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
         }
       }
 
-      const emptySlotIndex = slots.findIndex((slot) => slot.item === null);
+      const emptySlotIndex = currentSlots.findIndex((slot) => slot.item === null);
       if (emptySlotIndex === -1) {
         return false;
       }
 
-      const toAdd = Math.min(remaining, item.maxStack);
-      const newSlots = [...slots];
+      const toAdd = Math.min(remaining, baseItem.maxStack);
+      const newSlots = [...currentSlots];
       newSlots[emptySlotIndex] = { item, quantity: toAdd };
       set({ slots: newSlots });
 
@@ -77,7 +91,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     return true;
   },
 
-  removeItem: (slotIndex: number, quantity = 1): Item | null => {
+  removeItem: (slotIndex: number, quantity = 1): InventoryItem | null => {
     const { slots } = get();
     if (slotIndex < 0 || slotIndex >= INVENTORY_SIZE) return null;
 
@@ -98,7 +112,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     return removedItem;
   },
 
-  useItem: (slotIndex: number): boolean => {
+  consumeItem: (slotIndex: number): boolean => {
     const { slots, removeItem } = get();
     if (slotIndex < 0 || slotIndex >= INVENTORY_SIZE) return false;
 
@@ -107,7 +121,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
 
     const item = slot.item;
 
-    if (item.category === 'consumable') {
+    if ('category' in item && item.category === 'consumable') {
       const consumable = item as ConsumableItem;
       const effect = consumable.effect;
 
@@ -146,6 +160,9 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
         case 'damage_aoe': {
           return false;
         }
+        case 'enchant': {
+          return false;
+        }
         default: {
           const _exhaustiveCheck: never = effect;
           return _exhaustiveCheck;
@@ -181,13 +198,13 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     set({ selectedSlot: slotIndex });
   },
 
-  getItemAt: (slotIndex: number): Item | null => {
+  getItemAt: (slotIndex: number): InventoryItem | null => {
     const { slots } = get();
     if (slotIndex < 0 || slotIndex >= INVENTORY_SIZE) return null;
     return slots[slotIndex].item;
   },
 
-  findItemById: (itemId: ItemId): { slotIndex: number; item: Item } | null => {
+  findItemById: (itemId: ItemId): { slotIndex: number; item: InventoryItem } | null => {
     const { slots } = get();
     for (let i = 0; i < slots.length; i++) {
       if (slots[i].item?.id === itemId) {

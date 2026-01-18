@@ -1,6 +1,6 @@
 # AGENTS.md - src/dungeon
 
-**Generated**: 2026-01-18 | **Commit**: 0b652eb | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-18 | **Commit**: b1bdced | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Dungeon generation system. Procedural floors with BSP algorithm, separate Zustand store.
 

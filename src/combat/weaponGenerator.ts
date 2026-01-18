@@ -1,5 +1,5 @@
-import type { Weapon, WeaponTypeId, WeaponTier, WeaponPremiumId } from './types';
-import { WEAPON_TYPE_IDS } from './weapons';
+import type { Weapon, WeaponTypeId, WeaponTier, WeaponPremiumId, PassivePremiumId } from './types';
+import { WEAPON_TYPE_IDS, PASSIVE_PREMIUM_IDS, selectRandomUnique } from './weapons';
 
 const PREMIUM_IDS: WeaponPremiumId[] = [
   'hp_bonus',
@@ -11,13 +11,25 @@ const PREMIUM_IDS: WeaponPremiumId[] = [
   'burn_on_hit',
   'stun_on_hit',
   'fire_damage',
+  'ice_damage',
+  'lightning_damage',
   'undead_slayer',
+  'attack_count',
+  'pierce',
+  'knockback',
 ];
 
-const TIER_CONFIG: Record<WeaponTier, { premiumCount: [number, number]; attackBonus: [number, number]; weight: number }> = {
-  common: { premiumCount: [0, 1], attackBonus: [0, 2], weight: 70 },
-  rare: { premiumCount: [1, 2], attackBonus: [2, 4], weight: 25 },
-  legendary: { premiumCount: [2, 3], attackBonus: [4, 6], weight: 5 },
+
+
+const TIER_CONFIG: Record<WeaponTier, { 
+  premiumCount: [number, number]; 
+  passivePremiumCount: [number, number];
+  attackBonus: [number, number]; 
+  weight: number;
+}> = {
+  common: { premiumCount: [0, 1], passivePremiumCount: [0, 0], attackBonus: [0, 2], weight: 70 },
+  rare: { premiumCount: [1, 2], passivePremiumCount: [0, 1], attackBonus: [2, 4], weight: 25 },
+  legendary: { premiumCount: [2, 3], passivePremiumCount: [0, 2], attackBonus: [4, 6], weight: 5 },
 };
 
 const TIER_NAMES: Record<WeaponTier, Record<WeaponTypeId, string>> = {
@@ -56,20 +68,11 @@ const selectTier = (): WeaponTier => {
   return 'common';
 };
 
-const selectPremiums = (count: number): WeaponPremiumId[] => {
-  if (count === 0) return [];
-  
-  const available = [...PREMIUM_IDS];
-  const selected: WeaponPremiumId[] = [];
-  
-  for (let i = 0; i < count && available.length > 0; i++) {
-    const idx = Math.floor(Math.random() * available.length);
-    selected.push(available[idx]);
-    available.splice(idx, 1);
-  }
-  
-  return selected;
-};
+const selectPremiums = (count: number): WeaponPremiumId[] =>
+  selectRandomUnique(PREMIUM_IDS, count);
+
+const selectPassivePremiums = (count: number): PassivePremiumId[] =>
+  selectRandomUnique(PASSIVE_PREMIUM_IDS, count);
 
 export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
   const tier = selectTier();
@@ -79,6 +82,9 @@ export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
   
   const premiumCount = randomInt(config.premiumCount[0], config.premiumCount[1]);
   const premiums = selectPremiums(premiumCount);
+  
+  const passivePremiumCount = randomInt(config.passivePremiumCount[0], config.passivePremiumCount[1]);
+  const passivePremiums = selectPassivePremiums(passivePremiumCount);
   
   const baseBonus = randomInt(config.attackBonus[0], config.attackBonus[1]);
   const depthBonus = Math.floor(floorDepth / 2);
@@ -95,6 +101,7 @@ export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
     name,
     attackBonus,
     premiums,
+    passivePremiums,
   };
 };
 

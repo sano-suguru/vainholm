@@ -14,6 +14,7 @@ import type {
   CharacterClassId,
   BackgroundId,
   Weapon,
+  Armor,
   StatusEffectId,
   StatusEffect,
 } from '../combat/types';
@@ -35,6 +36,7 @@ import { createBossStats } from '../combat/enemyTypes';
 import { calculateWeaponDamage } from '../combat/weaponAttack';
 import { WEAPON_PREMIUMS } from '../combat/weapons';
 import { createRandomWeapon, shouldDropWeapon } from '../combat/weaponGenerator';
+import { createRandomArmor, shouldDropArmor } from '../combat/armor';
 import { STATUS_EFFECTS } from '../combat/statusEffects';
 import { getLocalizedEnemyName, getLocalizedBossName } from '../utils/i18n';
 import { useDungeonStore } from '../dungeon/dungeonStore';
@@ -116,6 +118,7 @@ interface PlayerState {
   classId: CharacterClassId;
   backgroundId: BackgroundId;
   weapon: Weapon | null;
+  armor: Armor | null;
   statusEffects: Map<StatusEffectId, StatusEffect>;
 }
 
@@ -285,6 +288,11 @@ interface GameStore {
   discardWeaponDrop: () => void;
   setPendingWeaponDrop: (weapon: Weapon | null) => void;
 
+  pendingArmorDrop: Armor | null;
+  equipArmor: (armor: Armor) => void;
+  discardArmorDrop: () => void;
+  setPendingArmorDrop: (armor: Armor | null) => void;
+
   pendingRemnantTrade: boolean;
   openRemnantTrade: () => void;
   closeRemnantTrade: () => void;
@@ -307,6 +315,7 @@ const createInitialPlayerState = (): PlayerState => ({
   classId: DEFAULT_CLASS_ID,
   backgroundId: DEFAULT_BACKGROUND_ID,
   weapon: null,
+  armor: null,
   statusEffects: new Map(),
 });
 
@@ -337,6 +346,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameEndState: 'playing',
   combatLog: [],
   pendingWeaponDrop: null,
+  pendingArmorDrop: null,
   pendingRemnantTrade: false,
   permanentVisionPenalty: 0,
   floorVisionPenalty: 0,
@@ -462,6 +472,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         if (shouldDropWeapon()) {
           const droppedWeapon = createRandomWeapon(currentFloor);
           set({ pendingWeaponDrop: droppedWeapon });
+        } else if (shouldDropArmor()) {
+          const droppedArmor = createRandomArmor(currentFloor);
+          set({ pendingArmorDrop: droppedArmor });
         }
       }
       
@@ -1078,6 +1091,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         classId,
         backgroundId,
         weapon: null,
+        armor: null,
         statusEffects: new Map(),
       },
     });
@@ -1117,6 +1131,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameEndState: 'playing',
       combatLog: [],
       pendingWeaponDrop: null,
+      pendingArmorDrop: null,
       pendingRemnantTrade: false,
     });
   },
@@ -1137,6 +1152,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   discardWeaponDrop: () => {
     set({ pendingWeaponDrop: null });
+  },
+
+  setPendingArmorDrop: (armor: Armor | null) => {
+    set({ pendingArmorDrop: armor });
+  },
+
+  equipArmor: (armor: Armor) => {
+    set((state) => ({
+      player: {
+        ...state.player,
+        armor,
+      },
+      pendingArmorDrop: null,
+    }));
+  },
+
+  discardArmorDrop: () => {
+    set({ pendingArmorDrop: null });
   },
 
   openRemnantTrade: () => {

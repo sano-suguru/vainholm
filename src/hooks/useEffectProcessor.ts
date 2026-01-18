@@ -49,6 +49,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     lastInteractionEffects,
     mapSeed,
     currentMapType,
+    tick,
     setMap,
     setMapType,
     clearInteractionEffects,
@@ -62,6 +63,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       lastInteractionEffects: state.lastInteractionEffects,
       mapSeed: state.mapSeed,
       currentMapType: state.currentMapType,
+      tick: state.tick,
       setMap: state.setMap,
       setMapType: state.setMapType,
       clearInteractionEffects: state.clearInteractionEffects,
@@ -132,7 +134,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
           }
         }
       } else if (effect.type === 'ascend' && isInDungeon) {
-        const newFloor = ascendStairs();
+        const newFloor = ascendStairs(tick);
         if (newFloor) {
           useGameStore.getState().clearFloorStatModifiers();
           useGameStore.getState().clearFloorPenalties();
@@ -185,5 +187,6 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     onEnterDungeon,
     onExitDungeon,
     gameMode,
+    tick,
   ]);
 }

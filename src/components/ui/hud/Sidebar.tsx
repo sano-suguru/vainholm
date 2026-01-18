@@ -4,6 +4,10 @@ import { Sword, Shield, Heart } from 'lucide-react';
 import { useGameStore } from '../../../stores/gameStore';
 import styles from '../../../styles/game.module.css';
 
+interface SidebarProps {
+  onEquipmentClick?: () => void;
+}
+
 function getHpStateClass(hp: number, maxHp: number): string {
   if (maxHp <= 0) return styles.sidebarHpCritical;
   const ratio = hp / maxHp;
@@ -12,7 +16,7 @@ function getHpStateClass(hp: number, maxHp: number): string {
   return styles.sidebarHpCritical;
 }
 
-export const Sidebar = memo(function Sidebar() {
+export const Sidebar = memo(function Sidebar({ onEquipmentClick }: SidebarProps) {
   const { player, enemies } = useGameStore(
     useShallow((state) => ({
       player: state.player,
@@ -78,16 +82,31 @@ export const Sidebar = memo(function Sidebar() {
         </div>
       </div>
 
-      {player.weapon && (
-        <div className={styles.sidebarSection}>
+      {(player.weapon || player.armor) && (
+        <div 
+          className={`${styles.sidebarSection} ${onEquipmentClick ? styles.sidebarSectionClickable : ''}`}
+          onClick={onEquipmentClick}
+          role={onEquipmentClick ? 'button' : undefined}
+          tabIndex={onEquipmentClick ? 0 : undefined}
+          onKeyDown={onEquipmentClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onEquipmentClick(); } : undefined}
+        >
           <div className={styles.sidebarSectionHeader}>
             <span className={styles.sidebarSectionIcon}>⚔</span>
             <span>EQUIPMENT</span>
+            {onEquipmentClick && <span className={styles.sidebarKeyHint}>[E]</span>}
           </div>
-          <div className={styles.sidebarEquipmentItem}>
-            <span className={styles.sidebarEquipmentName}>{player.weapon.name}</span>
-            <span className={styles.sidebarEquipmentStat}>+{player.weapon.attackBonus}</span>
-          </div>
+          {player.weapon && (
+            <div className={styles.sidebarEquipmentItem}>
+              <span className={styles.sidebarEquipmentName}>{player.weapon.name}</span>
+              <span className={styles.sidebarEquipmentStat}>+{player.weapon.attackBonus}</span>
+            </div>
+          )}
+          {player.armor && (
+            <div className={styles.sidebarEquipmentItem}>
+              <span className={styles.sidebarEquipmentName}>{player.armor.name}</span>
+              <span className={styles.sidebarEquipmentStat}>+{player.armor.defenseBonus}</span>
+            </div>
+          )}
         </div>
       )}
 

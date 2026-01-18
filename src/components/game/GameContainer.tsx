@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../stores/gameStore';
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
@@ -23,6 +23,8 @@ import { GameOverScreen } from '../ui/GameOverScreen';
 import { LevelUpScreen } from '../ui/LevelUpScreen';
 import { WeaponDropModal } from '../ui/WeaponDropModal';
 import { RemnantTradeModal } from '../ui/RemnantTradeModal';
+import { EquipmentScreen } from '../ui/EquipmentScreen';
+import { ArmorDropModal } from '../ui/ArmorDropModal';
 import { Hud } from '../ui/hud';
 import { getRegionConfigForFloor } from '../../dungeon/config';
 import { getRemnantForRegion } from '../../progression/remnants';
@@ -37,7 +39,8 @@ interface GameContainerProps {
 }
 
 export function GameContainer({ onReturnToTitle }: GameContainerProps) {
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingRemnantTrade } = useGameStore(
+  const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -51,6 +54,7 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
       currentBoss: state.currentBoss,
       bossDefeatedOnFloor: state.bossDefeatedOnFloor,
       pendingWeaponDrop: state.pendingWeaponDrop,
+      pendingArmorDrop: state.pendingArmorDrop,
       pendingRemnantTrade: state.pendingRemnantTrade,
     }))
   );
@@ -71,6 +75,8 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const generateTileLights = useGameStore((state) => state.generateTileLights);
   const equipWeapon = useGameStore((state) => state.equipWeapon);
   const discardWeaponDrop = useGameStore((state) => state.discardWeaponDrop);
+  const equipArmor = useGameStore((state) => state.equipArmor);
+  const discardArmorDrop = useGameStore((state) => state.discardArmorDrop);
   const closeRemnantTrade = useGameStore((state) => state.closeRemnantTrade);
   const healPlayer = useGameStore((state) => state.healPlayer);
   const applyStatModifiers = useGameStore((state) => state.applyStatModifiers);
@@ -100,6 +106,8 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
       selectUpgrade: state.selectUpgrade,
     }))
   );
+
+  const freeSlotCount = useInventoryStore((state) => state.getFreeSlotCount());
   
   const currentFloor = useMemo(() => {
     if (!dungeon) return null;
@@ -269,13 +277,43 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const handleQuickbarUse = useCallback((slotIndex: number) => {
     if (gameEndState !== 'playing') return;
     if (pendingLevelUp) return;
-    useInventoryStore.getState().useItem(slotIndex);
+    useInventoryStore.getState().consumeItem(slotIndex);
   }, [gameEndState, pendingLevelUp]);
+
+  const handleEquipmentToggle = useCallback(() => {
+    if (gameEndState !== 'playing') return;
+    if (pendingLevelUp) return;
+    if (pendingWeaponDrop) return;
+    if (pendingArmorDrop) return;
+    if (pendingRemnantTrade) return;
+    setIsEquipmentOpen((prev) => !prev);
+  }, [gameEndState, pendingLevelUp, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade]);
+
+  const handleEquipmentClose = useCallback(() => {
+    setIsEquipmentOpen(false);
+  }, []);
+
+  const handleAddWeaponToInventory = useCallback(() => {
+    if (!pendingWeaponDrop) return;
+    const added = useInventoryStore.getState().addItem(pendingWeaponDrop);
+    if (added) {
+      discardWeaponDrop();
+    }
+  }, [pendingWeaponDrop, discardWeaponDrop]);
+
+  const handleAddArmorToInventory = useCallback(() => {
+    if (!pendingArmorDrop) return;
+    const added = useInventoryStore.getState().addItem(pendingArmorDrop);
+    if (added) {
+      discardArmorDrop();
+    }
+  }, [pendingArmorDrop, discardArmorDrop]);
 
   useKeyboard({
     onMove: handleMove,
     onDebugToggle: toggleDebugMode,
     onQuickbarUse: handleQuickbarUse,
+    onEquipmentToggle: handleEquipmentToggle,
   });
 
   const viewport = useViewport(
@@ -373,7 +411,7 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
           currentBoss={currentBoss}
         />
       </div>
-      <Hud />
+      <Hud onEquipmentClick={handleEquipmentToggle} />
       {debugMode && (
         <DebugInfo
           playerPosition={player.position}
@@ -396,7 +434,19 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
           weapon={pendingWeaponDrop}
           currentWeapon={player.weapon}
           onEquip={() => equipWeapon(pendingWeaponDrop)}
+          onAddToInventory={handleAddWeaponToInventory}
           onDiscard={discardWeaponDrop}
+          isInventoryFull={freeSlotCount === 0}
+        />
+      )}
+      {pendingArmorDrop && (
+        <ArmorDropModal
+          armor={pendingArmorDrop}
+          currentArmor={player.armor}
+          onEquip={() => equipArmor(pendingArmorDrop)}
+          onAddToInventory={handleAddArmorToInventory}
+          onDiscard={discardArmorDrop}
+          isInventoryFull={freeSlotCount === 0}
         />
       )}
       {pendingRemnantTrade && currentRemnant && (
@@ -405,6 +455,9 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
           onAcceptTrade={handleAcceptTrade}
           onDecline={handleDeclineTrade}
         />
+      )}
+      {isEquipmentOpen && (
+        <EquipmentScreen onClose={handleEquipmentClose} />
       )}
     </div>
   );

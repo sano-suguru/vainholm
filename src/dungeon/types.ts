@@ -6,6 +6,50 @@ export type TileWeights = Partial<Record<TileType, number>>;
 
 export type GameMode = 'normal' | 'advanced';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Dungeon Collapse System (時間制約による崩壊)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** 崩壊システムの定数 */
+export const COLLAPSE_CONSTANTS = {
+  /** 崩壊開始ターン（序盤は自由探索） */
+  START_TICK: 200,
+  /** 崩壊速度：1フロアあたりのターン数 */
+  TICKS_PER_FLOOR: 50,
+} as const;
+
+/** 崩壊したフロアを計算（純粋関数） */
+export function getCollapsedFloor(tick: number): number {
+  if (tick < COLLAPSE_CONSTANTS.START_TICK) return 0;
+  return Math.floor((tick - COLLAPSE_CONSTANTS.START_TICK) / COLLAPSE_CONSTANTS.TICKS_PER_FLOOR) + 1;
+}
+
+/** 現在のフロアが崩壊するまでの残りターン数を計算 */
+export function getTurnsUntilCollapse(tick: number, currentFloor: number): number | null {
+  // 崩壊開始前
+  if (tick < COLLAPSE_CONSTANTS.START_TICK) {
+    const turnsUntilStart = COLLAPSE_CONSTANTS.START_TICK - tick;
+    const turnsAfterStart = (currentFloor - 1) * COLLAPSE_CONSTANTS.TICKS_PER_FLOOR;
+    return turnsUntilStart + turnsAfterStart;
+  }
+  
+  // 崩壊進行中
+  const collapsedFloor = getCollapsedFloor(tick);
+  if (currentFloor <= collapsedFloor) {
+    return 0; // 既に崩壊している
+  }
+  
+  const tickWhenCurrentFloorCollapses = 
+    COLLAPSE_CONSTANTS.START_TICK + (currentFloor - 1) * COLLAPSE_CONSTANTS.TICKS_PER_FLOOR;
+  return tickWhenCurrentFloorCollapses - tick;
+}
+
+/** プレイヤーが崩壊に巻き込まれたか */
+export function isPlayerCaughtByCollapse(playerFloor: number, tick: number): boolean {
+  const collapsedFloor = getCollapsedFloor(tick);
+  return playerFloor <= collapsedFloor;
+}
+
 export type DungeonTheme =
   | 'hrodrgraf'
   | 'rotmyrkr'
