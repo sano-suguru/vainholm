@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import {
   game_over_defeat_title,
   game_over_defeat_message,
@@ -21,17 +21,22 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
   const unlockAdvancedMode = useMetaProgressionStore((state) => state.unlockAdvancedMode);
   const recordRunEnd = useMetaProgressionStore((state) => state.recordRunEnd);
 
+  const hasRecordedRef = useRef(false);
+
   const isDefeat = type === 'defeat';
   const isVictory = type === 'victory' || type === 'victory_true';
   const isTrueEnding = type === 'victory_true';
 
   useEffect(() => {
+    if (hasRecordedRef.current) return;
+    hasRecordedRef.current = true;
+
     recordRunEnd(isVictory);
-    
+
     if (isVictory && gameMode === 'normal') {
       unlockAdvancedMode();
     }
-    
+
     useMetaProgressionStore.getState().clearCurrentRunRemnantTrades();
   }, [isVictory, gameMode, recordRunEnd, unlockAdvancedMode]);
 

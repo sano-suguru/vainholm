@@ -14,12 +14,18 @@ interface EncyclopediaScreenProps {
   onBack: () => void;
 }
 
-const REGION_NAMES: Record<string, string> = {
+const REGION_NAMES = {
   hrodrgraf: '栄光の墓',
   rotmyrkr: '根の闇',
   gleymdariki: '忘却の王国',
   upphafsdjup: '起源の深淵',
-};
+} as const;
+
+type KnownRegionId = keyof typeof REGION_NAMES;
+
+function getRegionName(region: string): string {
+  return REGION_NAMES[region as KnownRegionId] ?? region;
+}
 
 export const EncyclopediaScreen = memo(function EncyclopediaScreen({
   onBack,
@@ -68,7 +74,7 @@ export const EncyclopediaScreen = memo(function EncyclopediaScreen({
             戻る
           </button>
           <h1 className={styles.encyclopediaTitle}>図鑑</h1>
-          <div className={styles.encyclopediaBackButton} style={{ visibility: 'hidden' }}>
+          <div className={`${styles.encyclopediaBackButton} ${styles.encyclopediaBackButtonPlaceholder}`}>
             戻る
           </div>
         </div>
@@ -165,7 +171,7 @@ const EnemyTab = memo(function EnemyTab({ enemies, encountered, encounters }: En
                 </div>
                 <div className={styles.encyclopediaCardDivider} />
                 <div className={styles.encyclopediaCardMeta}>
-                  <span>出現: {enemy.regions.map((r) => REGION_NAMES[r]).join(', ')}</span>
+                  <span>出現: {enemy.regions.map(getRegionName).join(', ')}</span>
                   <span>撃破数: {encounter?.timesDefeated ?? 0}</span>
                 </div>
               </>
@@ -226,7 +232,7 @@ const BossTab = memo(function BossTab({ bosses, encountered, encounters }: BossT
                 </div>
                 <div className={styles.encyclopediaCardDivider} />
                 <div className={styles.encyclopediaCardMeta}>
-                  <span>領域: {REGION_NAMES[boss.region]}</span>
+                  <span>領域: {getRegionName(boss.region)}</span>
                   <span>{isDefeated ? `撃破: ${encounter.timesDefeated}回` : '未撃破'}</span>
                 </div>
               </>
@@ -269,7 +275,7 @@ const RemnantTab = memo(function RemnantTab({ remnants, traded }: RemnantTabProp
                 <p className={styles.encyclopediaCardDesc}>{remnant.description}</p>
                 <div className={styles.encyclopediaCardDivider} />
                 <div className={styles.encyclopediaCardMeta}>
-                  <span>領域: {REGION_NAMES[remnant.region]}</span>
+                  <span>領域: {getRegionName(remnant.region)}</span>
                 </div>
                 <div className={styles.encyclopediaCardDivider} />
                 <div className={styles.encyclopediaCardQuote}>

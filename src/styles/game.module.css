@@ -1605,6 +1605,10 @@
   border-color: #3a3530;
 }
 
+.encyclopediaBackButtonPlaceholder {
+  visibility: hidden;
+}
+
 .encyclopediaTabs {
   display: flex;
   border-bottom: 1px solid #2a2420;
