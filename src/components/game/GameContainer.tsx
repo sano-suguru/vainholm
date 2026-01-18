@@ -32,7 +32,11 @@ import { executeTurn } from '../../combat/turnManager';
 import type { Enemy } from '../../combat/types';
 import styles from '../../styles/game.module.css';
 
-export function GameContainer() {
+interface GameContainerProps {
+  onReturnToTitle: () => void;
+}
+
+export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingRemnantTrade } = useGameStore(
     useShallow((state) => ({
       player: state.player,
@@ -336,15 +340,15 @@ export function GameContainer() {
   }
 
   if (gameEndState === 'defeat') {
-    return <GameOverScreen type="defeat" />;
+    return <GameOverScreen type="defeat" onNewGame={onReturnToTitle} />;
   }
 
   if (gameEndState === 'victory') {
-    return <GameOverScreen type="victory" />;
+    return <GameOverScreen type="victory" onNewGame={onReturnToTitle} />;
   }
 
   if (gameEndState === 'victory_true') {
-    return <GameOverScreen type="victory_true" />;
+    return <GameOverScreen type="victory_true" onNewGame={onReturnToTitle} />;
   }
 
   return (

@@ -31,18 +31,24 @@ export const executeTurn = (): void => {
   store.incrementTick();
 };
 
-const processPlayerStatusEffects = (
-  statusEffects: Map<StatusEffectId, StatusEffect>,
-  damagePlayer: (amount: number) => void,
-  setStatusEffects: (effects: Map<StatusEffectId, StatusEffect>) => void
-): StatusEffectId[] => {
-  if (statusEffects.size === 0) {
-    return [];
-  }
+type StatusEffectTickResult = {
+  damageEvents: number[];
+  effectsToRemove: StatusEffectId[];
+  nextEffects: Map<StatusEffectId, StatusEffect>;
+  hasStatusUpdates: boolean;
+};
 
+const tickStatusEffects = (
+  statusEffects: Map<StatusEffectId, StatusEffect>
+): StatusEffectTickResult => {
+  const damageEvents: number[] = [];
   const effectsToRemove: StatusEffectId[] = [];
-  const newEffects = new Map<StatusEffectId, StatusEffect>();
+  const nextEffects = new Map<StatusEffectId, StatusEffect>();
   let hasStatusUpdates = false;
+
+  if (statusEffects.size === 0) {
+    return { damageEvents, effectsToRemove, nextEffects, hasStatusUpdates };
+  }
 
   for (const [effectId, effect] of statusEffects) {
     const definition = STATUS_EFFECTS[effectId];
@@ -53,8 +59,7 @@ const processPlayerStatusEffects = (
     }
 
     if (definition.effect.type === 'damage_over_time') {
-      const damage = definition.effect.damagePerTurn * effect.stacks;
-      damagePlayer(damage);
+      damageEvents.push(definition.effect.damagePerTurn * effect.stacks);
     }
 
     const newDuration = effect.duration - 1;
@@ -68,11 +73,29 @@ const processPlayerStatusEffects = (
       hasStatusUpdates = true;
     }
 
-    newEffects.set(effectId, { ...effect, duration: newDuration });
+    nextEffects.set(effectId, { ...effect, duration: newDuration });
+  }
+
+  if (nextEffects.size !== statusEffects.size) {
+    hasStatusUpdates = true;
+  }
+
+  return { damageEvents, effectsToRemove, nextEffects, hasStatusUpdates };
+};
+
+const processPlayerStatusEffects = (
+  statusEffects: Map<StatusEffectId, StatusEffect>,
+  damagePlayer: (amount: number) => void,
+  setStatusEffects: (effects: Map<StatusEffectId, StatusEffect>) => void
+): StatusEffectId[] => {
+  const { damageEvents, effectsToRemove, nextEffects, hasStatusUpdates } = tickStatusEffects(statusEffects);
+
+  for (const damage of damageEvents) {
+    damagePlayer(damage);
   }
 
   if (hasStatusUpdates) {
-    setStatusEffects(newEffects);
+    setStatusEffects(nextEffects);
   }
 
   return effectsToRemove;
@@ -83,51 +106,20 @@ const processEnemyStatusEffects = (
   updateEnemy: (id: EnemyId, updates: Partial<Enemy>) => void
 ): void => {
   if (!enemy.isAlive || !enemy.statusEffects) return;
-  
-  const statusEffects = enemy.statusEffects;
-  let totalDamage = 0;
-  let hasStatusUpdates = false;
-  const newEffects = new Map<StatusEffectId, StatusEffect>();
 
-  for (const [effectId, effect] of statusEffects) {
-    const definition = STATUS_EFFECTS[effectId];
-    if (!definition) {
-      hasStatusUpdates = true;
-      continue;
-    }
-
-    if (definition.effect.type === 'damage_over_time') {
-      totalDamage += definition.effect.damagePerTurn * effect.stacks;
-    }
-
-    const newDuration = effect.duration - 1;
-    if (newDuration <= 0) {
-      hasStatusUpdates = true;
-      continue;
-    }
-
-    if (newDuration !== effect.duration) {
-      hasStatusUpdates = true;
-    }
-
-    newEffects.set(effectId, { ...effect, duration: newDuration });
-  }
-
-  if (newEffects.size !== statusEffects.size) {
-    hasStatusUpdates = true;
-  }
-
-  const nextEffects = newEffects.size > 0 ? newEffects : undefined;
+  const { damageEvents, nextEffects, hasStatusUpdates } = tickStatusEffects(enemy.statusEffects);
+  const nextStatusEffects = nextEffects.size > 0 ? nextEffects : undefined;
+  const totalDamage = damageEvents.reduce((sum, value) => sum + value, 0);
 
   if (totalDamage > 0) {
     const newHp = Math.max(0, enemy.stats.hp - totalDamage);
     updateEnemy(enemy.id, {
       stats: { ...enemy.stats, hp: newHp },
       isAlive: newHp > 0,
-      statusEffects: nextEffects,
+      statusEffects: nextStatusEffects,
     });
   } else if (hasStatusUpdates) {
-    updateEnemy(enemy.id, { statusEffects: nextEffects });
+    updateEnemy(enemy.id, { statusEffects: nextStatusEffects });
   }
 };
 

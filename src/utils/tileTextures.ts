@@ -529,19 +529,25 @@ export function isAnimatedTile(tileType: TileType): boolean {
   return ANIMATED_TILES.has(tileType);
 }
 
-export function getAnimatedTileTextures(tileType: TileType): Texture[] | null {
-  const urls = ANIMATED_TILE_URLS[tileType];
-  if (!urls) return null;
-  
+const getTexturesFromCache = (urls: (string | undefined)[]): Texture[] | null => {
   const textures: Texture[] = [];
+
   for (const url of urls) {
+    if (!url) continue;
     const texture = textureCache.get(url);
     if (texture) {
       textures.push(texture);
     }
   }
-  
+
   return textures.length > 0 ? textures : null;
+};
+
+export function getAnimatedTileTextures(tileType: TileType): Texture[] | null {
+  const urls = ANIMATED_TILE_URLS[tileType];
+  if (!urls) return null;
+
+  return getTexturesFromCache(urls);
 }
 
 export function getConnectionType(neighbors: {
@@ -667,17 +673,9 @@ export function getAnimatedMultiTileTextures(
 ): Texture[] | null {
   const frames = ANIMATED_MULTI_TILE_URLS[objectType];
   if (!frames) return null;
-  
+
   const key = `${tileX}_${tileY}`;
-  const textures: Texture[] = [];
-  
-  for (const frameTiles of frames) {
-    const url = frameTiles[key];
-    if (url) {
-      const texture = textureCache.get(url);
-      if (texture) textures.push(texture);
-    }
-  }
-  
-  return textures.length > 0 ? textures : null;
+  const urls = frames.map((frameTiles) => frameTiles[key]);
+
+  return getTexturesFromCache(urls);
 }

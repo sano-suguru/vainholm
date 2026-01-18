@@ -1,7 +1,6 @@
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Application, extend, useTick } from '@pixi/react';
-import type { Container, Graphics, Text, Sprite } from 'pixi.js';
-import { BlurFilter } from 'pixi.js';
+import { Container, Graphics, Text, Sprite, BlurFilter } from 'pixi.js';
 import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '../../types';
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
@@ -37,12 +36,7 @@ import {
 } from '../../utils/overlayConfig';
 import { getAnimationTime, setAnimationTime } from './animationTime';
 
-extend({
-  Container: undefined as unknown as typeof Container,
-  Graphics: undefined as unknown as typeof Graphics,
-  Text: undefined as unknown as typeof Text,
-  Sprite: undefined as unknown as typeof Sprite,
-});
+extend({ Container, Graphics, Text, Sprite });
 
 const FOG_BLUR_FILTER = (() => {
   const filter = new BlurFilter({ strength: 30, quality: 1 });

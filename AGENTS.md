@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-17 | **Commit**: af4063d | **Branch**: main | **Tests**: 88 passing
+**Generated**: 2026-01-18 | **Commit**: 094c72a | **Branch**: main | **Tests**: 99 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -18,7 +18,7 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 | `pnpm dev` | Vite dev server with HMR |
 | `pnpm build` | Type-check (`tsc -b`) + Vite build |
 | `pnpm lint` | ESLint on all files |
-| `pnpm test` | Vitest run (88 tests) |
+| `pnpm test` | Vitest run (99 tests) |
 | `pnpm similarity` | Detect duplicate code (threshold 0.7) |
 | `pnpm deadcode` | Detect unused files/exports (knip) |
 
@@ -213,7 +213,7 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 
 ## Testing
 
-**Framework**: Vitest 4.0.16 (88 tests passing)
+**Framework**: Vitest 4.0.16 (99 tests passing)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|

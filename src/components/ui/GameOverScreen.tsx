@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import {
   game_over_defeat_title,
   game_over_defeat_message,
@@ -6,31 +6,38 @@ import {
   game_over_victory_message,
   game_over_victory_true_title,
   game_over_victory_true_message,
-  ui_return_to_world,
 } from '../../paraglide/messages.js';
-import { useGameStore } from '../../stores/gameStore';
-import { useDungeonStore } from '../../dungeon';
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
+import { useDungeonStore } from '../../dungeon';
 import styles from '../../styles/game.module.css';
 
 interface GameOverScreenProps {
   type: 'defeat' | 'victory' | 'victory_true';
+  onNewGame: () => void;
 }
 
-export const GameOverScreen = memo(function GameOverScreen({ type }: GameOverScreenProps) {
-  const resetCombatState = useGameStore((state) => state.resetCombatState);
-  const restoreWorldMap = useGameStore((state) => state.restoreWorldMap);
-  const exitDungeon = useDungeonStore((state) => state.exitDungeon);
-
-  const handleRestart = useCallback(() => {
-    useMetaProgressionStore.getState().clearCurrentRunRemnantTrades();
-    resetCombatState();
-    exitDungeon();
-    restoreWorldMap();
-  }, [resetCombatState, exitDungeon, restoreWorldMap]);
+export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: GameOverScreenProps) {
+  const gameMode = useDungeonStore((state) => state.gameMode);
+  const unlockAdvancedMode = useMetaProgressionStore((state) => state.unlockAdvancedMode);
+  const recordRunEnd = useMetaProgressionStore((state) => state.recordRunEnd);
 
   const isDefeat = type === 'defeat';
+  const isVictory = type === 'victory' || type === 'victory_true';
   const isTrueEnding = type === 'victory_true';
+
+  useEffect(() => {
+    recordRunEnd(isVictory);
+    
+    if (isVictory && gameMode === 'normal') {
+      unlockAdvancedMode();
+    }
+    
+    useMetaProgressionStore.getState().clearCurrentRunRemnantTrades();
+  }, [isVictory, gameMode, recordRunEnd, unlockAdvancedMode]);
+
+  const handleNewGame = useCallback(() => {
+    onNewGame();
+  }, [onNewGame]);
   
   const getTitle = () => {
     if (isDefeat) return game_over_defeat_title();
@@ -51,9 +58,16 @@ export const GameOverScreen = memo(function GameOverScreen({ type }: GameOverScr
           {getTitle()}
         </h1>
         <p className={styles.gameOverMessage}>{getMessage()}</p>
-        <button className={styles.gameOverButton} onClick={handleRestart}>
-          {ui_return_to_world()}
-        </button>
+        
+        <div className={styles.gameOverButtons}>
+          <button className={styles.gameOverButton} onClick={handleNewGame}>
+            新しい旅を始める
+          </button>
+        </div>
+
+        {isVictory && gameMode === 'normal' && (
+          <p className={styles.gameOverUnlock}>上級モードが解放されました</p>
+        )}
       </div>
     </div>
   );
