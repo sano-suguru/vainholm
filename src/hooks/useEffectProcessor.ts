@@ -5,6 +5,7 @@ import { useDungeonStore } from '../dungeon';
 import type { DungeonFloor } from '../dungeon/types';
 import { getRegionConfigForFloor } from '../dungeon/config';
 import { spawnEnemiesForFloor, resetEnemyIdCounter } from '../combat/enemySpawner';
+import { checkStrandedAllies } from '../combat/turnManager';
 import type { Position } from '../types';
 import { TILE_DEFINITIONS } from '../utils/constants';
 import type { TileType } from '../types';
@@ -122,6 +123,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
         if (currentFloor && dungeon && currentFloor.level >= dungeon.maxFloors) {
           setGameEndState('victory');
         } else {
+          checkStrandedAllies(useDungeonStore.getState(), useGameStore.getState(), 'descend');
           const newFloor = descendStairs();
           if (newFloor) {
             useGameStore.getState().clearFloorStatModifiers();
@@ -134,6 +136,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
           }
         }
       } else if (effect.type === 'ascend' && isInDungeon) {
+        checkStrandedAllies(useDungeonStore.getState(), useGameStore.getState(), 'ascend');
         const newFloor = ascendStairs(tick);
         if (newFloor) {
           useGameStore.getState().clearFloorStatModifiers();

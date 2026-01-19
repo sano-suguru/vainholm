@@ -17,6 +17,9 @@ import type {
   Armor,
   StatusEffectId,
   StatusEffect,
+  Ally,
+  AllyId,
+  AllyBehaviorMode,
 } from '../combat/types';
 import { getClass } from '../combat/classes';
 import { getBackground } from '../combat/backgrounds';
@@ -234,6 +237,7 @@ interface GameStore {
   floorStatModifiers: StatModifier[];
 
   enemies: Map<EnemyId, Enemy>;
+  allies: Map<AllyId, Ally>;
   currentBoss: Boss | null;
   bossDefeatedOnFloor: boolean;
   turnPhase: TurnPhase;
@@ -266,6 +270,15 @@ interface GameStore {
   updateEnemy: (id: EnemyId, updates: Partial<Enemy>) => void;
   getEnemyAt: (x: number, y: number) => Enemy | null;
   clearEnemies: () => void;
+
+  addAlly: (ally: Ally) => void;
+  removeAlly: (id: AllyId) => void;
+  updateAlly: (id: AllyId, updates: Partial<Ally>) => void;
+  getAllyAt: (x: number, y: number) => Ally | null;
+  getAllies: () => Ally[];
+  setAllyBehaviorMode: (id: AllyId, mode: AllyBehaviorMode) => void;
+  clearAllies: () => void;
+
   damagePlayer: (amount: number) => void;
   healPlayer: (amount: number) => void;
   setTurnPhase: (phase: TurnPhase) => void;
@@ -340,6 +353,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dungeonEntrancePosition: null,
 
   enemies: new Map<EnemyId, Enemy>(),
+  allies: new Map<AllyId, Ally>(),
   currentBoss: null,
   bossDefeatedOnFloor: false,
   turnPhase: 'player',
@@ -840,6 +854,60 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ enemies: new Map() });
   },
 
+  addAlly: (ally) => {
+    set((state) => {
+      const newAllies = new Map(state.allies);
+      newAllies.set(ally.id, ally);
+      return { allies: newAllies };
+    });
+  },
+
+  removeAlly: (id) => {
+    set((state) => {
+      const newAllies = new Map(state.allies);
+      newAllies.delete(id);
+      return { allies: newAllies };
+    });
+  },
+
+  updateAlly: (id, updates) => {
+    set((state) => {
+      const ally = state.allies.get(id);
+      if (!ally) return state;
+      const newAllies = new Map(state.allies);
+      newAllies.set(id, { ...ally, ...updates });
+      return { allies: newAllies };
+    });
+  },
+
+  getAllyAt: (x, y) => {
+    const { allies } = get();
+    for (const ally of allies.values()) {
+      if (ally.isAlive && ally.position.x === x && ally.position.y === y) {
+        return ally;
+      }
+    }
+    return null;
+  },
+
+  getAllies: () => {
+    return Array.from(get().allies.values()).filter((ally) => ally.isAlive);
+  },
+
+  setAllyBehaviorMode: (id, mode) => {
+    set((state) => {
+      const ally = state.allies.get(id);
+      if (!ally) return state;
+      const newAllies = new Map(state.allies);
+      newAllies.set(id, { ...ally, behaviorMode: mode });
+      return { allies: newAllies };
+    });
+  },
+
+  clearAllies: () => {
+    set({ allies: new Map() });
+  },
+
   damagePlayer: (amount) => {
     const playerPos = get().player.position;
     const invulnerable = get().player.statusEffects.get('invulnerable');
@@ -906,6 +974,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         statusEffects: new Map(),
       },
       enemies: new Map(),
+      allies: new Map(),
       currentBoss: null,
       bossDefeatedOnFloor: false,
       turnPhase: 'player',
@@ -1125,6 +1194,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       floorVisionPenalty: 0,
       floorStatModifiers: [],
       enemies: new Map<EnemyId, Enemy>(),
+      allies: new Map<AllyId, Ally>(),
       currentBoss: null,
       bossDefeatedOnFloor: false,
       turnPhase: 'player',

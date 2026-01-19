@@ -119,5 +119,17 @@
   "ui_collapse_system_off": "Collapse OFF",
   "ui_collapse_hint_on": "Time limit (collapse starts after 200 turns)",
   "ui_collapse_hint_off": "Casual mode: No time limit",
-  "ui_collapse_warning": "{turns} until collapse"
+  "ui_collapse_warning": "{turns} until collapse",
+  "combat_enemy_attack_ally": "{enemy} attacks {ally} for {damage} damage",
+  "combat_ally_lost_to_collapse": "{ally} was lost to the collapse!",
+  "combat_ally_died": "{ally} has fallen!",
+  "combat_ally_attack_enemy": "{ally} attacks {enemy} for {damage} damage",
+  "combat_ally_killed_enemy": "{ally} killed {enemy}!",
+  "ally_skeleton": "Skeleton",
+  "ally_ghost": "Ghost",
+  "ally_cultist": "Cultist",
+  "ally_wraith": "Wraith",
+  "ally_shade": "Shade",
+  "ally_hollow_knight": "Hollow Knight",
+  "ally_survivor": "Survivor"
 }

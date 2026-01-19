@@ -119,5 +119,17 @@
   "ui_collapse_system_off": "崩壊システム OFF",
   "ui_collapse_hint_on": "時間制限あり（200ターン後に崩壊開始）",
   "ui_collapse_hint_off": "カジュアルモード：時間制限なし",
-  "ui_collapse_warning": "崩壊まで {turns}"
+  "ui_collapse_warning": "崩壊まで {turns}",
+  "combat_enemy_attack_ally": "{enemy}が{ally}に{damage}のダメージを与えた",
+  "combat_ally_lost_to_collapse": "{ally}が崩壊に巻き込まれた！",
+  "combat_ally_died": "{ally}が倒れた！",
+  "combat_ally_attack_enemy": "{ally}が{enemy}に{damage}のダメージを与えた",
+  "combat_ally_killed_enemy": "{ally}が{enemy}を倒した！",
+  "ally_skeleton": "骸骨",
+  "ally_ghost": "亡霊",
+  "ally_cultist": "信者",
+  "ally_wraith": "死霊",
+  "ally_shade": "影",
+  "ally_hollow_knight": "虚ろの騎士",
+  "ally_survivor": "生存者"
 }

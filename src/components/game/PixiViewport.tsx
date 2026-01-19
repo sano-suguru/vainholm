@@ -5,10 +5,11 @@ import type { MapData, Position, ViewportBounds, TileType, TilePosition } from '
 import type { WeatherType, TimeOfDay } from '../../stores/gameStore';
 import type { LightSource } from '../../utils/lighting';
 import type { MultiTileObject } from '../../dungeon/types';
-import type { Enemy, Boss } from '../../combat/types';
+import type { Enemy, Boss, Ally } from '../../combat/types';
 import { DAMAGE_NUMBER_DURATION_MS, useDamageNumberStore } from '../../stores/damageNumberStore';
 import { LightLayer } from './LightLayer';
 import { getEnemyTexture, getBossTexture } from '../../utils/enemyTextures';
+import { getAllyTexture } from '../../utils/allyTextures';
 
 import { TILE_SIZE, VIEWPORT_WIDTH_TILES, VIEWPORT_HEIGHT_TILES } from '../../utils/constants';
 import { 
@@ -60,6 +61,7 @@ interface PixiViewportProps {
   lightSources: LightSource[];
   multiTileObjects?: MultiTileObject[];
   enemies?: Enemy[];
+  allies?: Ally[];
   playerStats?: { hp: number; maxHp: number };
   currentBoss?: Boss | null;
 }
@@ -711,6 +713,83 @@ const EnemyLayer = memo(function EnemyLayer({
   );
 });
 
+interface AllyLayerProps {
+  allies: Ally[];
+  viewport: ViewportBounds;
+  isTileVisible: (x: number, y: number) => boolean;
+}
+
+const AllyLayer = memo(function AllyLayer({
+  allies,
+  viewport,
+  isTileVisible,
+}: AllyLayerProps) {
+  const [textures, setTextures] = useState<Map<string, import('pixi.js').Texture>>(new Map());
+  
+  const allyTypeKeys = useMemo(() => {
+    const types = new Set(allies.map(a => a.type));
+    return Array.from(types).sort().join(',');
+  }, [allies]);
+  
+  useEffect(() => {
+    let cancelled = false;
+    
+    const loadTextures = async () => {
+      const { Assets } = await import('pixi.js');
+      const newTextures = new Map<string, import('pixi.js').Texture>();
+      const types = allyTypeKeys.split(',').filter(Boolean);
+      
+      for (const type of types) {
+        if (cancelled) return;
+        if (!newTextures.has(type)) {
+          const texturePath = getAllyTexture(type as import('../../combat/types').AllyTypeId);
+          const texture = await Assets.load(texturePath);
+          newTextures.set(type, texture);
+        }
+      }
+      
+      if (!cancelled) {
+        setTextures(newTextures);
+      }
+    };
+    
+    if (allyTypeKeys) {
+      loadTextures();
+    }
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [allyTypeKeys]);
+  
+  return (
+    <pixiContainer>
+      {allies.map((ally) => {
+        if (!ally.isAlive) return null;
+        if (!isTileVisible(ally.position.x, ally.position.y)) return null;
+        
+        const texture = textures.get(ally.type);
+        if (!texture) return null;
+        
+        const screenX = (ally.position.x - viewport.startX) * TILE_SIZE;
+        const screenY = (ally.position.y - viewport.startY) * TILE_SIZE;
+        
+        return (
+          <pixiSprite
+            key={ally.id}
+            texture={texture}
+            x={screenX}
+            y={screenY}
+            width={TILE_SIZE}
+            height={TILE_SIZE}
+            tint={0x88ccff}
+          />
+        );
+      })}
+    </pixiContainer>
+  );
+});
+
 interface BossLayerProps {
   boss: Boss | null | undefined;
   viewport: ViewportBounds;
@@ -769,6 +848,7 @@ const BossLayer = memo(function BossLayer({
 
 interface HealthBarLayerProps {
   enemies: Enemy[];
+  allies: Ally[];
   playerStats: { hp: number; maxHp: number };
   playerPosition: Position;
   viewport: ViewportBounds;
@@ -777,6 +857,7 @@ interface HealthBarLayerProps {
 
 const HealthBarLayer = memo(function HealthBarLayer({
   enemies,
+  allies,
   playerStats,
   playerPosition,
   viewport,
@@ -807,6 +888,25 @@ const HealthBarLayer = memo(function HealthBarLayer({
       g.rect(screenX, screenY, fillWidth, barHeight);
       g.fill({ color: fillColor, alpha: 1 });
     }
+
+    for (const ally of allies) {
+      if (!ally.isAlive) continue;
+      if (!isTileVisible(ally.position.x, ally.position.y)) continue;
+      if (ally.stats.hp >= ally.stats.maxHp) continue;
+      
+      const screenX = (ally.position.x - viewport.startX) * TILE_SIZE + 2;
+      const screenY = (ally.position.y - viewport.startY) * TILE_SIZE + barOffsetY;
+      
+      g.rect(screenX, screenY, barWidth, barHeight);
+      g.fill({ color: 0x333333, alpha: 0.8 });
+      
+      const hpRatio = ally.stats.hp / ally.stats.maxHp;
+      const fillWidth = barWidth * hpRatio;
+      const fillColor = hpRatio > 0.5 ? 0x4488cc : hpRatio > 0.25 ? 0x44aacc : 0x4466cc;
+      
+      g.rect(screenX, screenY, fillWidth, barHeight);
+      g.fill({ color: fillColor, alpha: 1 });
+    }
     
     const playerScreenX = (playerPosition.x - viewport.startX) * TILE_SIZE + 2;
     const playerScreenY = (playerPosition.y - viewport.startY) * TILE_SIZE + barOffsetY;
@@ -820,7 +920,7 @@ const HealthBarLayer = memo(function HealthBarLayer({
     
     g.rect(playerScreenX, playerScreenY, playerFillWidth, barHeight);
     g.fill({ color: playerFillColor, alpha: 1 });
-  }, [enemies, playerStats, playerPosition, viewport, isTileVisible]);
+  }, [enemies, allies, playerStats, playerPosition, viewport, isTileVisible]);
   
   return <pixiGraphics draw={drawHealthBars} />;
 });
@@ -1250,6 +1350,7 @@ function GameScene({
   lightSources,
   multiTileObjects = [],
   enemies = [],
+  allies = [],
   playerStats = { hp: 30, maxHp: 30 },
   currentBoss,
 }: GameSceneProps) {
@@ -1293,6 +1394,11 @@ function GameScene({
         viewport={viewport}
         isTileVisible={isTileVisible}
       />
+      <AllyLayer
+        allies={allies}
+        viewport={viewport}
+        isTileVisible={isTileVisible}
+      />
       <BossLayer
         boss={currentBoss}
         viewport={viewport}
@@ -1300,6 +1406,7 @@ function GameScene({
       />
       <HealthBarLayer
         enemies={enemies}
+        allies={allies}
         playerStats={playerStats}
         playerPosition={playerPosition}
         viewport={viewport}

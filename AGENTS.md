@@ -11,6 +11,119 @@ Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 
 - Always respond in Japanese unless explicitly instructed otherwise
 - 日本語で応答すること（特に指示がない限り）
 
+## LLM GUIDANCE (FOR AI CODE GENERATION)
+
+**If you are an AI assistant generating code for this project, follow these guidelines.**
+
+### Code Generation Workflow
+
+1. **READ subsystem AGENTS.md FIRST** (e.g., `src/combat/AGENTS.md` for enemy additions)
+   - Locate "COMPLETE EXAMPLE" section if available
+   - Check "WHERE TO LOOK" table for file locations
+   - Review "Anti-Patterns" to avoid common mistakes
+
+2. **VERIFY DESIGN against GAMEPLAY VERIFICATION** (8 criteria below)
+   - Does the content satisfy "Meaningful Choice" principle?
+   - Does it create emergent interactions with 2+ existing systems?
+   - Run through the verification checklist before implementing
+
+3. **LOCATE EXACT FILES** using "WHERE TO LOOK" tables
+   - DO NOT guess file paths — use the routing tables
+   - Check cross-references (e.g., enemy types need both `enemyTypes.ts` AND `messages/*.json`)
+
+4. **FOLLOW EXISTING PATTERNS** by reading implementation examples
+   - Check 2-3 similar existing implementations (e.g., read existing enemy definitions)
+   - Match naming conventions, structure, field order
+   - Preserve code style (memo patterns, import order, type usage)
+
+5. **ADD LOCALIZATION ENTRIES** for all user-facing strings
+   - Add keys to `/messages/en.json` AND `/messages/ja.json`
+   - Follow key naming: `enemy_*`, `upgrade_*`, `boss_*`, `region_*`
+   - Run `pnpm run compile-i18n` after editing JSON
+
+6. **VERIFY TYPE SAFETY** before marking complete
+   - Run `pnpm build` — must pass without errors
+   - Check `lsp_diagnostics` on modified files
+   - NO `@ts-ignore`, `@ts-expect-error`, or `any` types allowed
+
+7. **PROVIDE TESTING INSTRUCTIONS** in your response
+   - Manual testing steps (how to trigger the new content)
+   - Expected behavior (what should happen)
+   - Edge cases to verify (floor restrictions, eligibility checks)
+
+### Core Design Principles (NEVER VIOLATE)
+
+| Principle | Rule | Violation Example |
+|-----------|------|-------------------|
+| **Meaningful Choice** | Both options have merit in different contexts | `upgradeA: +10 all stats` vs `upgradeB: +1 attack` (A strictly dominates) |
+| **Transparency** | Player can predict outcomes from visible info | Hidden stats, vague descriptions, unpredictable mechanics |
+| **Scarcity** | Limited availability creates tension | 100% drop rates, infinite inventory, universal upgrades |
+| **Emergent Interaction** | Content interacts with 2+ existing systems | One-dimensional stat stick with no synergies |
+| **Time Constraint** | Respects collapse system (~50 turns/floor) | Mandatory 100-turn puzzle, boss fights >30 turns |
+| **Build Diversity** | Multiple viable strategies exist | One dominant build, linear progression paths |
+
+### When to Ask for Clarification
+
+**ALWAYS ASK** before implementing if:
+- Multiple valid interpretations exist with 2x+ effort difference
+- Design seems to violate core principles (see GAMEPLAY VERIFICATION)
+- User's request contradicts existing codebase patterns
+- Missing critical information (which floor range? which region? which stat tier?)
+
+**PROCEED WITHOUT ASKING** if:
+- Single valid interpretation
+- Multiple interpretations with similar effort (pick most reasonable)
+- Pattern matches existing examples exactly
+
+### Evidence Requirements
+
+Mark task complete ONLY after:
+- [ ] `pnpm build` passes without errors
+- [ ] Localization compiled (`pnpm run compile-i18n`)
+- [ ] Manual testing instructions provided
+- [ ] Design verified against GAMEPLAY VERIFICATION checklist
+
+**NO EVIDENCE = INCOMPLETE WORK.**
+
+### Common Pitfalls for LLMs
+
+| Pitfall | Why It Happens | Mitigation |
+|---------|----------------|------------|
+| **Forgetting localization** | Focused on logic, forgot user-facing strings | Always check: Does this add UI text? Add to both `en.json` and `ja.json` |
+| **Guessing file paths** | Didn't read "WHERE TO LOOK" table | ALWAYS use routing tables, never guess |
+| **Skipping type definitions** | Added enum value but not TypeScript union | Check: Did I add to BOTH the enum AND the type union? |
+| **Over-optimizing first pass** | Premature abstraction | Follow existing patterns first, optimize only if explicitly requested |
+| **Ignoring Anti-Patterns** | Didn't read subsystem AGENTS.md | Read Anti-Patterns section BEFORE coding |
+| **Creating strictly dominant choices** | Didn't verify against "Meaningful Choice" | Run design through GAMEPLAY VERIFICATION before implementing |
+| **Breaking cross-store calls** | Used hooks instead of `.getState()` | Combat/progression run outside render cycle — use `.getState()` |
+
+### Example Workflow (Adding Enemy)
+
+```
+1. READ: src/combat/AGENTS.md → "COMPLETE EXAMPLE: Adding a New Enemy Type"
+2. VERIFY DESIGN:
+   - Glass cannon (high attack, low HP)? ✅ Meaningful choice (engage vs. avoid)
+   - Spawns floors 4-6? ✅ Scarcity (limited window)
+   - High detection range? ✅ Emergent (interacts with stealth, positioning)
+3. LOCATE FILES:
+   - src/combat/types.ts → Add to EnemyTypeId
+   - src/combat/enemyTypes.ts → Add definition
+   - messages/en.json + messages/ja.json → Add localization
+4. IMPLEMENT following "Shadow Beast" example structure
+5. RUN: pnpm run compile-i18n
+6. VERIFY: pnpm build (must pass)
+7. PROVIDE testing steps: "Enter dungeon floor 4, region Rotmyrkr, verify enemy spawns"
+```
+
+### Key Files Reference (Quick Lookup)
+
+| Content Type | Type Definition | Implementation | Localization |
+|--------------|-----------------|----------------|--------------|
+| Enemy | `combat/types.ts` → `EnemyTypeId` | `combat/enemyTypes.ts` | `messages/*.json` → `enemy_*` |
+| Upgrade | `progression/types.ts` → `UpgradeId` | `progression/upgrades.ts` | `messages/*.json` → `upgrade_*` |
+| Tile | `tiles/types.ts` → `TileType` | `tiles/registry.ts` | `tiles/tileTextures.ts` (texture) |
+| Region | `dungeon/types.ts` → `RegionId` | `dungeon/config/` | `messages/*.json` → `region_*` |
+
 ## Quick Reference
 
 | Command | Purpose |
@@ -259,6 +372,127 @@ pnpm test:watch  # Watch mode
 | `tileTextures.ts` | 682 | 168 imports — fallback chain |
 | `bspGenerator.ts` | 437 | BSP algorithm, Union-Find |
 | `tileInteractions.ts` | 331 | 35+ interactions, chain reactions |
+
+## GAMEPLAY VERIFICATION
+
+When adding or modifying game content (enemies, upgrades, items, dungeon features), verify against these 8 design principles derived from our core inspirations: **Brogue** (emergent depth), **片道勇者** (time constraint), **ハクスラ** (loot hunting).
+
+### 1. Meaningful Choice (Brogue)
+
+**Definition**: Both options have merit; no strictly dominant choice.
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Upgrade A: +5 attack, -2 defense<br>Upgrade B: +3 attack, +1 defense | Upgrade A: +10 attack, +5 defense<br>Upgrade B: +2 attack, +0 defense | **GOOD**: Context-dependent (A = glass cannon, B = balanced). **BAD**: A is strictly better—no reason to choose B. |
+| Enemy spawns in narrow corridors (forces engagement)<br>Enemy spawns in open rooms (can kite) | Enemy always spawns adjacent to player | **GOOD**: Positioning matters. **BAD**: No strategic planning possible. |
+| Weapon: High attack, slow speed<br>Weapon: Low attack, fast speed | Weapon: High attack, fast speed, no downside | **GOOD**: Trade-offs enable build diversity. **BAD**: One weapon dominates all scenarios. |
+
+**Test**: Can you describe a scenario where each option is preferable? If not, the choice is meaningless.
+
+### 2. Transparency (Brogue)
+
+**Definition**: Player can predict outcomes from visible information.
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Enemy stat visible after first encounter (HP, attack, defense shown) | Hidden stats, damage varies unpredictably | **GOOD**: Player learns and plans. **BAD**: Feels random, no skill expression. |
+| Trap visible with "Trap Sense" upgrade | Trap completely invisible, instant death | **GOOD**: Skill-gated information. **BAD**: Trial-and-error is not strategy. |
+| Upgrade description: "+20% damage when HP < 30%" | Upgrade description: "Become stronger in danger" (vague) | **GOOD**: Player can calculate value. **BAD**: Cannot make informed decision. |
+
+**Test**: Can the player predict the consequence of their action without trying it first?
+
+### 3. Scarcity (Brogue)
+
+**Definition**: Limited resources create tension and meaningful planning.
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Healing potion: 15% drop rate, max 3 inventory slots | Healing potion: 80% drop rate, infinite slots | **GOOD**: "Do I use now or save?" is a decision. **BAD**: Always spam heal, no tension. |
+| Upgrade appears only floors 4-6 (2-3 chances) | Upgrade available every level-up, floors 1-8 | **GOOD**: Rare → high perceived value. **BAD**: Universal → feels generic. |
+| Rare enemy: spawnWeight 0.3 (30% of standard) | Common enemy: spawnWeight 3.0 (3× standard) | **GOOD**: Encounter feels special. **BAD**: Dilutes enemy variety. |
+
+**Test**: Does acquiring this feel like an event, or routine?
+
+### 4. Emergent Interaction (Brogue)
+
+**Definition**: New content interacts with 2+ existing systems, creating unforeseen strategies.
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Trap: Deals damage + applies Slow status<br>**Interacts with**: Player positioning, enemy AI (chases into traps), Slow-resist armor | Trap: Deals fixed 10 damage, nothing else | **GOOD**: Enables trap-kiting, positioning play. **BAD**: One-dimensional, no combos. |
+| Upgrade: +50% critical chance when HP full<br>**Interacts with**: Healing items (HP management), defensive play, glass cannon builds | Upgrade: +2 attack (flat bonus) | **GOOD**: Changes playstyle, enables high-risk strategies. **BAD**: Boring stat stick. |
+| Enemy: High attack, low HP, charge AI (moves 2 tiles)<br>**Interacts with**: Doorways (choke points), ranged weapons, knockback effects | Enemy: Standard melee, no special behavior | **GOOD**: Positioning-dependent threat. **BAD**: Generic, forgettable. |
+
+**Test**: Can you name 3+ existing mechanics this new content interacts with?
+
+### 5. Time Constraint Respect (片道勇者)
+
+**Definition**: Content respects the collapse system's time pressure (200 turn start, 50 turns/floor).
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Optional treasure room: 10 turns to explore, 20% loot upgrade | Mandatory 100-turn puzzle blocking progression | **GOOD**: Risk vs. reward under time pressure. **BAD**: Forces tedium, breaks pacing. |
+| Boss fight: 15-20 turns average | Boss fight: 80 turns minimum | **GOOD**: Fits within floor budget (50 turns). **BAD**: Eats entire floor, no exploration time. |
+| Enemy: Patrols predictably, can be avoided with positioning | Enemy: Infinite detection range, impossible to avoid | **GOOD**: Stealth option saves turns. **BAD**: Forces every fight, pacing drags. |
+
+**Test**: Does this content respect the ~50 turn/floor budget? Does it enable turn-efficient play?
+
+### 6. Session Length (片道勇者)
+
+**Definition**: Full run fits 30-45 min target (8 floors × ~50 turns + boss fights).
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Upgrade selection: 4 choices, instant decision | Upgrade selection: 20 choices, complex dependencies | **GOOD**: Quick decision keeps pacing. **BAD**: Analysis paralysis breaks flow. |
+| Enemy: Dies in 3-5 hits (15 HP, 5 attack formula) | Enemy: Dies in 30+ hits (300 HP tank) | **GOOD**: Fast combat resolution. **BAD**: Single fight takes 5+ minutes. |
+| Trap: Instant effect (damage/status), move on | Trap: Triggers 5-turn timed puzzle | **GOOD**: Immediate consequence. **BAD**: Breaks roguelike flow. |
+
+**Test**: Does this content add >5 minutes to a full run? If yes, justify or cut.
+
+### 7. Meta-Progression Balance (片道勇者)
+
+**Definition**: Unlocks expand choices, NOT raw power (avoid power creep).
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| Unlock: New class with different ability (e.g., Hunter: Trap Detection) | Unlock: +50% starting stats for all characters | **GOOD**: Horizontal progression. **BAD**: Trivializes core challenge. |
+| Unlock: Rare enemy type (adds encounter variety) | Unlock: Start at floor 5 (skip content) | **GOOD**: Enriches gameplay. **BAD**: Defeats the point of roguelike. |
+| Unlock: Relic with trade-off (+attack, -defense) | Unlock: Permanent invincibility item | **GOOD**: Still requires skill. **BAD**: Removes all challenge. |
+
+**Test**: Does this unlock make the game more interesting or just easier?
+
+### 8. Build Diversity (ハクスラ)
+
+**Definition**: Multiple viable builds exist; no single "best" path.
+
+| ✅ GOOD | ❌ BAD | Why |
+|---------|--------|-----|
+| **Tank build**: High HP/defense, retaliation, slow weapon<br>**Glass cannon**: High attack, low defense, critical bonuses<br>**Stealth**: Trap detection, backstab damage, evasion | Only one viable path: Stack attack → delete everything | **GOOD**: 3+ distinct archetypes. **BAD**: No build identity, linear progression. |
+| Upgrade pool: 40% stat, 25% passive, 20% weapon, 15% active | Upgrade pool: 95% flat stat bonuses | **GOOD**: Diverse options each run. **BAD**: All builds feel identical. |
+| Weapon types: Sword (balanced), Axe (AoE), Spear (range), Dagger (crit) | All weapons: Linear DPS upgrades (Sword < Axe < Spear) | **GOOD**: Situational strengths. **BAD**: One weapon type dominates. |
+
+**Test**: Can you win with 3+ completely different strategies? If not, builds are shallow.
+
+---
+
+## VERIFICATION CHECKLIST
+
+When adding new content, run through this checklist:
+
+```
+[ ] Meaningful Choice: Both options have merit in different scenarios
+[ ] Transparency: Player can predict outcome from visible information
+[ ] Scarcity: Resource is limited enough to create tension
+[ ] Emergent Interaction: Content interacts with 2+ existing systems
+[ ] Time Constraint: Fits within ~50 turn/floor budget
+[ ] Session Length: Doesn't add >5 minutes to full run
+[ ] Meta-Progression: Unlocks expand choices, not raw power
+[ ] Build Diversity: Enables new builds, doesn't invalidate existing ones
+```
+
+If ANY checkbox fails, revisit the design before implementation.
+
+---
 
 ## Subdirectory Documentation
 

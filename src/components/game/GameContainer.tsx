@@ -31,7 +31,7 @@ import { getRemnantForRegion } from '../../progression/remnants';
 import type { RemnantTrade, RemnantCost, RemnantBenefit } from '../../progression/remnants';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE } from '../../utils/constants';
 import { executeTurn } from '../../combat/turnManager';
-import type { Enemy } from '../../combat/types';
+import type { Enemy, Ally } from '../../combat/types';
 import styles from '../../styles/game.module.css';
 
 interface GameContainerProps {
@@ -40,7 +40,7 @@ interface GameContainerProps {
 
 export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, allies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -50,6 +50,7 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
       lightSources: state.lightSources,
       mapSeed: state.mapSeed,
       enemies: state.enemies,
+      allies: state.allies,
       gameEndState: state.gameEndState,
       currentBoss: state.currentBoss,
       bossDefeatedOnFloor: state.bossDefeatedOnFloor,
@@ -363,6 +364,11 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
     () => Array.from(enemies.values()).filter((e): e is Enemy => e.isAlive),
     [enemies]
   );
+
+  const alliesArray = useMemo(
+    () => Array.from(allies.values()).filter((a): a is Ally => a.isAlive),
+    [allies]
+  );
   
   const playerStats = useMemo(
     () => ({ hp: player.stats.hp, maxHp: player.stats.maxHp }),
@@ -407,6 +413,7 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
           lightSources={lightSources}
           multiTileObjects={currentFloor?.multiTileObjects}
           enemies={enemiesArray}
+          allies={alliesArray}
           playerStats={playerStats}
           currentBoss={currentBoss}
         />

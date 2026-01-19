@@ -1,4 +1,4 @@
-import type { BossTypeId, EnemyTypeId } from '../combat/types';
+import type { AllyTypeId, BossTypeId, EnemyTypeId } from '../combat/types';
 import type { DungeonTheme } from '../dungeon/types';
 import {
   enemy_skeleton,
@@ -22,6 +22,13 @@ import {
   region_sannleiksholmr,
   region_world,
   region_unknown,
+  ally_skeleton,
+  ally_ghost,
+  ally_cultist,
+  ally_wraith,
+  ally_shade,
+  ally_hollow_knight,
+  ally_survivor,
 } from '../paraglide/messages.js';
 
 /**
@@ -80,4 +87,21 @@ export function getLocalizedWorldName(): string {
 
 export function getLocalizedUnknownRegionName(): string {
   return region_unknown();
+}
+
+/**
+ * Get localized ally name by type ID
+ */
+const ALLY_NAME_MAP: Record<AllyTypeId, () => string> = {
+  skeleton: ally_skeleton,
+  ghost: ally_ghost,
+  cultist: ally_cultist,
+  wraith: ally_wraith,
+  shade: ally_shade,
+  hollow_knight: ally_hollow_knight,
+  survivor: ally_survivor,
+};
+
+export function getLocalizedAllyName(typeId: AllyTypeId): string {
+  return ALLY_NAME_MAP[typeId]();
 }

@@ -1,9 +1,14 @@
 import { useGameStore } from '../stores/gameStore';
 import { useDungeonStore } from '../dungeon';
-import type { TurnPhase, StatusEffectId, StatusEffect, EnemyId, Enemy } from './types';
+import { useDamageNumberStore } from '../stores/damageNumberStore';
+import type { TurnPhase, StatusEffectId, StatusEffect, EnemyId, Enemy, Ally, AllyId } from './types';
 import { processAllEnemies } from './enemyAI';
+import { processAllAllies } from './allyAI';
 import { processBossAI } from './bossAI';
 import { STATUS_EFFECTS } from './statusEffects';
+import { getManhattanDistance } from './pathfinding';
+import { getLocalizedAllyName } from '../utils/i18n';
+import { combat_ally_lost_to_collapse, combat_ally_died } from '../paraglide/messages.js';
 
 export const executeTurn = (): void => {
   const store = useGameStore.getState();
@@ -15,6 +20,12 @@ export const executeTurn = (): void => {
   const slowEffect = store.player.statusEffects.get('slow');
   const isPlayerSlowed = slowEffect !== undefined && slowEffect.duration > 0;
   const enemyActionCount = isPlayerSlowed ? 2 : 1;
+
+  // DESIGN: Allies always act once per turn regardless of player slow status.
+  // This is intentional: allies are weaker than the player and don't benefit from
+  // the player's speed. Slowed allies individually skip turns in processAllyAI.
+  store.setTurnPhase('ally');
+  processAllAllies();
 
   for (let i = 0; i < enemyActionCount; i++) {
     store.setTurnPhase('enemy');
@@ -34,13 +45,47 @@ export const executeTurn = (): void => {
   checkCollapseGameOver();
 };
 
+const COLLAPSE_ALLY_SAFE_DISTANCE = 3;
+
 const checkCollapseGameOver = (): void => {
   const dungeonStore = useDungeonStore.getState();
   if (!dungeonStore.isInDungeon) return;
   
-  const tick = useGameStore.getState().tick;
+  const gameStore = useGameStore.getState();
+  const tick = gameStore.tick;
+
   if (dungeonStore.checkCollapseGameOver(tick)) {
-    useGameStore.getState().setGameEndState('defeat');
+    gameStore.setGameEndState('defeat');
+  }
+};
+
+export const checkStrandedAllies = (
+  dungeonStore: ReturnType<typeof useDungeonStore.getState>,
+  gameStore: ReturnType<typeof useGameStore.getState>,
+  direction: 'descend' | 'ascend' = 'descend'
+): void => {
+  const allies = gameStore.getAllies();
+  if (allies.length === 0) return;
+  
+  const currentFloor = dungeonStore.getCurrentFloor();
+  if (!currentFloor) return;
+  
+  const stairsPosition = direction === 'descend'
+    ? currentFloor.stairsDown ?? currentFloor.stairsUp
+    : currentFloor.stairsUp ?? currentFloor.stairsDown;
+  if (!stairsPosition) return;
+  
+  for (const ally of allies) {
+    const distance = getManhattanDistance(ally.position, stairsPosition);
+    if (distance > COLLAPSE_ALLY_SAFE_DISTANCE) {
+      gameStore.removeAlly(ally.id);
+      const allyDisplayName = getLocalizedAllyName(ally.type);
+      gameStore.addCombatLogEntry({
+        tick: gameStore.tick,
+        message: combat_ally_lost_to_collapse({ ally: allyDisplayName }),
+        type: 'ally_death',
+      });
+    }
   }
 };
 
@@ -136,9 +181,52 @@ const processEnemyStatusEffects = (
   }
 };
 
+const processAllyStatusEffects = (
+  ally: Ally,
+  updateAlly: (id: AllyId, updates: Partial<Ally>) => void,
+  removeAlly: (id: AllyId) => void,
+  addCombatLogEntry: ReturnType<typeof useGameStore.getState>['addCombatLogEntry'],
+  tick: number
+): void => {
+  if (!ally.isAlive || !ally.statusEffects) return;
+
+  const { damageEvents, nextEffects, hasStatusUpdates } = tickStatusEffects(ally.statusEffects);
+  const nextStatusEffects = nextEffects.size > 0 ? nextEffects : undefined;
+  const totalDamage = damageEvents.reduce((sum, value) => sum + value, 0);
+
+  if (totalDamage > 0) {
+    useDamageNumberStore.getState().addDamageNumber(ally.position, totalDamage, false, false);
+    
+    const newHp = Math.max(0, ally.stats.hp - totalDamage);
+    const isDead = newHp <= 0;
+    
+    if (isDead) {
+      const allyDisplayName = getLocalizedAllyName(ally.type);
+      addCombatLogEntry({
+        tick,
+        message: combat_ally_died({ ally: allyDisplayName }),
+        type: 'ally_death',
+      });
+      // Set isAlive: false before removal for consistency with enemy death handling
+      updateAlly(ally.id, {
+        stats: { ...ally.stats, hp: 0 },
+        isAlive: false,
+      });
+      removeAlly(ally.id);
+    } else {
+      updateAlly(ally.id, {
+        stats: { ...ally.stats, hp: newHp },
+        statusEffects: nextStatusEffects,
+      });
+    }
+  } else if (hasStatusUpdates) {
+    updateAlly(ally.id, { statusEffects: nextStatusEffects });
+  }
+};
+
 const processEffects = (): void => {
   const store = useGameStore.getState();
-  const { player, enemies, damagePlayer, updateEnemy, recalculateVisibility } = store;
+  const { player, enemies, damagePlayer, updateEnemy, recalculateVisibility, updateAlly, removeAlly, getAllies, addCombatLogEntry, tick } = store;
 
   const removedEffects = processPlayerStatusEffects(
     player.statusEffects,
@@ -153,6 +241,11 @@ const processEffects = (): void => {
   for (const enemy of enemies.values()) {
     if (!enemy.isAlive || !enemy.statusEffects) continue;
     processEnemyStatusEffects(enemy, updateEnemy);
+  }
+  
+  for (const ally of getAllies()) {
+    if (!ally.isAlive || !ally.statusEffects) continue;
+    processAllyStatusEffects(ally, updateAlly, removeAlly, addCombatLogEntry, tick);
   }
 };
 

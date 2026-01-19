@@ -39,19 +39,21 @@
 - [x] 崩壊に巻き込まれた場合のゲームオーバー処理（`turnManager.ts`で毎ターンチェック）
 - [x] カジュアルモード（崩壊なし）のUI追加（CharacterSelectionScreen：チェックボックスで切り替え）
 
-### Phase C: パーティシステム
+### Phase C: パーティシステム ✅ (2026-01-19)
 
 仲間による戦略性と装備分配のジレンマを導入。
 
-- [ ] 仲間（Ally）の型定義（`combat/types.ts`に追加）
-- [ ] gameStoreにパーティ状態追加（allies配列、最大3人）
-- [ ] 仲間のAI行動モード（突撃/追従/待機）
-- [ ] 仲間の描画（EnemyLayer相当のAllyLayer）
-- [ ] 仲間への装備割り当てUI
-- [ ] 仲間の死亡処理（永久ロスト、装備も消失）
-- [ ] 仲間の味方化メカニクス（魔法or救出イベント）
-- [ ] 仲間のHPバー表示
-- [ ] 崩壊システムとの連携（仲間取り残しジレンマ）
+- [x] 仲間（Ally）の型定義（`combat/types.ts`に追加）
+- [x] gameStoreにパーティ状態追加（allies Map、最大3人）
+- [x] 仲間のAI行動モード（突撃/追従/待機）- `allyAI.ts`
+- [x] 仲間の描画（AllyLayer）- `PixiViewport.tsx`
+- [x] 仲間へのテクスチャ割り当て - `allyTextures.ts`
+- [x] 仲間の死亡処理（永久ロスト、装備も消失）
+- [x] 仲間のHPバー表示 - HealthBarLayerに統合
+- [x] turnManager.tsに仲間アクションフェーズ追加（player → ally → enemy → effects）
+- [x] 崩壊システムとの連携（階段から離れた仲間は取り残される）
+- [ ] 仲間への装備割り当てUI（未実装）
+- [ ] 仲間の味方化メカニクス（魔法or救出イベント）（未実装）
 
 ### Phase D: 強化の巻物 + ユニーク装備
 

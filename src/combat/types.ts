@@ -280,14 +280,47 @@ export interface DamageResult {
   isLethal: boolean;
 }
 
-export type TurnPhase = 'player' | 'enemy' | 'effects';
+export type TurnPhase = 'player' | 'ally' | 'enemy' | 'effects';
 
 export type GameEndState = 'playing' | 'victory' | 'victory_true' | 'defeat';
+
+// =============================================================================
+// Ally / Party System
+// =============================================================================
+
+export type AllyId = string;
+
+export type AllyTypeId =
+  | 'skeleton'
+  | 'ghost'
+  | 'cultist'
+  | 'wraith'
+  | 'shade'
+  | 'hollow_knight'
+  | 'survivor';
+
+export type AllyBehaviorMode = 'aggressive' | 'follow' | 'wait';
+
+export interface Ally {
+  id: AllyId;
+  type: AllyTypeId;
+  position: Position;
+  stats: CombatStats;
+  isAlive: boolean;
+  statusEffects?: Map<StatusEffectId, StatusEffect>;
+  behaviorMode: AllyBehaviorMode;
+  equippedWeapon?: Weapon;
+  equippedArmor?: Armor;
+}
+
+// AllyDefinition is defined in allyTypes.ts as AllyTypeDefinition
+// Re-export for backwards compatibility
+export type { AllyTypeDefinition as AllyDefinition } from './allyTypes';
 
 export interface CombatLogEntry {
   id: string;
   tick: number;
-  type: 'player_attack' | 'enemy_attack' | 'player_death' | 'enemy_death';
+  type: 'player_attack' | 'enemy_attack' | 'enemy_attack_ally' | 'ally_attack' | 'player_death' | 'enemy_death' | 'ally_death';
   message: string;
   damage?: number;
 }
