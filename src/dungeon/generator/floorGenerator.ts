@@ -40,11 +40,11 @@ function createEmptyGrid(width: number, height: number, fillTile: TileId): TileI
   return grid;
 }
 
-function carveRoom(terrain: TileId[][], room: Room): void {
+function carveRoom(terrain: TileId[][], room: Room, floorTile: TileId): void {
   for (let y = room.y; y < room.y + room.height; y++) {
     for (let x = room.x; x < room.x + room.width; x++) {
       if (terrain[y] && terrain[y][x] !== undefined) {
-        terrain[y][x] = T.dungeon_floor;
+        terrain[y][x] = floorTile;
       }
     }
   }
@@ -54,7 +54,8 @@ function carveLine(
   terrain: TileId[][],
   from: Position,
   to: Position,
-  width: number
+  width: number,
+  floorTile: TileId
 ): void {
   const dx = Math.sign(to.x - from.x);
   const dy = Math.sign(to.y - from.y);
@@ -70,7 +71,7 @@ function carveLine(
         const carveY = y + offsetY;
         const carveX = x + offsetX;
         if (terrain[carveY] && terrain[carveY][carveX] !== undefined) {
-          terrain[carveY][carveX] = T.dungeon_floor;
+          terrain[carveY][carveX] = floorTile;
         }
       }
     }
@@ -84,25 +85,25 @@ function carveLine(
       const carveY = to.y + offsetY;
       const carveX = to.x + offsetX;
       if (terrain[carveY] && terrain[carveY][carveX] !== undefined) {
-        terrain[carveY][carveX] = T.dungeon_floor;
+        terrain[carveY][carveX] = floorTile;
       }
     }
   }
 }
 
-function carveCorridor(terrain: TileId[][], corridor: Corridor): void {
+function carveCorridor(terrain: TileId[][], corridor: Corridor, floorTile: TileId): void {
   if (corridor.bends && corridor.bends.length > 0) {
     let current = corridor.start;
     for (const bend of corridor.bends) {
-      carveLine(terrain, current, bend, corridor.width);
+      carveLine(terrain, current, bend, corridor.width, floorTile);
       current = bend;
     }
-    carveLine(terrain, current, corridor.end, corridor.width);
+    carveLine(terrain, current, corridor.end, corridor.width, floorTile);
   } else if (corridor.bend) {
-    carveLine(terrain, corridor.start, corridor.bend, corridor.width);
-    carveLine(terrain, corridor.bend, corridor.end, corridor.width);
+    carveLine(terrain, corridor.start, corridor.bend, corridor.width, floorTile);
+    carveLine(terrain, corridor.bend, corridor.end, corridor.width, floorTile);
   } else {
-    carveLine(terrain, corridor.start, corridor.end, corridor.width);
+    carveLine(terrain, corridor.start, corridor.end, corridor.width, floorTile);
   }
 }
 
@@ -209,7 +210,8 @@ function assignRoomTypes(
 
 function findDoorPosition(
   room: Room,
-  terrain: TileId[][]
+  terrain: TileId[][],
+  floorTile: TileId
 ): Position | null {
   const directions = [
     { dx: 0, dy: -1 },
@@ -227,7 +229,7 @@ function findDoorPosition(
       y += dy;
     }
 
-    if (terrain[y]?.[x] === T.dungeon_floor) {
+    if (terrain[y]?.[x] === floorTile) {
       return { x, y };
     }
   }
@@ -250,6 +252,7 @@ function placeDoors(
   terrain: TileId[][],
   features: TileId[][],
   random: () => number,
+  floorTile: TileId,
   config?: DoorConfig
 ): void {
   if (!config) return;
@@ -268,7 +271,7 @@ function placeDoors(
       );
       if (!room) continue;
 
-      const doorPos = findDoorPosition(room, terrain);
+      const doorPos = findDoorPosition(room, terrain, floorTile);
       if (!doorPos) continue;
 
       const posKey = `${doorPos.x},${doorPos.y}`;
@@ -418,6 +421,7 @@ function addHazards(
   rooms: Room[],
   entranceRoom: Room,
   random: () => number,
+  floorTile: TileId,
   config?: HazardConfig
 ): void {
   if (!config) return;
@@ -447,7 +451,7 @@ function addHazards(
       for (let dx = 0; dx < size; dx++) {
         const x = startX + dx;
         const y = startY + dy;
-        if (terrain[y]?.[x] === T.dungeon_floor && features[y]?.[x] === 0) {
+        if (terrain[y]?.[x] === floorTile && features[y]?.[x] === 0) {
           features[y][x] = tile;
         }
       }
@@ -691,7 +695,8 @@ function floodFill(
   startX: number,
   startY: number,
   width: number,
-  height: number
+  height: number,
+  wallTile: TileId
 ): Set<string> {
   const visited = new Set<string>();
   const stack: Position[] = [{ x: startX, y: startY }];
@@ -704,7 +709,7 @@ function floodFill(
     if (pos.x < 0 || pos.x >= width || pos.y < 0 || pos.y >= height) continue;
 
     const tile = terrain[pos.y]?.[pos.x];
-    if (tile === T.dungeon_wall || tile === T.collapse_void || tile === undefined) continue;
+    if (tile === wallTile || tile === T.collapse_void || tile === undefined) continue;
 
     visited.add(key);
 
@@ -722,9 +727,10 @@ function isPathConnected(
   from: Position,
   to: Position,
   width: number,
-  height: number
+  height: number,
+  wallTile: TileId
 ): boolean {
-  const reachable = floodFill(terrain, from.x, from.y, width, height);
+  const reachable = floodFill(terrain, from.x, from.y, width, height, wallTile);
   return reachable.has(`${to.x},${to.y}`);
 }
 
@@ -739,7 +745,9 @@ function addCollapseZones(
   config: CollapseConfig,
   regionLevel: number,
   width: number,
-  height: number
+  height: number,
+  floorTile: TileId,
+  wallTile: TileId
 ): void {
   const minRoomSize = config.affectWalls ? config.minCollapseSize : config.minCollapseSize + 2;
   const eligibleRooms = rooms.filter(
@@ -799,8 +807,8 @@ function addCollapseZones(
         const y = collapseY + dy;
 
         const tile = terrain[y]?.[x];
-        const isFloor = tile === T.dungeon_floor;
-        const isWall = tile === T.dungeon_wall;
+        const isFloor = tile === floorTile;
+        const isWall = tile === wallTile;
 
         if (!isFloor && !(config.affectWalls && isWall)) continue;
 
@@ -836,7 +844,7 @@ function addCollapseZones(
     const startPos = stairsUp ?? entranceRoom.center;
     const endPos = stairsDown ?? (exitRoom?.center ?? startPos);
 
-    if (!isPathConnected(terrain, startPos, endPos, width, height)) {
+    if (!isPathConnected(terrain, startPos, endPos, width, height, wallTile)) {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           terrain[y][x] = terrainBackup[y][x];
@@ -851,7 +859,7 @@ function addCollapseZones(
           const x = pos.x + dx;
           const y = pos.y + dy;
 
-          if (terrain[y]?.[x] === T.dungeon_floor) {
+          if (terrain[y]?.[x] === floorTile) {
             terrain[y][x] = T.cracked_floor;
           }
         }
@@ -893,15 +901,18 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
     throw new Error(`Failed to generate rooms for floor ${level}`);
   }
 
-  const terrain = createEmptyGrid(width, height, T.dungeon_wall);
+  const floorTile = TILE_ID_BY_TYPE[regionConfig.floorTileType];
+  const wallTile = TILE_ID_BY_TYPE[regionConfig.wallTileType];
+
+  const terrain = createEmptyGrid(width, height, wallTile);
   const features = createEmptyGrid(width, height, 0);
 
   for (const room of rooms) {
-    carveRoom(terrain, room);
+    carveRoom(terrain, room, floorTile);
   }
 
   for (const corridor of corridors) {
-    carveCorridor(terrain, corridor);
+    carveCorridor(terrain, corridor, floorTile);
   }
 
   let stairsUp: Position | null = null;
@@ -951,11 +962,13 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
       regionConfig.collapseConfig,
       regionLevel,
       width,
-      height
+      height,
+      floorTile,
+      wallTile
     );
   }
 
-  placeDoors(rooms, corridors, terrain, features, random, regionConfig.doorConfig);
+  placeDoors(rooms, corridors, terrain, features, random, floorTile, regionConfig.doorConfig);
 
   decorateSpecialRooms(features, rooms, random);
 
@@ -965,7 +978,7 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
 
   addLighting(features, rooms, random, regionConfig.lightingConfig);
 
-  addHazards(features, terrain, rooms, entranceRoom, random, regionConfig.hazardConfig);
+  addHazards(features, terrain, rooms, entranceRoom, random, floorTile, regionConfig.hazardConfig);
 
   const isLastFloorInRegion = regionLevel === floorsPerRegion;
   if (isLastFloorInRegion) {

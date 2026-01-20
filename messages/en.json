@@ -163,5 +163,14 @@
   "unique_void_shroud_desc": "Woven from the fabric of the void, it bends reality.",
 
   "class_unlock_hunter": "(Reach 4F to unlock)",
-  "class_unlock_scholar": "(Defeat a boss to unlock)"
+  "class_unlock_scholar": "(Defeat a boss to unlock)",
+
+  "tile_temple_floor": "Temple Floor",
+  "tile_temple_wall": "Temple Wall",
+  "tile_root_floor": "Root Floor",
+  "tile_root_wall": "Root Wall",
+  "tile_fortress_floor": "Fortress Floor",
+  "tile_fortress_wall": "Fortress Wall",
+  "tile_void_floor": "Void Floor",
+  "tile_void_wall": "Void Wall"
 }

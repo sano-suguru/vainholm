@@ -290,6 +290,15 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   // Environmental effects (fallback to existing)
   smoke: miasmaFrame0Url,
   burning_ground: lavaUrl,
+  // Region-specific dungeon tiles (fallback to generic dungeon tiles)
+  temple_floor: dungeonFloorUrl,
+  temple_wall: dungeonWallUrl,
+  root_floor: dungeonFloorUrl,
+  root_wall: dungeonWallUrl,
+  fortress_floor: dungeonFloorUrl,
+  fortress_wall: dungeonWallUrl,
+  void_floor: dungeonFloorUrl,
+  void_wall: dungeonWallUrl,
 };
 
 type TransitionDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -515,7 +524,15 @@ export function getConnectedTileTexture(
   tileType: TileType,
   connectionType: ConnectionType
 ): Texture | null {
-  const connections = CONNECTED_URLS[tileType];
+  let connections = CONNECTED_URLS[tileType];
+  
+  if (!connections) {
+    const wallFallbacks: TileType[] = ['temple_wall', 'root_wall', 'fortress_wall', 'void_wall'];
+    if (wallFallbacks.includes(tileType)) {
+      connections = CONNECTED_URLS['dungeon_wall'];
+    }
+  }
+  
   if (!connections) return null;
   
   const url = connections[connectionType];

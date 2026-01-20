@@ -146,6 +146,8 @@ export interface RegionConfig {
   generatorStyle: GeneratorStyle;
   size: FloorSizeConfig;
   bspConfig: BSPConfig;
+  floorTileType: TileType;
+  wallTileType: TileType;
   decorationConfig?: DecorationConfig;
   trapConfig?: TrapConfig;
   lightingConfig?: LightingConfig;

@@ -7,6 +7,8 @@ export const ROTMYRKR_CONFIG: RegionConfig = {
   floors: 2,
   startFloor: 3,
   generatorStyle: 'bsp',
+  floorTileType: 'root_floor',
+  wallTileType: 'root_wall',
   size: {
     base: { width: 45, height: 45 },
     perFloor: {

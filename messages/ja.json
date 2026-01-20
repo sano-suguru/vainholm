@@ -163,5 +163,14 @@
   "unique_void_shroud_desc": "虚空の布から織られ、現実を曲げる。",
 
   "class_unlock_hunter": "(4F到達で解放)",
-  "class_unlock_scholar": "(ボス撃破で解放)"
+  "class_unlock_scholar": "(ボス撃破で解放)",
+
+  "tile_temple_floor": "神殿の床",
+  "tile_temple_wall": "神殿の壁",
+  "tile_root_floor": "根の床",
+  "tile_root_wall": "根の壁",
+  "tile_fortress_floor": "砦の床",
+  "tile_fortress_wall": "砦の壁",
+  "tile_void_floor": "虚空の床",
+  "tile_void_wall": "虚空の壁"
 }

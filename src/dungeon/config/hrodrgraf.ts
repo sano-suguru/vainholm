@@ -7,6 +7,8 @@ export const HRODRGRAF_CONFIG: RegionConfig = {
   floors: 2,
   startFloor: 1,
   generatorStyle: 'bsp',
+  floorTileType: 'temple_floor',
+  wallTileType: 'temple_wall',
   size: {
     base: { width: 40, height: 40 },
     perFloor: {

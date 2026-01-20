@@ -44,7 +44,7 @@ export const TitleScreen = memo(function TitleScreen({ onStartGame, onOpenEncycl
         </div>
 
         <p className={styles.titleScreenTagline}>
-          神々は嘘をついていた——あるいは、嘘をつかされていた
+          底には、神々が恐れたものがある
         </p>
 
         <div className={styles.titleScreenButtons}>

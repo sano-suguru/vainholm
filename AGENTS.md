@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Branch**: main | **Tests**: 116 passing
+**Generated**: 2026-01-20 | **Commit**: 01d37f0 | **Branch**: main | **Tests**: 116 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -131,7 +131,7 @@ Mark task complete ONLY after:
 | `pnpm dev` | Vite dev server with HMR |
 | `pnpm build` | Type-check (`tsc -b`) + Vite build |
 | `pnpm lint` | ESLint on all files |
-| `pnpm test` | Vitest run (99 tests) |
+| `pnpm test` | Vitest run (116 tests) |
 | `pnpm similarity` | Detect duplicate code (threshold 0.7) |
 | `pnpm deadcode` | Detect unused files/exports (knip) |
 

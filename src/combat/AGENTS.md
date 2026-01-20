@@ -1,6 +1,6 @@
 # AGENTS.md - src/combat
 
-**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 01d37f0 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Turn-based combat system. Pure functions called from GameContainer after player action.
 

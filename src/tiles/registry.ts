@@ -75,6 +75,15 @@ const TILE_REGISTRY = [
   { id: 64, type: 'smoke', walkable: true, movementCost: 1, name: 'Smoke', char: '░' },
   { id: 65, type: 'burning_ground', walkable: true, movementCost: 1.5, name: 'Burning Ground', char: '!' },
   { id: 66, type: 'weapon_shrine', walkable: true, movementCost: 1, name: 'Weapon Shrine', char: '†' },
+  // Region-specific floor/wall tiles
+  { id: 67, type: 'temple_floor', walkable: true, movementCost: 1, name: 'Temple Floor', char: '.' },
+  { id: 68, type: 'temple_wall', walkable: false, movementCost: Infinity, name: 'Temple Wall', char: '#' },
+  { id: 69, type: 'root_floor', walkable: true, movementCost: 1, name: 'Root Floor', char: '.' },
+  { id: 70, type: 'root_wall', walkable: false, movementCost: Infinity, name: 'Root Wall', char: '#' },
+  { id: 71, type: 'fortress_floor', walkable: true, movementCost: 1, name: 'Fortress Floor', char: '.' },
+  { id: 72, type: 'fortress_wall', walkable: false, movementCost: Infinity, name: 'Fortress Wall', char: '#' },
+  { id: 73, type: 'void_floor', walkable: true, movementCost: 1, name: 'Void Floor', char: '.' },
+  { id: 74, type: 'void_wall', walkable: false, movementCost: Infinity, name: 'Void Wall', char: '#' },
 ] as const satisfies readonly TileEntry[];
 
 export type TileType = (typeof TILE_REGISTRY)[number]['type'];

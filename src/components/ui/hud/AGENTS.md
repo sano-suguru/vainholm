@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/ui/hud
 
-**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../../../../AGENTS.md](../../../../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 01d37f0 | **Parent**: [../../../../AGENTS.md](../../../../AGENTS.md)
 
 React DOM HUD overlay. Fixed position, non-blocking, pointer-events selective.
 

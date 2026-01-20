@@ -7,6 +7,8 @@ export const UPPHAFSDJUP_CONFIG: RegionConfig = {
   floors: 2,
   startFloor: 7,
   generatorStyle: 'bsp',
+  floorTileType: 'void_floor',
+  wallTileType: 'void_wall',
   size: {
     base: { width: 55, height: 55 },
     perFloor: {

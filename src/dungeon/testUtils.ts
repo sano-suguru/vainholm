@@ -33,6 +33,10 @@ export function floodFill(map: MapData, start: Position): Set<string> {
     if (!tileType) return false;
     return (
       tileType === 'dungeon_floor' ||
+      tileType === 'temple_floor' ||
+      tileType === 'root_floor' ||
+      tileType === 'fortress_floor' ||
+      tileType === 'void_floor' ||
       tileType === 'cracked_floor' ||
       tileType === 'collapse_edge'
     );
@@ -96,9 +100,17 @@ export function mapToAscii(map: MapData, highlights?: Map<string, string>): stri
 
       switch (tileType) {
         case 'dungeon_floor':
+        case 'temple_floor':
+        case 'root_floor':
+        case 'fortress_floor':
+        case 'void_floor':
           line += '.';
           break;
         case 'dungeon_wall':
+        case 'temple_wall':
+        case 'root_wall':
+        case 'fortress_wall':
+        case 'void_wall':
           line += '#';
           break;
         case 'stairs_down':
@@ -162,6 +174,10 @@ export function countTotalWalkableTiles(map: MapData): number {
       const tileType = map.tileMapping[String(tileId)];
       if (
         tileType === 'dungeon_floor' ||
+        tileType === 'temple_floor' ||
+        tileType === 'root_floor' ||
+        tileType === 'fortress_floor' ||
+        tileType === 'void_floor' ||
         tileType === 'cracked_floor' ||
         tileType === 'collapse_edge'
       ) count++;

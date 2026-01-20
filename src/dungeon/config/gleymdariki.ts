@@ -7,6 +7,8 @@ export const GLEYMDARIKI_CONFIG: RegionConfig = {
   floors: 2,
   startFloor: 5,
   generatorStyle: 'bsp',
+  floorTileType: 'fortress_floor',
+  wallTileType: 'fortress_wall',
   size: {
     base: { width: 50, height: 50 },
     perFloor: {
