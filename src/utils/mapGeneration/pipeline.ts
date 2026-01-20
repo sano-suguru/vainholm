@@ -1,16 +1,11 @@
-import type { TileId } from '../../types';
 import type {
   GenerationPhase,
   GenerationPipelineResult,
   PhaseResult,
+  BiomeLayerData,
 } from './types';
 import { createPlacementContext } from './PlacementContext';
 import { createPlacementMutator } from './PlacementMutator';
-
-interface BiomeLayerData {
-  terrain: TileId[][];
-  features: TileId[][];
-}
 
 function topologicalSort(phases: GenerationPhase[]): GenerationPhase[] | null {
   const phaseMap = new Map<string, GenerationPhase>();

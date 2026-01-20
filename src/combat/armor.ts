@@ -4,11 +4,16 @@ import type {
   ArmorPremium,
   ArmorPremiumId,
   Armor,
-  PassivePremiumId,
 } from './types';
 import type { GlowColor } from './colors';
 import { GLOW_COLORS } from './colors';
-import { PASSIVE_PREMIUM_IDS, selectRandomUnique } from './weapons';
+import { PASSIVE_PREMIUM_IDS } from './weapons';
+import {
+  selectRandomUnique,
+  randomInt,
+  generateEquipmentId,
+  getEquipmentGlowColor,
+} from './equipmentGenerator';
 
 export const ARMOR_PREMIUMS: Record<ArmorPremiumId, ArmorPremium> = {
   physical_resist: {
@@ -86,13 +91,6 @@ const TIER_NAMES: Record<ArmorTier, string> = {
   legendary: '英雄の鎧',
 };
 
-
-
-let armorIdCounter = 0;
-
-const randomInt = (min: number, max: number): number =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
-
 const selectTier = (): ArmorTier => {
   const roll = Math.random() * 100;
   if (roll < TIER_CONFIG.legendary.weight) return 'legendary';
@@ -100,22 +98,16 @@ const selectTier = (): ArmorTier => {
   return 'common';
 };
 
-const selectPremiums = (count: number): ArmorPremiumId[] =>
-  selectRandomUnique(ARMOR_PREMIUM_IDS, count);
-
-const selectPassivePremiums = (count: number): PassivePremiumId[] =>
-  selectRandomUnique(PASSIVE_PREMIUM_IDS, count);
-
 export const createRandomArmor = (floorDepth: number = 1): Armor => {
   const tier = selectTier();
   const config = TIER_CONFIG[tier];
   const slot: ArmorSlot = 'body';
 
   const premiumCount = randomInt(config.premiumCount[0], config.premiumCount[1]);
-  const premiums = selectPremiums(premiumCount);
+  const premiums = selectRandomUnique(ARMOR_PREMIUM_IDS, premiumCount);
 
   const passivePremiumCount = randomInt(config.passivePremiumCount[0], config.passivePremiumCount[1]);
-  const passivePremiums = selectPassivePremiums(passivePremiumCount);
+  const passivePremiums = selectRandomUnique(PASSIVE_PREMIUM_IDS, passivePremiumCount);
 
   const baseBonus = randomInt(config.defenseBonus[0], config.defenseBonus[1]);
   const depthBonus = Math.floor(floorDepth / 3);
@@ -123,10 +115,8 @@ export const createRandomArmor = (floorDepth: number = 1): Armor => {
 
   const name = TIER_NAMES[tier];
 
-  armorIdCounter++;
-
   return {
-    id: `armor_${armorIdCounter}_${Date.now()}`,
+    id: generateEquipmentId('armor'),
     slot,
     tier,
     name,
@@ -144,18 +134,4 @@ export const shouldDropArmor = (): boolean =>
 export type ArmorGlowColor = GlowColor;
 export const ARMOR_GLOW_COLORS = GLOW_COLORS;
 
-export const getArmorGlowColor = (armor: {
-  premiums: readonly unknown[];
-  passivePremiums: readonly unknown[];
-  isUnique?: boolean;
-}): ArmorGlowColor => {
-  if (armor.isUnique) return 'gold';
-
-  const hasBluePremium = armor.premiums.length > 0;
-  const hasGreenPremium = armor.passivePremiums.length > 0;
-
-  if (hasBluePremium && hasGreenPremium) return 'cyan';
-  if (hasGreenPremium) return 'green';
-  if (hasBluePremium) return 'blue';
-  return 'white';
-};
+export const getArmorGlowColor = getEquipmentGlowColor;

@@ -8,8 +8,10 @@ import type {
 } from './types';
 import type { GlowColor } from './colors';
 import { GLOW_COLORS } from './colors';
+import { getEquipmentGlowColor } from './equipmentGenerator';
 
 export { getStatusEffect } from './statusEffects';
+export { selectRandomUnique } from './equipmentGenerator';
 
 export const WEAPON_PATTERNS: Record<WeaponTypeId, WeaponPattern> = {
   sword: {
@@ -198,36 +200,7 @@ export const PASSIVE_PREMIUM_IDS: PassivePremiumId[] = [
   'fire_resist',
 ];
 
-export const selectRandomUnique = <T>(pool: readonly T[], count: number): T[] => {
-  if (count === 0) return [];
-  
-  const available = [...pool];
-  const selected: T[] = [];
-  
-  for (let i = 0; i < count && available.length > 0; i++) {
-    const idx = Math.floor(Math.random() * available.length);
-    selected.push(available[idx]);
-    available.splice(idx, 1);
-  }
-  
-  return selected;
-};
-
 export type WeaponGlowColor = GlowColor;
 export const WEAPON_GLOW_COLORS = GLOW_COLORS;
 
-export const getWeaponGlowColor = (weapon: {
-  premiums: readonly unknown[];
-  passivePremiums: readonly unknown[];
-  isUnique?: boolean;
-}): WeaponGlowColor => {
-  if (weapon.isUnique) return 'gold';
-  
-  const hasBluePremium = weapon.premiums.length > 0;
-  const hasGreenPremium = weapon.passivePremiums.length > 0;
-  
-  if (hasBluePremium && hasGreenPremium) return 'cyan';
-  if (hasGreenPremium) return 'green';
-  if (hasBluePremium) return 'blue';
-  return 'white';
-};
+export const getWeaponGlowColor = getEquipmentGlowColor;

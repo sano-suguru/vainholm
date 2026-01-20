@@ -1,12 +1,7 @@
 import type { TileId } from '../../types';
-import type { PlacementMutator } from './types';
+import type { PlacementMutator, BiomeLayerData } from './types';
 
 const NO_FEATURE = 0;
-
-interface BiomeLayerData {
-  terrain: TileId[][];
-  features: TileId[][];
-}
 
 export function createPlacementMutator(
   layers: BiomeLayerData,

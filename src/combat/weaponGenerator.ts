@@ -1,5 +1,10 @@
-import type { Weapon, WeaponTypeId, WeaponTier, WeaponPremiumId, PassivePremiumId } from './types';
-import { WEAPON_TYPE_IDS, PASSIVE_PREMIUM_IDS, selectRandomUnique } from './weapons';
+import type { Weapon, WeaponTypeId, WeaponTier, WeaponPremiumId } from './types';
+import { WEAPON_TYPE_IDS, PASSIVE_PREMIUM_IDS } from './weapons';
+import {
+  selectRandomUnique,
+  randomInt,
+  generateEquipmentId,
+} from './equipmentGenerator';
 
 const PREMIUM_IDS: WeaponPremiumId[] = [
   'hp_bonus',
@@ -18,8 +23,6 @@ const PREMIUM_IDS: WeaponPremiumId[] = [
   'pierce',
   'knockback',
 ];
-
-
 
 const TIER_CONFIG: Record<WeaponTier, { 
   premiumCount: [number, number]; 
@@ -56,23 +59,12 @@ const TIER_NAMES: Record<WeaponTier, Record<WeaponTypeId, string>> = {
   },
 };
 
-let weaponIdCounter = 0;
-
-const randomInt = (min: number, max: number): number => 
-  Math.floor(Math.random() * (max - min + 1)) + min;
-
 const selectTier = (): WeaponTier => {
   const roll = Math.random() * 100;
   if (roll < TIER_CONFIG.legendary.weight) return 'legendary';
   if (roll < TIER_CONFIG.legendary.weight + TIER_CONFIG.rare.weight) return 'rare';
   return 'common';
 };
-
-const selectPremiums = (count: number): WeaponPremiumId[] =>
-  selectRandomUnique(PREMIUM_IDS, count);
-
-const selectPassivePremiums = (count: number): PassivePremiumId[] =>
-  selectRandomUnique(PASSIVE_PREMIUM_IDS, count);
 
 export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
   const tier = selectTier();
@@ -81,10 +73,10 @@ export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
   const typeId = WEAPON_TYPE_IDS[Math.floor(Math.random() * WEAPON_TYPE_IDS.length)];
   
   const premiumCount = randomInt(config.premiumCount[0], config.premiumCount[1]);
-  const premiums = selectPremiums(premiumCount);
+  const premiums = selectRandomUnique(PREMIUM_IDS, premiumCount);
   
   const passivePremiumCount = randomInt(config.passivePremiumCount[0], config.passivePremiumCount[1]);
-  const passivePremiums = selectPassivePremiums(passivePremiumCount);
+  const passivePremiums = selectRandomUnique(PASSIVE_PREMIUM_IDS, passivePremiumCount);
   
   const baseBonus = randomInt(config.attackBonus[0], config.attackBonus[1]);
   const depthBonus = Math.floor(floorDepth / 2);
@@ -92,10 +84,8 @@ export const createRandomWeapon = (floorDepth: number = 1): Weapon => {
   
   const name = TIER_NAMES[tier][typeId];
   
-  weaponIdCounter++;
-  
   return {
-    id: `weapon_${weaponIdCounter}_${Date.now()}`,
+    id: generateEquipmentId('weapon'),
     typeId,
     tier,
     name,

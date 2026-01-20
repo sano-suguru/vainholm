@@ -1,5 +1,10 @@
 import type { TileId, Position } from '../../types';
 
+export interface BiomeLayerData {
+  terrain: TileId[][];
+  features: TileId[][];
+}
+
 export interface BoundingBox {
   minX: number;
   minY: number;

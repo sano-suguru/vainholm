@@ -1,14 +1,10 @@
 import type { MapData, TileId, Position } from '../types';
+import type { BiomeLayerData } from './mapGeneration/types';
 import { TILE_MAPPING } from '../tiles';
 import { createSeededNoise2D, fbm, normalizeNoise } from './noise';
 import { getBiomeTiles, applyIslandMask } from './biomes';
 import { seededRandom } from './seedUtils';
 import { runPipeline, ALL_PHASES, isWalkableTile as isWalkableTileFromConstraints } from './mapGeneration';
-
-interface BiomeLayerData {
-  terrain: TileId[][];
-  features: TileId[][];
-}
 
 function generateBiomeData(
   width: number,
