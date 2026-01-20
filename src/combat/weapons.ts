@@ -182,6 +182,13 @@ export const getWeaponPremium = (id: WeaponPremiumId): WeaponPremium => WEAPON_P
 export const getPassivePremium = (id: PassivePremiumId): PassivePremium => PASSIVE_PREMIUMS[id];
 
 export const WEAPON_TYPE_IDS: WeaponTypeId[] = ['sword', 'axe', 'spear', 'dagger', 'mace'];
+
+export const ENCHANTABLE_WEAPON_PREMIUM_IDS: readonly WeaponPremiumId[] = [
+  'hp_bonus', 'attack_percent', 'critical_chance', 'life_steal',
+  'poison_on_hit', 'bleed_on_hit', 'burn_on_hit', 'stun_on_hit',
+  'fire_damage', 'ice_damage', 'lightning_damage', 'undead_slayer',
+] as const;
+
 export const PASSIVE_PREMIUM_IDS: PassivePremiumId[] = [
   'max_hp_percent',
   'vision_bonus', 

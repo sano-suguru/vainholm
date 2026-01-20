@@ -60,6 +60,15 @@ export const ARMOR_PREMIUM_IDS: ArmorPremiumId[] = [
   'thorns',
 ];
 
+export const ENCHANTABLE_ARMOR_PREMIUM_IDS: readonly ArmorPremiumId[] = [
+  'physical_resist',
+  'fire_resist',
+  'ice_resist',
+  'lightning_resist',
+  'reflect',
+  'thorns',
+] as const;
+
 const TIER_CONFIG: Record<ArmorTier, { 
   premiumCount: [number, number]; 
   passivePremiumCount: [number, number];

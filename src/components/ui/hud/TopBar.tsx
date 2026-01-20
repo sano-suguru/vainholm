@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { m } from '../../../utils/i18nHelpers';
@@ -11,6 +11,7 @@ interface TopBarProps {
   turn: number;
   isInDungeon: boolean;
   turnsUntilCollapse: number | null;
+  dungeonSeed: number | null;
 }
 
 const getCollapseUrgency = (turns: number): 'safe' | 'warning' | 'danger' | 'critical' => {
@@ -27,8 +28,15 @@ export const TopBar = memo(function TopBar({
   turn,
   isInDungeon,
   turnsUntilCollapse,
+  dungeonSeed,
 }: TopBarProps) {
   const collapseUrgency = turnsUntilCollapse !== null ? getCollapseUrgency(turnsUntilCollapse) : null;
+
+  const handleCopySeed = useCallback(() => {
+    if (dungeonSeed !== null) {
+      navigator.clipboard.writeText(String(dungeonSeed));
+    }
+  }, [dungeonSeed]);
   
   return (
     <div className={styles.topBar}>
@@ -41,6 +49,15 @@ export const TopBar = memo(function TopBar({
         )}
       </div>
       <div className={styles.topBarRight}>
+        {isInDungeon && dungeonSeed !== null && (
+          <button
+            className={styles.topBarSeed}
+            onClick={handleCopySeed}
+            title="Click to copy"
+          >
+            Seed: {dungeonSeed}
+          </button>
+        )}
         {isInDungeon && turnsUntilCollapse !== null && collapseUrgency && (
           <div 
             className={`${styles.topBarCollapse} ${styles[`topBarCollapse${collapseUrgency.charAt(0).toUpperCase()}${collapseUrgency.slice(1)}`]}`}

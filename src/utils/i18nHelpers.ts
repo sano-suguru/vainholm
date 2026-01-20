@@ -8,6 +8,7 @@ import type {
   WeaponTier, 
   ArmorTier,
   StatusEffectId,
+  AllyTypeId,
 } from '../combat/types';
 
 export { m };
@@ -95,6 +96,19 @@ export const getStatusEffectDisplayName = (id: StatusEffectId): string => {
     slow: m.status_slow,
     blind: m.status_blind,
     invulnerable: m.status_invulnerable,
+  };
+  return messages[id]();
+};
+
+export const getAllyTypeDisplayName = (id: AllyTypeId): string => {
+  const messages: Record<AllyTypeId, () => string> = {
+    skeleton: m.ally_skeleton,
+    ghost: m.ally_ghost,
+    cultist: m.ally_cultist,
+    wraith: m.ally_wraith,
+    shade: m.ally_shade,
+    hollow_knight: m.ally_hollow_knight,
+    survivor: m.ally_survivor,
   };
   return messages[id]();
 };

@@ -12,9 +12,12 @@ interface DungeonStore {
   isInDungeon: boolean;
   gameMode: GameMode;
   collapseEnabled: boolean;
+  customSeed: number | null;
 
   setGameMode: (mode: GameMode) => void;
   setCollapseEnabled: (enabled: boolean) => void;
+  setCustomSeed: (seed: number | null) => void;
+  getEffectiveSeed: (fallbackSeed: number) => number;
   enterDungeon: (seed: number) => DungeonFloor;
   exitDungeon: () => void;
   goToFloor: (level: number) => DungeonFloor | null;
@@ -82,6 +85,7 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
   isInDungeon: false,
   gameMode: 'normal',
   collapseEnabled: true,
+  customSeed: null,
 
   setGameMode: (mode: GameMode) => {
     set({ gameMode: mode });
@@ -89,6 +93,15 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
 
   setCollapseEnabled: (enabled: boolean) => {
     set({ collapseEnabled: enabled });
+  },
+
+  setCustomSeed: (seed: number | null) => {
+    set({ customSeed: seed });
+  },
+
+  getEffectiveSeed: (fallbackSeed: number) => {
+    const { customSeed } = get();
+    return customSeed ?? fallbackSeed;
   },
 
   enterDungeon: (seed: number) => {

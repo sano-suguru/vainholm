@@ -28,11 +28,12 @@ export const Hud = memo(function Hud({ onEquipmentClick }: HudProps) {
     }))
   );
 
-  const { dungeon, isInDungeon, getTurnsUntilCollapse } = useDungeonStore(
+  const { dungeon, isInDungeon, getTurnsUntilCollapse, dungeonSeed } = useDungeonStore(
     useShallow((state) => ({
       dungeon: state.dungeon,
       isInDungeon: state.isInDungeon,
       getTurnsUntilCollapse: state.getTurnsUntilCollapse,
+      dungeonSeed: state.dungeon?.baseSeed ?? null,
     }))
   );
 
@@ -57,6 +58,7 @@ export const Hud = memo(function Hud({ onEquipmentClick }: HudProps) {
         turn={tick}
         isInDungeon={isInDungeon}
         turnsUntilCollapse={turnsUntilCollapse}
+        dungeonSeed={dungeonSeed}
       />
       <StatusEffectsDisplay statusEffects={player.statusEffects} />
       <BossHealthBar />

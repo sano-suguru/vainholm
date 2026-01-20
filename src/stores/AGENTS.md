@@ -1,6 +1,6 @@
 # AGENTS.md - src/stores
 
-**Generated**: 2026-01-18 | **Commit**: b1bdced | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Central Zustand stores. Hub for game state, meta-progression, floating damage.
 

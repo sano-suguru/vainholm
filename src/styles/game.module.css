@@ -213,6 +213,45 @@
   }
 }
 
+.legacyPointsSection {
+  margin: 24px 0;
+  padding: 16px 24px;
+  background: rgba(40, 35, 30, 0.6);
+  border: 1px solid var(--border-subtle);
+}
+
+.legacyPointsTitle {
+  font-family: 'Times New Roman', serif;
+  font-size: 18px;
+  color: var(--accent-gold);
+  margin: 0 0 12px 0;
+  letter-spacing: 2px;
+}
+
+.legacyPointsBreakdown {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.legacyPointsRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(80, 70, 60, 0.3);
+}
+
+.legacyPointsTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 0 0;
+  margin-top: 8px;
+  font-size: 16px;
+  color: var(--accent-gold);
+  font-weight: bold;
+  border-top: 1px solid var(--border-subtle);
+}
+
 .hud {
   position: fixed;
   top: 0;
@@ -250,6 +289,24 @@
 .topBarFloor {
   color: var(--hud-text-secondary);
   margin-left: 8px;
+}
+
+.topBarSeed {
+  color: var(--hud-text-secondary);
+  font-size: 11px;
+  padding: 2px 8px;
+  background: rgba(40, 35, 30, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s ease;
+}
+
+.topBarSeed:hover {
+  color: var(--hud-text-primary);
+  border-color: var(--border-highlight);
+  background: rgba(50, 45, 38, 0.8);
 }
 
 .topBarTurn {
@@ -1149,6 +1206,41 @@
   font-size: 11px;
   flex-basis: 100%;
   margin-left: 24px;
+}
+
+.seedInputContainer {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(30, 25, 20, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.seedInputLabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.seedInputLabelText {
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.seedInput {
+  flex: 1;
+  max-width: 150px;
+  padding: 4px 8px;
+  background: rgba(20, 18, 15, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.seedInput::placeholder {
+  color: var(--text-muted);
 }
 
 .characterSelectCard {
@@ -2519,4 +2611,320 @@
 .inventoryRowActions button:hover {
   background: rgba(40, 35, 30, 0.5);
   color: var(--text-primary);
+}
+
+/* Ally Equipment Section */
+.allySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.allySectionHeader {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.allyEmpty {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 16px;
+  text-align: center;
+}
+
+.allyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.allyCard {
+  padding: 12px;
+  background: rgba(20, 18, 16, 0.5);
+  border: 1px solid #2a2420;
+}
+
+.allyCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.allyCardName {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.allyCardStats {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.allyCardEquipment {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.allyEquipSlot {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  background: rgba(15, 13, 11, 0.6);
+  border: 1px solid #222018;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.allyEquipSlotLabel {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.allyEquipSlotEmpty {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.allyEquipSlotName {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.allyEquipSlotActions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.allyEquipSlotActions button {
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid #3a3028;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.allyEquipSlotActions button:hover {
+  background: rgba(40, 35, 30, 0.5);
+  color: var(--text-primary);
+}
+
+/* EnchantTargetModal */
+.enchantOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.94) 0%, rgba(3, 2, 1, 0.98) 100%);
+  backdrop-filter: blur(4px);
+  animation: levelUpFadeIn 0.4s ease-out;
+}
+
+.enchantModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 40px 36px;
+  max-width: 520px;
+  width: 90%;
+  background: rgba(12, 10, 8, 0.95);
+  border: 1px solid var(--hud-border);
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(60, 50, 40, 0.1);
+}
+
+.enchantHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.enchantHeaderLine {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold-dim), transparent);
+}
+
+.enchantTitle {
+  font-family: 'Noto Serif JP', 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--accent-gold);
+  text-shadow: 
+    0 0 10px rgba(255, 204, 51, 0.8),
+    0 0 30px rgba(255, 204, 51, 0.5),
+    0 0 60px rgba(255, 204, 51, 0.3);
+  margin: 0;
+  letter-spacing: 4px;
+  white-space: nowrap;
+}
+
+.enchantContent {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.enchantCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(14, 12, 10, 0.96);
+  border: 1px solid var(--border-subtle);
+  padding: 16px 20px;
+  transition: all 0.2s ease;
+}
+
+.enchantCard:hover {
+  border-color: var(--border-highlight);
+  box-shadow: 0 0 20px rgba(168, 152, 120, 0.1);
+}
+
+.enchantCardLabel {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--hud-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.enchantCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.enchantCardName {
+  font-family: 'Noto Serif JP', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--hud-text-primary);
+  letter-spacing: 1px;
+}
+
+.enchantCardTier {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.enchantCardDivider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--hud-border), transparent);
+  margin-bottom: 10px;
+}
+
+.enchantCardType {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--hud-text-secondary);
+  margin-bottom: 4px;
+}
+
+.enchantCardStat {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--stat-attack);
+  margin-bottom: 8px;
+}
+
+.enchantCardPremiums {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.enchantCardPremium {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #9a8a7a;
+  letter-spacing: 0.5px;
+}
+
+.enchantButton {
+  font-family: 'Noto Serif JP', 'Courier New', monospace;
+  font-size: 12px;
+  padding: 10px 20px;
+  background: rgba(40, 35, 30, 0.9);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.enchantButton:hover {
+  background: rgba(60, 50, 40, 0.95);
+  box-shadow: 
+    0 0 20px rgba(255, 204, 51, 0.35),
+    0 0 40px rgba(255, 204, 51, 0.15);
+}
+
+.enchantButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #666;
+  border-color: #444;
+}
+
+.enchantButtonDisabled:hover {
+  background: rgba(40, 35, 30, 0.9);
+  box-shadow: none;
+}
+
+.enchantNoEquipment {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--hud-text-muted);
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.enchantActions {
+  display: flex;
+  gap: 16px;
+}
+
+.enchantButtonCancel {
+  font-family: 'Noto Serif JP', 'Courier New', monospace;
+  font-size: 13px;
+  padding: 12px 28px;
+  background: rgba(30, 28, 26, 0.9);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+}
+
+.enchantButtonCancel:hover {
+  background: rgba(40, 38, 36, 0.95);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { EnemyTypeId, BossTypeId } from '../combat/types';
+import type { EnemyTypeId, BossTypeId, CharacterClassId } from '../combat/types';
 import type { RemnantId } from '../progression/remnants';
 import { REMNANT_IDS } from '../progression/remnants';
 
@@ -62,9 +62,17 @@ interface MetaProgressionState {
   currentRunRemnantTrades: RemnantTradeRecord[];
 }
 
+export interface LegacyPointsBreakdown {
+  floorBonus: number;
+  enemyBonus: number;
+  bossBonus: number;
+  total: number;
+}
+
 interface MetaProgressionActions {
   recordEnemyEncounter: (enemyType: EnemyTypeId, floor: number, defeated: boolean) => void;
   recordBossEncounter: (bossType: BossTypeId, floor: number, defeated: boolean) => void;
+  calculateLegacyPoints: (finalFloor: number, enemiesDefeated: number, bossesDefeated: number) => LegacyPointsBreakdown;
   discoverRelic: (relicId: string) => void;
   equipRelic: (relicId: string) => void;
   unequipRelic: (relicId: string) => void;
@@ -82,6 +90,7 @@ interface MetaProgressionActions {
   hasTradeWithAllRemnants: () => boolean;
   getCurrentRunRemnantTrades: () => RemnantTradeRecord[];
   clearCurrentRunRemnantTrades: () => void;
+  isClassUnlocked: (classId: CharacterClassId) => boolean;
   resetProgress: () => void;
 }
 
@@ -155,6 +164,18 @@ export const useMetaProgressionStore = create<MetaProgressionStore>()(
             },
           };
         });
+      },
+
+      calculateLegacyPoints: (finalFloor, enemiesDefeated, bossesDefeated) => {
+        const floorBonus = finalFloor * 10;
+        const enemyBonus = enemiesDefeated;
+        const bossBonus = bossesDefeated * 50;
+        return {
+          floorBonus,
+          enemyBonus,
+          bossBonus,
+          total: floorBonus + enemyBonus + bossBonus,
+        };
       },
 
       discoverRelic: (relicId) => {
@@ -260,6 +281,25 @@ export const useMetaProgressionStore = create<MetaProgressionStore>()(
 
       clearCurrentRunRemnantTrades: () => {
         set({ currentRunRemnantTrades: [] });
+      },
+
+      isClassUnlocked: (classId) => {
+        const state = get();
+        switch (classId) {
+          case 'warrior':
+            return true;
+          case 'hunter':
+            return state.deepestFloorReached >= 4;
+          case 'scholar': {
+            const totalBossesDefeated = Object.values(state.bossEncounters).reduce(
+              (sum, enc) => sum + enc.timesDefeated,
+              0
+            );
+            return totalBossesDefeated >= 1;
+          }
+          default:
+            return false;
+        }
       },
 
       resetProgress: () => {

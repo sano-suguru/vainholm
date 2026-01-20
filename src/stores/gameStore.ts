@@ -32,14 +32,16 @@ import {
 } from '../paraglide/messages.js';
 import { createLightSource, TILE_LIGHT_SOURCES, LIGHT_PRESETS } from '../utils/lighting';
 import { TILE_DEFINITIONS } from '../utils/constants';
-import { processTrigger } from '../utils/tileInteractions';
+import { processTrigger, elementToTrigger, processChainReactions } from '../utils/tileInteractions';
+import { TILE_ID_BY_TYPE } from '../tiles/registry';
 import { checkBossPhaseTransition, clearBossAbilitiesCache, resetShadeIdCounter } from '../combat/bossAI';
 import { applyDamageToEnemy } from '../combat/damageCalculation';
 import { createBossStats } from '../combat/enemyTypes';
 import { calculateWeaponDamage } from '../combat/weaponAttack';
-import { WEAPON_PREMIUMS } from '../combat/weapons';
+import { WEAPON_PREMIUMS, ENCHANTABLE_WEAPON_PREMIUM_IDS } from '../combat/weapons';
 import { createRandomWeapon, shouldDropWeapon } from '../combat/weaponGenerator';
-import { createRandomArmor, shouldDropArmor } from '../combat/armor';
+import { createRandomArmor, shouldDropArmor, ENCHANTABLE_ARMOR_PREMIUM_IDS } from '../combat/armor';
+import { getUniqueWeaponForBoss, getUniqueArmorForBoss } from '../combat/uniqueEquipment';
 import { STATUS_EFFECTS } from '../combat/statusEffects';
 import { getLocalizedEnemyName, getLocalizedBossName } from '../utils/i18n';
 import { useDungeonStore } from '../dungeon/dungeonStore';
@@ -130,7 +132,7 @@ export type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
 export type MapType = 'world' | 'dungeon';
 
 const BASE_VISION_RADIUS = 8;
-const POS_KEY_MULTIPLIER = 100000;
+export const POS_KEY_MULTIPLIER = 100000;
 
 const STATUS_EFFECT_SOURCE_PLAYER = 'player' as const;
 
@@ -213,6 +215,11 @@ function getVisibilityDelta(
   return { toAdd, toRemove };
 }
 
+interface RunStats {
+  enemiesDefeated: number;
+  bossesDefeated: number;
+}
+
 interface GameStore {
   player: PlayerState;
   map: MapData | null;
@@ -235,6 +242,7 @@ interface GameStore {
   permanentVisionPenalty: number;
   floorVisionPenalty: number;
   floorStatModifiers: StatModifier[];
+  runStats: RunStats;
 
   enemies: Map<EnemyId, Enemy>;
   allies: Map<AllyId, Ally>;
@@ -254,6 +262,7 @@ interface GameStore {
   setTimeOfDay: (time: TimeOfDay) => void;
   canMoveTo: (x: number, y: number) => boolean;
   getTileAt: (x: number, y: number) => TileType | null;
+  setTileAt: (x: number, y: number, tileType: TileType) => void;
   isTileVisible: (x: number, y: number) => boolean;
   isTileExplored: (x: number, y: number) => boolean;
   revealAllTiles: () => void;
@@ -310,6 +319,11 @@ interface GameStore {
   openRemnantTrade: () => void;
   closeRemnantTrade: () => void;
 
+  pendingEnchantSlot: number | null;
+  openEnchantModal: (slotIndex: number) => void;
+  closeEnchantModal: () => void;
+  enchantEquipment: (target: 'weapon' | 'armor') => boolean;
+
   addFloorStatModifiers: (modifiers: StatModifier[]) => void;
   clearFloorStatModifiers: () => void;
   addVisionPenalty: (amount: number, permanent: boolean) => void;
@@ -362,9 +376,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingWeaponDrop: null,
   pendingArmorDrop: null,
   pendingRemnantTrade: false,
+  pendingEnchantSlot: null,
   permanentVisionPenalty: 0,
   floorVisionPenalty: 0,
   floorStatModifiers: [],
+  runStats: { enemiesDefeated: 0, bossesDefeated: 0 },
 
   setMap: (map, seed, entryPoint) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
@@ -400,7 +416,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { player, canMoveTo, exploredTiles, visibleTiles, getEnemyAt, gameEndState } = state;
     
     if (gameEndState !== 'playing') return;
-    
     
     const oldX = player.position.x;
     const oldY = player.position.y;
@@ -450,6 +465,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
             });
           }
         }
+
+        for (const premiumId of player.weapon.premiums) {
+          const premium = WEAPON_PREMIUMS[premiumId];
+          if (premium.effect.type !== 'elemental_damage') continue;
+          
+          const trigger = elementToTrigger(premium.effect.element);
+          const tileType = get().getTileAt(enemy.position.x, enemy.position.y);
+          if (tileType) {
+            const triggerResult = processTrigger(enemy.position, tileType, trigger);
+            if (triggerResult) {
+              for (const effect of triggerResult.effects) {
+                if (effect.type === 'transform' && effect.transformTo) {
+                  get().setTileAt(enemy.position.x, enemy.position.y, effect.transformTo);
+                }
+              }
+              
+              if (triggerResult.chainReactions.length > 0) {
+                processChainReactions(triggerResult, {
+                  getTileAt: (x, y) => get().getTileAt(x, y),
+                  setTileAt: (x, y, tile) => get().setTileAt(x, y, tile),
+                });
+              }
+            }
+          }
+        }
       }
 
       state.updateEnemy(enemy.id, {
@@ -482,6 +522,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
         
         useMetaProgressionStore.getState().recordEnemyEncounter(enemy.type, currentFloor, true);
+        set((s) => ({ runStats: { ...s.runStats, enemiesDefeated: s.runStats.enemiesDefeated + 1 } }));
         
         if (shouldDropWeapon()) {
           const droppedWeapon = createRandomWeapon(currentFloor);
@@ -517,6 +558,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
       );
       
       state.damageBoss(damageResult.damage);
+
+      if (player.weapon) {
+        for (const premiumId of player.weapon.premiums) {
+          const premium = WEAPON_PREMIUMS[premiumId];
+          if (premium.effect.type !== 'elemental_damage') continue;
+          
+          const trigger = elementToTrigger(premium.effect.element);
+          const tileType = get().getTileAt(boss.position.x, boss.position.y);
+          if (tileType) {
+            const triggerResult = processTrigger(boss.position, tileType, trigger);
+            if (triggerResult) {
+              for (const effect of triggerResult.effects) {
+                if (effect.type === 'transform' && effect.transformTo) {
+                  get().setTileAt(boss.position.x, boss.position.y, effect.transformTo);
+                }
+              }
+              
+              if (triggerResult.chainReactions.length > 0) {
+                processChainReactions(triggerResult, {
+                  getTileAt: (x, y) => get().getTileAt(x, y),
+                  setTileAt: (x, y, tile) => get().setTileAt(x, y, tile),
+                });
+              }
+            }
+          }
+        }
+      }
       
       const updatedBoss = get().currentBoss;
       if (updatedBoss) {
@@ -552,6 +620,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const dungeonState = useDungeonStore.getState();
           const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
           useMetaProgressionStore.getState().recordBossEncounter(boss.type, currentFloor, true);
+          set((s) => ({ runStats: { ...s.runStats, bossesDefeated: s.runStats.bossesDefeated + 1 } }));
+          
+          // Boss unique equipment drops
+          const uniqueWeapon = getUniqueWeaponForBoss(boss.type);
+          const uniqueArmor = getUniqueArmorForBoss(boss.type);
+          
+          if (uniqueWeapon) {
+            set({ pendingWeaponDrop: uniqueWeapon });
+          }
+          if (uniqueArmor) {
+            set({ pendingArmorDrop: uniqueArmor });
+          }
         }
       }
       
@@ -599,6 +679,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
         );
         if (result) {
           interactionEffects = result.effects;
+        }
+      }
+
+      const adjacentOffsets = [
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: -1 },
+        { dx: 0, dy: 1 },
+      ];
+      
+      for (const offset of adjacentOffsets) {
+        const adjX = newX + offset.dx;
+        const adjY = newY + offset.dy;
+        const adjTileType = get().getTileAt(adjX, adjY);
+        if (adjTileType) {
+          const adjResult = processTrigger(
+            { x: adjX, y: adjY },
+            adjTileType,
+            'player_adjacent'
+          );
+          if (adjResult) {
+            for (const effect of adjResult.effects) {
+              if (effect.type === 'transform' && effect.transformTo) {
+                get().setTileAt(adjX, adjY, effect.transformTo);
+              }
+            }
+            interactionEffects.push(...adjResult.effects.filter(e => e.type !== 'transform'));
+          }
         }
       }
 
@@ -671,6 +779,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (tileId === undefined) return null;
 
     return map.tileMapping[String(tileId)] || null;
+  },
+
+  setTileAt: (x, y, tileType) => {
+    const { map, terrainLayer, featureLayer } = get();
+    if (!map || !terrainLayer) return;
+
+    if (x < 0 || x >= map.width || y < 0 || y >= map.height) return;
+
+    const tileId = TILE_ID_BY_TYPE[tileType];
+    if (tileId === undefined) return;
+
+    if (featureLayer) {
+      const currentFeatureId = featureLayer.data[y]?.[x];
+      if (currentFeatureId !== undefined && currentFeatureId !== 0) {
+        const newFeatureData = featureLayer.data.map((row, rowY) =>
+          rowY === y ? row.map((id, colX) => (colX === x ? tileId : id)) : row
+        );
+        set({
+          featureLayer: { ...featureLayer, data: newFeatureData },
+        });
+        return;
+      }
+    }
+
+    const newTerrainData = terrainLayer.data.map((row, rowY) =>
+      rowY === y ? row.map((id, colX) => (colX === x ? tileId : id)) : row
+    );
+    set({
+      terrainLayer: { ...terrainLayer, data: newTerrainData },
+    });
   },
 
   isTileVisible: (x, y) => {
@@ -1193,6 +1331,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       permanentVisionPenalty: 0,
       floorVisionPenalty: 0,
       floorStatModifiers: [],
+      runStats: { enemiesDefeated: 0, bossesDefeated: 0 },
       enemies: new Map<EnemyId, Enemy>(),
       allies: new Map<AllyId, Ally>(),
       currentBoss: null,
@@ -1203,6 +1342,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       pendingWeaponDrop: null,
       pendingArmorDrop: null,
       pendingRemnantTrade: false,
+      pendingEnchantSlot: null,
     });
   },
 
@@ -1248,6 +1388,61 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   closeRemnantTrade: () => {
     set({ pendingRemnantTrade: false });
+  },
+
+  openEnchantModal: (slotIndex: number) => {
+    set({ pendingEnchantSlot: slotIndex });
+  },
+
+  closeEnchantModal: () => {
+    set({ pendingEnchantSlot: null });
+  },
+
+  enchantEquipment: (target: 'weapon' | 'armor') => {
+    const state = get();
+    const player = state.player;
+    
+    if (target === 'weapon') {
+      const weapon = player.weapon;
+      if (!weapon) return false;
+      
+      const unusedPremiums = ENCHANTABLE_WEAPON_PREMIUM_IDS.filter(p => !weapon.premiums.includes(p));
+      if (unusedPremiums.length === 0) return false;
+      
+      const newPremium = unusedPremiums[Math.floor(Math.random() * unusedPremiums.length)];
+      const updatedWeapon = {
+        ...weapon,
+        premiums: [...weapon.premiums, newPremium],
+      };
+      
+      set({
+        player: { ...player, weapon: updatedWeapon },
+        pendingEnchantSlot: null,
+      });
+      return true;
+    }
+    
+    if (target === 'armor') {
+      const armor = player.armor;
+      if (!armor) return false;
+      
+      const unusedPremiums = ENCHANTABLE_ARMOR_PREMIUM_IDS.filter(p => !armor.premiums.includes(p));
+      if (unusedPremiums.length === 0) return false;
+      
+      const newPremium = unusedPremiums[Math.floor(Math.random() * unusedPremiums.length)];
+      const updatedArmor = {
+        ...armor,
+        premiums: [...armor.premiums, newPremium],
+      };
+      
+      set({
+        player: { ...player, armor: updatedArmor },
+        pendingEnchantSlot: null,
+      });
+      return true;
+    }
+    
+    return false;
   },
 
   addFloorStatModifiers: (modifiers) => {

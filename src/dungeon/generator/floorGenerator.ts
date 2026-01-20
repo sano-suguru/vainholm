@@ -21,6 +21,17 @@ import { seededRandom } from '../../utils/seedUtils';
 
 const T = TILE_ID_BY_TYPE;
 
+function getEligibleFeatureRooms(rooms: Room[], minSize = 3): Room[] {
+  return rooms.filter(
+    (r) =>
+      r.roomType !== 'entrance' &&
+      r.roomType !== 'exit' &&
+      r.roomType !== 'boss' &&
+      r.width >= minSize &&
+      r.height >= minSize
+  );
+}
+
 function createEmptyGrid(width: number, height: number, fillTile: TileId): TileId[][] {
   const grid: TileId[][] = [];
   for (let y = 0; y < height; y++) {
@@ -546,6 +557,63 @@ function placeRemnantAltar(
   return null;
 }
 
+function placeCage(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  cageChance: number
+): Position | null {
+  if (random() > cageChance) return null;
+
+  const eligibleRooms = getEligibleFeatureRooms(rooms);
+
+  if (eligibleRooms.length === 0) return null;
+
+  const room = eligibleRooms[Math.floor(random() * eligibleRooms.length)];
+
+  for (let attempts = 0; attempts < 10; attempts++) {
+    const x = room.x + 1 + Math.floor(random() * Math.max(1, room.width - 2));
+    const y = room.y + 1 + Math.floor(random() * Math.max(1, room.height - 2));
+
+    if (features[y]?.[x] === 0) {
+      features[y][x] = T.cage;
+      return { x, y };
+    }
+  }
+
+  return null;
+}
+
+function placeWeaponShrine(
+  features: TileId[][],
+  rooms: Room[],
+  random: () => number,
+  level: number,
+  shrineChance: number
+): Position | null {
+  // Only spawn on deeper floors (level >= 4)
+  if (level < 4) return null;
+  if (random() > shrineChance) return null;
+
+  const eligibleRooms = getEligibleFeatureRooms(rooms);
+
+  if (eligibleRooms.length === 0) return null;
+
+  const room = eligibleRooms[Math.floor(random() * eligibleRooms.length)];
+
+  for (let attempts = 0; attempts < 10; attempts++) {
+    const x = room.x + 1 + Math.floor(random() * Math.max(1, room.width - 2));
+    const y = room.y + 1 + Math.floor(random() * Math.max(1, room.height - 2));
+
+    if (features[y]?.[x] === 0) {
+      features[y][x] = T.weapon_shrine;
+      return { x, y };
+    }
+  }
+
+  return null;
+}
+
 function selectWeightedObject(
   objects: MultiTileObjectDef[],
   random: () => number
@@ -903,6 +971,9 @@ export function generateFloor(options: FloorGenerationOptions): DungeonFloor {
   if (isLastFloorInRegion) {
     placeRemnantAltar(features, rooms, random);
   }
+
+  placeCage(features, rooms, random, 0.15);
+  placeWeaponShrine(features, rooms, random, level, 0.15);
 
   const multiTileObjects = placeMultiTileObjects(features, rooms, random, regionConfig.multiTileConfig);
 

@@ -1,4 +1,4 @@
-import { useGameStore } from '../stores/gameStore';
+import { useGameStore, POS_KEY_MULTIPLIER } from '../stores/gameStore';
 import { useDungeonStore } from '../dungeon';
 import { useDamageNumberStore } from '../stores/damageNumberStore';
 import type { TurnPhase, StatusEffectId, StatusEffect, EnemyId, Enemy, Ally, AllyId } from './types';
@@ -9,6 +9,8 @@ import { STATUS_EFFECTS } from './statusEffects';
 import { getManhattanDistance } from './pathfinding';
 import { getLocalizedAllyName } from '../utils/i18n';
 import { combat_ally_lost_to_collapse, combat_ally_died } from '../paraglide/messages.js';
+import { processTrigger, processChainReactions } from '../utils/tileInteractions';
+import type { TileType } from '../types';
 
 export const executeTurn = (): void => {
   const store = useGameStore.getState();
@@ -224,6 +226,45 @@ const processAllyStatusEffects = (
   }
 };
 
+const TIME_DECAY_TILES: readonly TileType[] = [
+  'burning_ground',
+  'smoke',
+  'blood',
+  'corpse_gas',
+  'miasma',
+] as const;
+
+const processTimeDecay = (
+  store: ReturnType<typeof useGameStore.getState>
+): void => {
+  const { visibleTiles, map, getTileAt, setTileAt } = store;
+  if (!map) return;
+
+  for (const posKey of visibleTiles) {
+    const x = posKey % POS_KEY_MULTIPLIER;
+    const y = Math.floor(posKey / POS_KEY_MULTIPLIER);
+    
+    const tileType = getTileAt(x, y);
+    if (!tileType || !TIME_DECAY_TILES.includes(tileType)) continue;
+
+    const result = processTrigger({ x, y }, tileType, 'time_decay');
+    if (!result) continue;
+
+    for (const effect of result.effects) {
+      if (effect.type === 'transform' && effect.transformTo) {
+        setTileAt(x, y, effect.transformTo);
+      }
+    }
+
+    if (result.chainReactions.length > 0) {
+      processChainReactions(result, {
+        getTileAt: (cx, cy) => getTileAt(cx, cy),
+        setTileAt: (cx, cy, tile) => setTileAt(cx, cy, tile),
+      });
+    }
+  }
+};
+
 const processEffects = (): void => {
   const store = useGameStore.getState();
   const { player, enemies, damagePlayer, updateEnemy, recalculateVisibility, updateAlly, removeAlly, getAllies, addCombatLogEntry, tick } = store;
@@ -247,6 +288,8 @@ const processEffects = (): void => {
     if (!ally.isAlive || !ally.statusEffects) continue;
     processAllyStatusEffects(ally, updateAlly, removeAlly, addCombatLogEntry, tick);
   }
+  
+  processTimeDecay(store);
 };
 
 export const isEnemyStunned = (enemy: Enemy): boolean => {

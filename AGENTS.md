@@ -1,6 +1,6 @@
 # AGENTS.md - Vainholm
 
-**Generated**: 2026-01-18 | **Commit**: b1bdced | **Branch**: main | **Tests**: 99 passing
+**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Branch**: main | **Tests**: 116 passing
 
 Dark fantasy dungeon crawler: React 19 + Pixi.js 8 + Zustand 5 + TypeScript 5.9 (strict).
 
@@ -326,15 +326,19 @@ getVisibilityDelta(oldX, oldY, newX, newY): { toAdd: Position[], toRemove: Posit
 
 ## Testing
 
-**Framework**: Vitest 4.0.16 (99 tests passing)
+**Framework**: Vitest 4.0.16 (116 tests passing)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
 | `mapGeneratorCore.test.ts` | 56 | Procedural generation, determinism |
 | `floorGenerator.test.ts` | 19 | Dungeon connectivity, reachability |
+| `gameStore.party.test.ts` | 17 | Ally management, party system |
+| `gameStore.victory.test.ts` | 6 | Victory conditions, remnant trades |
 | `LightLayer.test.ts` | 6 | Light calculations |
-| `progressionStore.test.ts` | 3 | Upgrade selection |
 | `i18n.test.ts` | 4 | Localization |
+| `metaProgressionStore.test.ts` | 3 | Meta-progression, remnant tracking |
+| `progressionStore.test.ts` | 3 | Upgrade selection |
+| `gameStore.progression.test.ts` | 2 | Stat modifiers |
 
 **Pattern**: Co-located tests (`.test.ts`), seeded randomness for determinism, no mocking.
 

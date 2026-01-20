@@ -1,6 +1,6 @@
 # AGENTS.md - src/components/ui
 
-**Generated**: 2026-01-18 | **Commit**: b1bdced | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 React DOM UI layer. Full-screen screens, modal overlays, debug info. NOT Pixi.js rendering.
 

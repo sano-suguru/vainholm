@@ -25,6 +25,7 @@ import { WeaponDropModal } from '../ui/WeaponDropModal';
 import { RemnantTradeModal } from '../ui/RemnantTradeModal';
 import { EquipmentScreen } from '../ui/EquipmentScreen';
 import { ArmorDropModal } from '../ui/ArmorDropModal';
+import { EnchantTargetModal } from '../ui/EnchantTargetModal';
 import { Hud } from '../ui/hud';
 import { getRegionConfigForFloor } from '../../dungeon/config';
 import { getRemnantForRegion } from '../../progression/remnants';
@@ -40,7 +41,7 @@ interface GameContainerProps {
 
 export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
-  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, allies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade } = useGameStore(
+  const { player, map, weather, timeOfDay, visibilityHash, lightSources, mapSeed, enemies, allies, gameEndState, currentBoss, bossDefeatedOnFloor, pendingWeaponDrop, pendingArmorDrop, pendingRemnantTrade, pendingEnchantSlot } = useGameStore(
     useShallow((state) => ({
       player: state.player,
       map: state.map,
@@ -57,6 +58,7 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
       pendingWeaponDrop: state.pendingWeaponDrop,
       pendingArmorDrop: state.pendingArmorDrop,
       pendingRemnantTrade: state.pendingRemnantTrade,
+      pendingEnchantSlot: state.pendingEnchantSlot,
     }))
   );
 
@@ -79,6 +81,8 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
   const equipArmor = useGameStore((state) => state.equipArmor);
   const discardArmorDrop = useGameStore((state) => state.discardArmorDrop);
   const closeRemnantTrade = useGameStore((state) => state.closeRemnantTrade);
+  const closeEnchantModal = useGameStore((state) => state.closeEnchantModal);
+  const enchantEquipment = useGameStore((state) => state.enchantEquipment);
   const healPlayer = useGameStore((state) => state.healPlayer);
   const applyStatModifiers = useGameStore((state) => state.applyStatModifiers);
   const addFloorStatModifiers = useGameStore((state) => state.addFloorStatModifiers);
@@ -310,6 +314,28 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
     }
   }, [pendingArmorDrop, discardArmorDrop]);
 
+  const handleEnchantWeapon = useCallback(() => {
+    if (pendingEnchantSlot === null) return;
+    const success = enchantEquipment('weapon');
+    if (success) {
+      useInventoryStore.getState().removeItem(pendingEnchantSlot, 1);
+    }
+    closeEnchantModal();
+  }, [pendingEnchantSlot, enchantEquipment, closeEnchantModal]);
+
+  const handleEnchantArmor = useCallback(() => {
+    if (pendingEnchantSlot === null) return;
+    const success = enchantEquipment('armor');
+    if (success) {
+      useInventoryStore.getState().removeItem(pendingEnchantSlot, 1);
+    }
+    closeEnchantModal();
+  }, [pendingEnchantSlot, enchantEquipment, closeEnchantModal]);
+
+  const handleEnchantCancel = useCallback(() => {
+    closeEnchantModal();
+  }, [closeEnchantModal]);
+
   useKeyboard({
     onMove: handleMove,
     onDebugToggle: toggleDebugMode,
@@ -461,6 +487,15 @@ export function GameContainer({ onReturnToTitle }: GameContainerProps) {
           remnant={currentRemnant}
           onAcceptTrade={handleAcceptTrade}
           onDecline={handleDeclineTrade}
+        />
+      )}
+      {pendingEnchantSlot !== null && (
+        <EnchantTargetModal
+          weapon={player.weapon}
+          armor={player.armor}
+          onEnchantWeapon={handleEnchantWeapon}
+          onEnchantArmor={handleEnchantArmor}
+          onCancel={handleEnchantCancel}
         />
       )}
       {isEquipmentOpen && (

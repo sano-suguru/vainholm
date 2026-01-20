@@ -161,7 +161,10 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
           return false;
         }
         case 'enchant': {
-          return false;
+          const { player } = gameStore;
+          if (!player.weapon && !player.armor) return false;
+          gameStore.openEnchantModal(slotIndex);
+          return true;
         }
         default: {
           const _exhaustiveCheck: never = effect;

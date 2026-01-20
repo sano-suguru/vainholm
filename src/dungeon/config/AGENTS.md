@@ -1,6 +1,6 @@
 # AGENTS.md - src/dungeon/config
 
-**Generated**: 2026-01-18 | **Commit**: b1bdced | **Parent**: [../AGENTS.md](../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../AGENTS.md](../AGENTS.md)
 
 Region-specific configurations for BSP dungeon generation.
 

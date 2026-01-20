@@ -7,9 +7,16 @@ export type InteractionTrigger =
   | 'fire'
   | 'water'
   | 'ice'
+  | 'lightning'
   | 'explosion';
 
-export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain' | 'descend' | 'ascend' | 'enter_dungeon' | 'exit_dungeon' | 'open_remnant_trade';
+export type ElementType = 'fire' | 'ice' | 'lightning';
+
+export const elementToTrigger = (element: ElementType): InteractionTrigger => {
+  return element;
+};
+
+export type EffectType = 'damage' | 'transform' | 'message' | 'slow' | 'chain' | 'descend' | 'ascend' | 'enter_dungeon' | 'exit_dungeon' | 'open_remnant_trade' | 'recruit_ally' | 'drop_weapon';
 
 export interface TriggerEffect {
   type: EffectType;
@@ -145,6 +152,33 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     ],
   },
   {
+    tile: 'swamp',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'slow' },
+      { type: 'message', message: 'The swamp slows your movement.' },
+    ],
+  },
+  {
+    tile: 'burning_ground',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'damage', damageAmount: 8, damageType: 'fire' },
+      { type: 'message', message: 'The flames burn you!' },
+    ],
+  },
+  {
+    tile: 'smoke',
+    trigger: 'player_step',
+    chance: 0.5,
+    effects: [
+      { type: 'damage', damageAmount: 1, damageType: 'poison' },
+      { type: 'message', message: 'You choke on the smoke.' },
+    ],
+  },
+  {
     tile: 'lava',
     trigger: 'player_step',
     chance: 1.0,
@@ -177,16 +211,34 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     trigger: 'fire',
     chance: 0.7,
     effects: [
-      { type: 'transform', transformTo: 'charred_ground' },
+      { type: 'transform', transformTo: 'burning_ground' },
       { type: 'chain', chainTrigger: 'fire', chainRadius: 1 },
     ],
+  },
+  {
+    tile: 'burning_ground',
+    trigger: 'time_decay',
+    chance: 0.3,
+    effects: [{ type: 'transform', transformTo: 'smoke' }],
+  },
+  {
+    tile: 'smoke',
+    trigger: 'time_decay',
+    chance: 0.2,
+    effects: [{ type: 'transform', transformTo: 'charred_ground' }],
+  },
+  {
+    tile: 'burning_ground',
+    trigger: 'water',
+    chance: 1.0,
+    effects: [{ type: 'transform', transformTo: 'charred_ground' }],
   },
   {
     tile: 'forest',
     trigger: 'fire',
     chance: 0.8,
     effects: [
-      { type: 'transform', transformTo: 'dead_forest' },
+      { type: 'transform', transformTo: 'burning_ground' },
       { type: 'chain', chainTrigger: 'fire', chainRadius: 1 },
     ],
   },
@@ -195,7 +247,7 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     trigger: 'fire',
     chance: 0.9,
     effects: [
-      { type: 'transform', transformTo: 'charred_ground' },
+      { type: 'transform', transformTo: 'burning_ground' },
       { type: 'chain', chainTrigger: 'fire', chainRadius: 1 },
     ],
   },
@@ -260,6 +312,16 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     effects: [{ type: 'transform', transformTo: 'dried_blood' }],
   },
   {
+    tile: 'cage',
+    trigger: 'player_adjacent',
+    chance: 1.0,
+    effects: [
+      { type: 'recruit_ally' },
+      { type: 'transform', transformTo: 'dungeon_floor' },
+      { type: 'message', message: 'You freed a survivor trapped in the cage!' },
+    ],
+  },
+  {
     tile: 'corpse_gas',
     trigger: 'time_decay',
     chance: 0.05,
@@ -270,6 +332,43 @@ const TRIGGER_INTERACTIONS: TriggerInteraction[] = [
     trigger: 'time_decay',
     chance: 0.03,
     effects: [{ type: 'transform', transformTo: 'swamp' }],
+  },
+  {
+    tile: 'water',
+    trigger: 'lightning',
+    chance: 1.0,
+    effects: [
+      { type: 'damage', damageAmount: 15, damageType: 'magic' },
+      { type: 'chain', chainTrigger: 'lightning', chainRadius: 2 },
+    ],
+  },
+  {
+    tile: 'shallow_water',
+    trigger: 'lightning',
+    chance: 1.0,
+    effects: [
+      { type: 'damage', damageAmount: 10, damageType: 'magic' },
+      { type: 'chain', chainTrigger: 'lightning', chainRadius: 1 },
+    ],
+  },
+  {
+    tile: 'swamp',
+    trigger: 'lightning',
+    chance: 1.0,
+    effects: [
+      { type: 'damage', damageAmount: 12, damageType: 'magic' },
+      { type: 'chain', chainTrigger: 'lightning', chainRadius: 1 },
+    ],
+  },
+  {
+    tile: 'weapon_shrine',
+    trigger: 'player_step',
+    chance: 1.0,
+    effects: [
+      { type: 'drop_weapon' },
+      { type: 'transform', transformTo: 'dungeon_floor' },
+      { type: 'message', message: 'You discover a weapon at the shrine.' },
+    ],
   },
 ];
 
@@ -328,4 +427,57 @@ export function processTrigger(
   }
 
   return { position, effects: interaction.effects, chainReactions };
+}
+
+export interface ChainReactionProcessor {
+  getTileAt: (x: number, y: number) => TileType | null;
+  setTileAt: (x: number, y: number, tileType: TileType) => void;
+  applyDamage?: (position: Position, amount: number, damageType: string) => void;
+}
+
+export function processChainReactions(
+  initialResult: TriggerResult,
+  processor: ChainReactionProcessor,
+  maxIterations = 50,
+  random: () => number = Math.random
+): void {
+  const queue: Array<{ position: Position; trigger: InteractionTrigger }> = [
+    ...initialResult.chainReactions,
+  ];
+  const processed = new Set<string>();
+  processed.add(`${initialResult.position.x},${initialResult.position.y}`);
+
+  let iterations = 0;
+  while (queue.length > 0 && iterations < maxIterations) {
+    const current = queue.shift();
+    if (!current) break;
+
+    const key = `${current.position.x},${current.position.y}`;
+    if (processed.has(key)) continue;
+    processed.add(key);
+
+    const tileType = processor.getTileAt(current.position.x, current.position.y);
+    if (!tileType) continue;
+
+    const result = processTrigger(current.position, tileType, current.trigger, random);
+    if (!result) continue;
+
+    for (const effect of result.effects) {
+      if (effect.type === 'transform' && effect.transformTo) {
+        processor.setTileAt(current.position.x, current.position.y, effect.transformTo);
+      }
+      if (effect.type === 'damage' && processor.applyDamage && effect.damageAmount && effect.damageType) {
+        processor.applyDamage(current.position, effect.damageAmount, effect.damageType);
+      }
+    }
+
+    for (const chainReaction of result.chainReactions) {
+      const chainKey = `${chainReaction.position.x},${chainReaction.position.y}`;
+      if (!processed.has(chainKey)) {
+        queue.push(chainReaction);
+      }
+    }
+
+    iterations++;
+  }
 }

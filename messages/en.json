@@ -131,5 +131,37 @@
   "ally_wraith": "Wraith",
   "ally_shade": "Shade",
   "ally_hollow_knight": "Hollow Knight",
-  "ally_survivor": "Survivor"
+  "ally_survivor": "Survivor",
+
+  "ui_allies": "Allies",
+  "ui_no_allies": "No Allies",
+  "ui_ally_equipment": "Equipment",
+  "ui_give_weapon": "Give Weapon",
+  "ui_give_armor": "Give Armor",
+  "ui_take_weapon": "Take Weapon",
+  "ui_take_armor": "Take Armor",
+  "ui_select_ally": "Select Ally",
+  "ui_ally_stats": "HP: {hp}/{maxHp} ATK: {attack} DEF: {defense}",
+
+  "ui_enchant_title": "Enchant Equipment",
+  "ui_enchant": "Enchant",
+  "ui_enchant_max": "Max Enchanted",
+  "ui_enchant_no_equipment": "No equipment to enchant",
+  "ui_cancel": "Cancel",
+
+  "unique_hrodr_blade_name": "Hróðrvarðr's Blade",
+  "unique_hrodr_blade_desc": "A sacred blade once wielded by the temple guardian.",
+  "unique_rot_piercer_name": "Rot Piercer",
+  "unique_rot_piercer_desc": "Forged from the corrupted root, it carries decay itself.",
+  "unique_void_fang_name": "Void Fang",
+  "unique_void_fang_desc": "A blade from the void, striking from nothingness.",
+  "unique_kings_mace_name": "Forgotten King's Mace",
+  "unique_kings_mace_desc": "The weapon of a king who chose to be forgotten.",
+  "unique_guardian_plate_name": "Guardian's Plate",
+  "unique_guardian_plate_desc": "Armor blessed by fallen temple guardians.",
+  "unique_void_shroud_name": "Void Shroud",
+  "unique_void_shroud_desc": "Woven from the fabric of the void, it bends reality.",
+
+  "class_unlock_hunter": "(Reach 4F to unlock)",
+  "class_unlock_scholar": "(Defeat a boss to unlock)"
 }

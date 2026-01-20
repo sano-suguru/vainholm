@@ -1,6 +1,6 @@
 # AGENTS.md - src/utils/mapGeneration
 
-**Generated**: 2026-01-18 | **Commit**: b1bdced | **Parent**: [../../AGENTS.md](../../AGENTS.md)
+**Generated**: 2026-01-20 | **Commit**: 35f9005 | **Parent**: [../../AGENTS.md](../../AGENTS.md)
 
 Phase-based procedural generation pipeline. Topological sort ensures dependency order.
 

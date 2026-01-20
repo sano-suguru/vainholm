@@ -269,6 +269,7 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   pillar: pillarUrl,
   altar_dark: altarDarkUrl,
   altar_remnant: altarDarkUrl,
+  weapon_shrine: altarDarkUrl,
   sarcophagus: sarcophagusUrl,
   crystal: crystalUrl,
   // Grass variants
@@ -286,6 +287,9 @@ const BASE_TILE_URLS: Partial<Record<TileType, string>> = {
   salt_flat: saltFlatUrl,
   dead_forest: deadForestUrl,
   petrified_tree: petrifiedTreeUrl,
+  // Environmental effects (fallback to existing)
+  smoke: miasmaFrame0Url,
+  burning_ground: lavaUrl,
 };
 
 type TransitionDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';

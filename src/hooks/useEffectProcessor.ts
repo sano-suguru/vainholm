@@ -7,10 +7,13 @@ import { getRegionConfigForFloor } from '../dungeon/config';
 import { spawnEnemiesForFloor, resetEnemyIdCounter } from '../combat/enemySpawner';
 import { checkStrandedAllies } from '../combat/turnManager';
 import type { Position } from '../types';
+import type { Ally } from '../combat/types';
 import { TILE_DEFINITIONS } from '../utils/constants';
 import type { TileType } from '../types';
 import { getRemnantForRegion } from '../progression/remnants';
 import { useMetaProgressionStore } from '../stores/metaProgressionStore';
+import { createAllyStats } from '../combat/allyTypes';
+import { createRandomWeapon } from '../combat/weaponGenerator';
 
 const getWalkableTilesFromFloor = (floor: DungeonFloor): Position[] => {
   const walkableTiles: Position[] = [];
@@ -76,7 +79,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     }))
   );
 
-  const { isInDungeon, dungeon, gameMode, enterDungeon, exitDungeon, descendStairs, ascendStairs, getCurrentFloor } = useDungeonStore(
+  const { isInDungeon, dungeon, gameMode, enterDungeon, exitDungeon, descendStairs, ascendStairs, getCurrentFloor, getEffectiveSeed } = useDungeonStore(
     useShallow((state) => ({
       isInDungeon: state.isInDungeon,
       dungeon: state.dungeon,
@@ -86,6 +89,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       descendStairs: state.descendStairs,
       ascendStairs: state.ascendStairs,
       getCurrentFloor: state.getCurrentFloor,
+      getEffectiveSeed: state.getEffectiveSeed,
     }))
   );
 
@@ -103,9 +107,10 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       if (effect.type === 'enter_dungeon' && !isInDungeon) {
         cacheWorldMap();
         resetEnemyIdCounter();
-        const firstFloor = enterDungeon(mapSeed);
+        const dungeonSeed = getEffectiveSeed(mapSeed);
+        const firstFloor = enterDungeon(dungeonSeed);
         const playerSpawn = firstFloor.stairsUp ?? firstFloor.map.spawnPoint;
-        setMap(firstFloor.map, mapSeed, playerSpawn);
+        setMap(firstFloor.map, dungeonSeed, playerSpawn);
         setMapType('dungeon');
         generateTileLights();
         spawnEnemiesOnFloor(firstFloor, playerSpawn);
@@ -161,6 +166,40 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
         if (!remnant) continue;
         if (useMetaProgressionStore.getState().hasTradeWithRemnant(remnant.id)) continue;
         openRemnantTrade();
+      } else if (effect.type === 'recruit_ally') {
+        const gameState = useGameStore.getState();
+        const currentAllyCount = gameState.allies.size;
+        if (currentAllyCount >= 3) {
+          continue;
+        }
+        
+        const playerPos = gameState.player.position;
+        const survivorAlly: Ally = {
+          id: `ally-survivor-${Date.now()}`,
+          type: 'survivor',
+          position: { x: playerPos.x, y: playerPos.y },
+          stats: createAllyStats('survivor'),
+          isAlive: true,
+          behaviorMode: 'follow',
+        };
+        
+        gameState.addAlly(survivorAlly);
+      } else if (effect.type === 'slow') {
+        const gameState = useGameStore.getState();
+        gameState.addStatusEffect({
+          id: 'slow',
+          duration: 2,
+          stacks: 1,
+          source: 'tile',
+        });
+      } else if (effect.type === 'damage' && effect.damageAmount) {
+        const gameState = useGameStore.getState();
+        gameState.damagePlayer(effect.damageAmount);
+      } else if (effect.type === 'drop_weapon') {
+        const dungeonState = useDungeonStore.getState();
+        const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
+        const droppedWeapon = createRandomWeapon(currentFloor + 2);
+        useGameStore.setState({ pendingWeaponDrop: droppedWeapon });
       }
 
       // TODO: Handle 'message' effects when message UI system is implemented
@@ -191,5 +230,6 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
     onExitDungeon,
     gameMode,
     tick,
+    getEffectiveSeed,
   ]);
 }

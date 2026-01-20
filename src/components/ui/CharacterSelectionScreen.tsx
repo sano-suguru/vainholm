@@ -8,6 +8,7 @@ import { CLASSES, CLASS_IDS } from '../../combat/classes';
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
 import { useDungeonStore } from '../../dungeon';
 import { m } from '../../utils/i18nHelpers';
+import { class_unlock_hunter, class_unlock_scholar } from '../../paraglide/messages.js';
 import styles from '../../styles/game.module.css';
 
 interface CharacterSelectionScreenProps {
@@ -33,15 +34,19 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
   onConfirm,
 }: CharacterSelectionScreenProps) {
   const advancedModeUnlocked = useMetaProgressionStore((state) => state.advancedModeUnlocked);
+  const isClassUnlocked = useMetaProgressionStore((state) => state.isClassUnlocked);
   const collapseEnabled = useDungeonStore((state) => state.collapseEnabled);
   const setCollapseEnabled = useDungeonStore((state) => state.setCollapseEnabled);
+  const setCustomSeed = useDungeonStore((state) => state.setCustomSeed);
   const [selectedMode, setSelectedMode] = useState<GameMode>('normal');
   const [selectedClass, setSelectedClass] = useState<CharacterClassId | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<BackgroundId | null>(null);
+  const [seedInput, setSeedInput] = useState('');
 
   const handleClassSelect = useCallback((classId: CharacterClassId) => {
+    if (!isClassUnlocked(classId)) return;
     setSelectedClass(classId);
-  }, []);
+  }, [isClassUnlocked]);
 
   const handleBackgroundSelect = useCallback((backgroundId: BackgroundId) => {
     setSelectedBackground(backgroundId);
@@ -54,9 +59,17 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
 
   const handleConfirm = useCallback(() => {
     if (selectedClass && selectedBackground) {
+      const trimmedSeed = seedInput.trim();
+      // Validate that the entire string is a valid integer (not partial like "123abc")
+      // Also ensure it's within safe integer range to avoid precision loss
+      const parsedSeed = trimmedSeed && /^-?\d+$/.test(trimmedSeed)
+        ? parseInt(trimmedSeed, 10)
+        : null;
+      const safeSeed = parsedSeed !== null && Number.isSafeInteger(parsedSeed) ? parsedSeed : null;
+      setCustomSeed(safeSeed);
       onConfirm(selectedClass, selectedBackground, selectedMode);
     }
-  }, [selectedClass, selectedBackground, selectedMode, onConfirm]);
+  }, [selectedClass, selectedBackground, selectedMode, onConfirm, seedInput, setCustomSeed]);
 
   const canConfirm = selectedClass !== null && selectedBackground !== null;
 
@@ -121,6 +134,18 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
               </span>
             </label>
           </div>
+          <div className={styles.seedInputContainer}>
+            <label className={styles.seedInputLabel}>
+              <span className={styles.seedInputLabelText}>シード値 (任意)</span>
+              <input
+                type="text"
+                value={seedInput}
+                onChange={(e) => setSeedInput(e.target.value)}
+                placeholder="空欄でランダム"
+                className={styles.seedInput}
+              />
+            </label>
+          </div>
         </div>
 
         <div className={styles.characterSelectSection}>
@@ -129,18 +154,23 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
             {CLASS_IDS.map((classId) => {
               const charClass = CLASSES[classId];
               const isSelected = selectedClass === classId;
+              const isUnlocked = isClassUnlocked(classId);
+              const unlockHint = classId === 'hunter' ? class_unlock_hunter() : classId === 'scholar' ? class_unlock_scholar() : '';
               return (
                 <button
                   key={classId}
-                  className={`${styles.characterSelectCard} ${isSelected ? styles.characterSelectCardSelected : ''}`}
+                  className={`${styles.characterSelectCard} ${isSelected ? styles.characterSelectCardSelected : ''} ${!isUnlocked ? styles.characterSelectConfirmDisabled : ''}`}
                   onClick={() => handleClassSelect(classId)}
+                  disabled={!isUnlocked}
                   type="button"
                 >
                   <div className={styles.characterSelectCardInner}>
                     <span className={styles.characterSelectCardSymbol}>
-                      {CLASS_SYMBOLS[classId]}
+                      {isUnlocked ? CLASS_SYMBOLS[classId] : '🔒'}
                     </span>
-                    <h4 className={styles.characterSelectCardName}>{charClass.displayName}</h4>
+                    <h4 className={styles.characterSelectCardName}>
+                      {charClass.displayName}{!isUnlocked && ` ${unlockHint}`}
+                    </h4>
                     <div className={styles.levelUpCardDivider} />
                     <p className={styles.characterSelectCardDesc}>{charClass.description}</p>
                     <div className={styles.characterSelectCardStats}>

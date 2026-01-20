@@ -1,6 +1,7 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 
 import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
+import { useGameStore } from '../../stores/gameStore';
 import { useDungeonStore } from '../../dungeon';
 import { m } from '../../utils/i18nHelpers';
 import styles from '../../styles/game.module.css';
@@ -12,9 +13,12 @@ interface GameOverScreenProps {
 
 export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: GameOverScreenProps) {
   const gameMode = useDungeonStore((state) => state.gameMode);
+  const currentFloor = useDungeonStore((state) => state.dungeon?.currentFloor ?? 1);
+  const runStats = useGameStore((state) => state.runStats);
   const advancedModeUnlocked = useMetaProgressionStore((state) => state.advancedModeUnlocked);
   const unlockAdvancedMode = useMetaProgressionStore((state) => state.unlockAdvancedMode);
   const recordRunEnd = useMetaProgressionStore((state) => state.recordRunEnd);
+  const calculateLegacyPoints = useMetaProgressionStore((state) => state.calculateLegacyPoints);
 
   const hasRecordedRef = useRef(false);
 
@@ -23,6 +27,11 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
   const isTrueEnding = type === 'victory_true';
 
   const shouldUnlockAdvancedMode = isVictory && gameMode === 'normal' && !advancedModeUnlocked;
+
+  const legacyPoints = useMemo(
+    () => calculateLegacyPoints(currentFloor, runStats.enemiesDefeated, runStats.bossesDefeated),
+    [calculateLegacyPoints, currentFloor, runStats.enemiesDefeated, runStats.bossesDefeated]
+  );
 
   useEffect(() => {
     if (hasRecordedRef.current) return;
@@ -56,6 +65,28 @@ export const GameOverScreen = memo(function GameOverScreen({ type, onNewGame }: 
           {getTitle()}
         </h1>
         <p className={styles.gameOverMessage}>{getMessage()}</p>
+        
+        <div className={styles.legacyPointsSection}>
+          <h2 className={styles.legacyPointsTitle}>遺産ポイント</h2>
+          <div className={styles.legacyPointsBreakdown}>
+            <div className={styles.legacyPointsRow}>
+              <span>到達フロア ({currentFloor}F)</span>
+              <span>+{legacyPoints.floorBonus}</span>
+            </div>
+            <div className={styles.legacyPointsRow}>
+              <span>敵撃破 ({runStats.enemiesDefeated}体)</span>
+              <span>+{legacyPoints.enemyBonus}</span>
+            </div>
+            <div className={styles.legacyPointsRow}>
+              <span>ボス撃破 ({runStats.bossesDefeated}体)</span>
+              <span>+{legacyPoints.bossBonus}</span>
+            </div>
+            <div className={styles.legacyPointsTotal}>
+              <span>合計</span>
+              <span>{legacyPoints.total}</span>
+            </div>
+          </div>
+        </div>
         
         <div className={styles.gameOverButtons}>
           <button className={styles.gameOverButton} onClick={onNewGame}>
