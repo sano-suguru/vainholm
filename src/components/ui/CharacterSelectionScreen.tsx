@@ -9,6 +9,7 @@ import { useMetaProgressionStore } from '../../stores/metaProgressionStore';
 import { useDungeonStore } from '../../dungeon';
 import { m } from '../../utils/i18nHelpers';
 import { class_unlock_hunter, class_unlock_scholar } from '../../paraglide/messages.js';
+import { getRelicById } from '../../progression/relics';
 import styles from '../../styles/game.module.css';
 
 interface CharacterSelectionScreenProps {
@@ -35,6 +36,10 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
 }: CharacterSelectionScreenProps) {
   const advancedModeUnlocked = useMetaProgressionStore((state) => state.advancedModeUnlocked);
   const isClassUnlocked = useMetaProgressionStore((state) => state.isClassUnlocked);
+  const discoveredRelics = useMetaProgressionStore((state) => state.discoveredRelics);
+  const equippedRelics = useMetaProgressionStore((state) => state.equippedRelics);
+  const equipRelic = useMetaProgressionStore((state) => state.equipRelic);
+  const unequipRelic = useMetaProgressionStore((state) => state.unequipRelic);
   const collapseEnabled = useDungeonStore((state) => state.collapseEnabled);
   const setCollapseEnabled = useDungeonStore((state) => state.setCollapseEnabled);
   const setCustomSeed = useDungeonStore((state) => state.setCustomSeed);
@@ -42,6 +47,14 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
   const [selectedClass, setSelectedClass] = useState<CharacterClassId | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<BackgroundId | null>(null);
   const [seedInput, setSeedInput] = useState('');
+
+  const handleRelicToggle = useCallback((relicId: string) => {
+    if (equippedRelics.includes(relicId)) {
+      unequipRelic(relicId);
+    } else if (equippedRelics.length < 2) {
+      equipRelic(relicId);
+    }
+  }, [equippedRelics, equipRelic, unequipRelic]);
 
   const handleClassSelect = useCallback((classId: CharacterClassId) => {
     if (!isClassUnlocked(classId)) return;
@@ -224,6 +237,40 @@ export const CharacterSelectionScreen = memo(function CharacterSelectionScreen({
             })}
           </div>
         </div>
+
+        {discoveredRelics.length > 0 && (
+          <div className={styles.characterSelectSection}>
+            <h3 className={styles.characterSelectSectionTitle}>
+              遺物 ({equippedRelics.length}/2)
+            </h3>
+            <div className={styles.characterSelectCardGrid6}>
+              {discoveredRelics.map((relicId) => {
+                const relic = getRelicById(relicId);
+                if (!relic) return null;
+                const isEquipped = equippedRelics.includes(relicId);
+                const canEquip = isEquipped || equippedRelics.length < 2;
+                return (
+                  <button
+                    key={relicId}
+                    className={`${styles.characterSelectCard} ${styles.characterSelectCardSmall} ${isEquipped ? styles.characterSelectCardSelected : ''} ${!canEquip ? styles.characterSelectConfirmDisabled : ''}`}
+                    onClick={() => handleRelicToggle(relicId)}
+                    disabled={!canEquip}
+                    type="button"
+                  >
+                    <div className={styles.characterSelectCardInner}>
+                      <span className={styles.characterSelectCardSymbolSmall}>
+                        {isEquipped ? '◆' : '◇'}
+                      </span>
+                      <h4 className={styles.characterSelectCardNameSmall}>{relic.displayName}</h4>
+                      <p className={styles.characterSelectCardDescSmall}>{relic.description}</p>
+                    </div>
+                    {isEquipped && <div className={styles.characterSelectCardGlow} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <button
           className={`${styles.characterSelectConfirmButton} ${canConfirm ? '' : styles.characterSelectConfirmDisabled}`}

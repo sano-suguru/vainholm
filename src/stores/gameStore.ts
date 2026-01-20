@@ -243,6 +243,7 @@ interface GameStore {
   floorVisionPenalty: number;
   floorStatModifiers: StatModifier[];
   runStats: RunStats;
+  relicEffectsApplied: boolean;
 
   enemies: Map<EnemyId, Enemy>;
   allies: Map<AllyId, Ally>;
@@ -381,6 +382,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   floorVisionPenalty: 0,
   floorStatModifiers: [],
   runStats: { enemiesDefeated: 0, bossesDefeated: 0 },
+  relicEffectsApplied: false,
 
   setMap: (map, seed, entryPoint) => {
     const terrainLayer = map.layers.find((l) => l.name === 'terrain') ?? null;
@@ -1332,6 +1334,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       floorVisionPenalty: 0,
       floorStatModifiers: [],
       runStats: { enemiesDefeated: 0, bossesDefeated: 0 },
+      relicEffectsApplied: false,
       enemies: new Map<EnemyId, Enemy>(),
       allies: new Map<AllyId, Ally>(),
       currentBoss: null,

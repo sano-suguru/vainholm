@@ -14,6 +14,72 @@ import { getRemnantForRegion } from '../progression/remnants';
 import { useMetaProgressionStore } from '../stores/metaProgressionStore';
 import { createAllyStats } from '../combat/allyTypes';
 import { createRandomWeapon } from '../combat/weaponGenerator';
+import { getRelicById } from '../progression/relics';
+
+const RESISTANCE_DAMAGE_REDUCTION = 0.5;
+
+const applyEquippedRelicEffects = (): void => {
+  const metaStore = useMetaProgressionStore.getState();
+  const gameStore = useGameStore.getState();
+  
+  if (gameStore.relicEffectsApplied) {
+    return;
+  }
+  
+  for (const relicId of metaStore.equippedRelics) {
+    const relic = getRelicById(relicId);
+    if (!relic) continue;
+    
+    const effect = relic.effect;
+    switch (effect.type) {
+      case 'max_hp_bonus':
+        gameStore.applyStatModifiers([{ stat: 'maxHp', value: effect.amount }]);
+        gameStore.healPlayer(effect.amount);
+        break;
+      case 'vision_bonus':
+        gameStore.applyStatModifiers([{ stat: 'visionRange', value: effect.amount }]);
+        break;
+      case 'resistance':
+        break;
+      case 'starting_item':
+        break;
+    }
+  }
+  
+  useGameStore.setState({ relicEffectsApplied: true });
+};
+
+const getEquippedResistances = (): Array<'fire' | 'ice' | 'poison'> => {
+  const metaStore = useMetaProgressionStore.getState();
+  const resistances: Array<'fire' | 'ice' | 'poison'> = [];
+  
+  for (const relicId of metaStore.equippedRelics) {
+    const relic = getRelicById(relicId);
+    if (!relic) continue;
+    
+    if (relic.effect.type === 'resistance') {
+      resistances.push(relic.effect.element);
+    }
+  }
+  
+  return resistances;
+};
+
+const applyResistanceToEnvironmentDamage = (
+  baseDamage: number,
+  damageType: 'fire' | 'ice' | 'poison' | 'physical' | 'magic' | undefined
+): number => {
+  if (!damageType || damageType === 'physical' || damageType === 'magic') {
+    return baseDamage;
+  }
+  
+  const resistances = getEquippedResistances();
+  if (resistances.includes(damageType)) {
+    return Math.max(1, Math.floor(baseDamage * RESISTANCE_DAMAGE_REDUCTION));
+  }
+  
+  return baseDamage;
+};
 
 const getWalkableTilesFromFloor = (floor: DungeonFloor): Position[] => {
   const walkableTiles: Position[] = [];
@@ -107,6 +173,7 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
       if (effect.type === 'enter_dungeon' && !isInDungeon) {
         cacheWorldMap();
         resetEnemyIdCounter();
+        applyEquippedRelicEffects();
         const dungeonSeed = getEffectiveSeed(mapSeed);
         const firstFloor = enterDungeon(dungeonSeed);
         const playerSpawn = firstFloor.stairsUp ?? firstFloor.map.spawnPoint;
@@ -194,7 +261,8 @@ export function useEffectProcessor(options: UseEffectProcessorOptions = {}) {
         });
       } else if (effect.type === 'damage' && effect.damageAmount) {
         const gameState = useGameStore.getState();
-        gameState.damagePlayer(effect.damageAmount);
+        const finalDamage = applyResistanceToEnvironmentDamage(effect.damageAmount, effect.damageType);
+        gameState.damagePlayer(finalDamage);
       } else if (effect.type === 'drop_weapon') {
         const dungeonState = useDungeonStore.getState();
         const currentFloor = dungeonState.dungeon?.currentFloor ?? 1;
